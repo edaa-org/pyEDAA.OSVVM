@@ -29,10 +29,12 @@
 # ==================================================================================================================== #
 #
 """Instantiation tests for the project model."""
-from unittest import TestCase
+from pathlib  import Path
+from unittest import TestCase as TestCase
 
-from pyEDAA.OSVVM.Environment import Library
+from pyVHDLModel import VHDLVersion
 
+from pyEDAA.OSVVM.Environment import Library, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -41,9 +43,47 @@ if __name__ == "__main__": # pragma: no cover
 
 
 class Instantiate(TestCase):
+	def test_VHDLSourceFile(self) -> None:
+		path = Path("source.vhdl")
+		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008)
+
+		self.assertEqual(path, vhdlFile.Path)
+		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+
 	def test_Library(self) -> None:
 		library = Library("library")
 
-		self.assertIsNotNone(library)
-		self.assertEqual(library.Name, "library")
+		self.assertEqual("library", library.Name)
 		self.assertEqual(0, len(library.Files))
+
+	def test_GenericValue(self) -> None:
+		generic = GenericValue("generic", "value")
+
+		self.assertEqual("generic", generic.Name)
+		self.assertEqual("value", generic.Value)
+
+	def test_Testcase(self) -> None:
+		tc = Testcase("tc")
+
+		self.assertEqual("tc", tc.Name)
+		self.assertIsNone(tc.ToplevelName)
+		self.assertEqual(0, len(tc.Generics))
+
+	def test_Testsuite(self) -> None:
+		ts = Testsuite("ts")
+
+		self.assertEqual("ts", ts.Name)
+		self.assertEqual(0, len(ts.Testcases))
+
+	def test_Context(self) -> None:
+		context = Context()
+
+		cwd = Path.cwd()
+		self.assertEqual(cwd, context.WorkingDirectory)
+		self.assertEqual(cwd, context.CurrentDirectory)
+		self.assertIsNone(context.Library)
+		self.assertIsNone(context.TestCase)
+		self.assertIsNone(context.Testsuite)
+		self.assertEqual(0, len(context.IncludedFiles))
+		self.assertEqual(0, len(context.Libraries))
+		self.assertEqual(0, len(context.Testsuites))

@@ -43,6 +43,8 @@ class Base(metaclass=ExtendedType):
 
 
 class SourceFile(Base):
+	"""A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts."""
+
 	_path: Path
 
 	def __init__(self, path: Path) -> None:
@@ -67,6 +69,8 @@ class VHDLSourceFile(SourceFile):
 
 
 class Library(Base):
+	"""A VHDL library collecting multiple VHDL files containing VHDL design units."""
+	
 	_name: str
 	_files: List[VHDLSourceFile]
 
@@ -109,7 +113,7 @@ class GenericValue(Base):
 		return f"{self._name} = {self._value}"
 
 
-class TestCase(Base):
+class Testcase(Base):
 	_name: str
 	_toplevelName: Nullable[str]
 	_generics: Dict[str, str]
@@ -141,9 +145,9 @@ class TestCase(Base):
 		return f"Testcase: {self._name} - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]"
 
 
-class TestSuite(Base):
+class Testsuite(Base):
 	_name:      str
-	_testcases: Dict[str, TestCase]
+	_testcases: Dict[str, Testcase]
 
 	def __init__(self, name: str) -> None:
 		self._name = name
@@ -154,10 +158,10 @@ class TestSuite(Base):
 		return self._name
 
 	@readonly
-	def Testcases(self) -> Dict[str, TestCase]:
+	def Testcases(self) -> Dict[str, Testcase]:
 		return self._testcases
 
-	def AddTestcase(self, testcase: TestCase) -> None:
+	def AddTestcase(self, testcase: Testcase) -> None:
 		self._testcases[testcase._name] = testcase
 
 	def __repr__(self) -> str:
@@ -176,9 +180,9 @@ class Context(Base):
 	_libraries:        Dict[str, Library]
 	_library:          Nullable[Library]
 
-	_testsuites:       Dict[str, TestSuite]
-	_testsuite:        Nullable[TestSuite]
-	_testcase:         Nullable[TestCase]
+	_testsuites:       Dict[str, Testsuite]
+	_testsuite:        Nullable[Testsuite]
+	_testcase:         Nullable[Testcase]
 	_options:          Dict[int, GenericValue]
 
 	def __init__(self) -> None:
@@ -231,15 +235,15 @@ class Context(Base):
 		return self._library
 
 	@readonly
-	def Testsuites(self) -> Dict[str, TestSuite]:
+	def Testsuites(self) -> Dict[str, Testsuite]:
 		return self._testsuites
 
 	@readonly
-	def Testsuite(self) -> TestSuite:
+	def Testsuite(self) -> Testsuite:
 		return self._testsuite
 
 	@readonly
-	def TestCase(self) -> TestCase:
+	def TestCase(self) -> Testcase:
 		return self._testcase
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
@@ -287,14 +291,14 @@ class Context(Base):
 		try:
 			self._testsuite = self._testsuites[testsuiteName]
 		except KeyError:
-			self._testsuite = TestSuite(testsuiteName)
+			self._testsuite = Testsuite(testsuiteName)
 			self._testsuites[testsuiteName] = self._testsuite
 
 	def AddTestcase(self, testName: str) -> TestCase:
 		if self._testsuite is None:
 			self.SetTestsuite("default")
 
-		self._testcase = TestCase(testName)
+		self._testcase = Testcase(testName)
 		self._testsuite._testcases[testName] = self._testcase
 
 		return self._testcase
