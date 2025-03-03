@@ -204,24 +204,24 @@ class Context:
 		return self._includedFiles
 
 	@readonly
-	def Library(self) -> Library:
-		return self._library
-
-	@readonly
 	def Libraries(self) -> Dict[str, Library]:
 		return self._libraries
 
 	@readonly
-	def TestCase(self) -> TestCase:
-		return self._testcase
+	def Library(self) -> Library:
+		return self._library
+
+	@readonly
+	def Testsuites(self) -> Dict[str, TestSuite]:
+		return self._testsuites
 
 	@readonly
 	def Testsuite(self) -> TestSuite:
 		return self._testsuite
 
 	@readonly
-	def Testsuites(self) -> Dict[str, TestSuite]:
-		return self._testsuites
+	def TestCase(self) -> TestCase:
+		return self._testcase
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if proFileOrBuildDirectory.is_absolute():
