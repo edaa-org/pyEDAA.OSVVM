@@ -1,0 +1,21 @@
+name: Pipeline
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+# Every Friday at 22:00 - rerun pipeline to check for dependency-based issues
+    - cron: '0 22 * * 5'
+
+jobs:
+  Pipeline:
+    uses: pyTooling/Actions/.github/workflows/CompletePipeline.yml@r4
+    with:
+      package_namespace: pyEDAA
+      package_name: OSVVM
+      unittest_disable_list: "mingw64:* ucrt64:*"
+      apptest_python_version_list: ""   # use latest Python version
+      apptest_system_list: "ubuntu macos macos-arm"
+    secrets:
+      PYPI_TOKEN:           ${{ secrets.PYPI_TOKEN }}
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
