@@ -35,3 +35,11 @@ __copyright__ = "2025-2025, Patrick Lehmann"
 __license__ =   "Apache License, Version 2.0"
 __version__ =   "0.1.0"
 __keywords__ =  ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
+
+from pyTooling.Decorators import export
+from pyTooling.Exceptions import ExceptionBase
+
+
+@export
+class OSVVMException(ExceptionBase):
+	pass

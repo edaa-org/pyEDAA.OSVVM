@@ -29,13 +29,20 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from typing import Optional as Nullable, List, Dict
+from typing  import Optional as Nullable, List, Dict
 
-from pyTooling.Decorators import readonly
-from pyVHDLModel          import VHDLVersion
+from pyTooling.Decorators  import readonly
+from pyTooling.MetaClasses import ExtendedType
+from pyVHDLModel           import VHDLVersion
+
+from pyEDAA.OSVVM import OSVVMException
 
 
-class SourceFile:
+class Base(metaclass=ExtendedType):
+	pass
+
+
+class SourceFile(Base):
 	_path: Path
 
 	def __init__(self, path: Path) -> None:
@@ -59,7 +66,7 @@ class VHDLSourceFile(SourceFile):
 		return self._vhdlVersion
 
 
-class Library:
+class Library(Base):
 	_name: str
 	_files: List[VHDLSourceFile]
 
@@ -82,7 +89,7 @@ class Library:
 		return f"VHDLLibrary: {self._name}"
 
 
-class GenericValue:
+class GenericValue(Base):
 	_name: str
 	_value: str
 
@@ -102,7 +109,7 @@ class GenericValue:
 		return f"{self._name} = {self._value}"
 
 
-class TestCase:
+class TestCase(Base):
 	_name: str
 	_toplevelName: Nullable[str]
 	_generics: Dict[str, str]
@@ -134,7 +141,7 @@ class TestCase:
 		return f"Testcase: {self._name} - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]"
 
 
-class TestSuite:
+class TestSuite(Base):
 	_name:      str
 	_testcases: Dict[str, TestCase]
 
@@ -157,12 +164,14 @@ class TestSuite:
 		return f"Testsuite: {self._name}"
 
 
-class Context:
+class Context(Base):
 	# _tcl:              TclEnvironment
 
 	_workingDirectory: Path
 	_currentDirectory: Path
 	_includedFiles:    List[Path]
+
+	_vhdlversion:      VHDLVersion
 
 	_libraries:        Dict[str, Library]
 	_library:          Nullable[Library]
@@ -178,6 +187,8 @@ class Context:
 		self._workingDirectory = Path.cwd()
 		self._currentDirectory = self._workingDirectory
 		self._includedFiles =    []
+
+		self._vhdlversion = VHDLVersion.VHDL2008
 
 		self._library =    None
 		self._libraries =  {}
@@ -198,6 +209,14 @@ class Context:
 	@readonly
 	def CurrentDirectory(self) -> Path:
 		return self._currentDirectory
+
+	@property
+	def VHDLVersion(self) -> VHDLVersion:
+		return self._vhdlversion
+
+	@VHDLVersion.setter
+	def VHDLVersion(self, value: VHDLVersion) -> None:
+		self._vhdlversion = value
 
 	@readonly
 	def IncludedFiles(self) -> List[Path]:
@@ -225,7 +244,7 @@ class Context:
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if proFileOrBuildDirectory.is_absolute():
-			raise Exception(f"Absolute path '{proFileOrBuildDirectory}' not supported.")
+			raise OSVVMException(f"Absolute path '{proFileOrBuildDirectory}' not supported.")
 
 		path = (self._currentDirectory / proFileOrBuildDirectory).resolve()
 		if path.is_file():
@@ -233,16 +252,16 @@ class Context:
 				self._currentDirectory = path.parent.relative_to(self._workingDirectory, walk_up=True)
 				proFile = self._currentDirectory / path.name
 			else:
-				raise Exception(f"Path '{proFileOrBuildDirectory}' is not a *.pro file.")
+				raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file.")
 		elif path.is_dir():
 			self._currentDirectory = path
 			proFile = path / "build.pro"
 			if not proFile.exists():
 				proFile = path / f"{path.name}.pro"
 				if not proFile.exists():
-					raise Exception(f"Path '{proFileOrBuildDirectory}' is not a build directory.") from FileNotFoundError(path / "build.pro")
+					raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a build directory.") from FileNotFoundError(path / "build.pro")
 		else:
-			raise Exception(f"Path '{proFileOrBuildDirectory}' is not a *.pro file or build directory.")
+			raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file or build directory.")
 
 		self._includedFiles.append(proFile)
 		return proFile
@@ -257,11 +276,12 @@ class Context:
 			self._library = Library(name)
 			self._libraries[name] = self._library
 
-	def AddVHDLFile(self, path: VHDLSourceFile) -> None:
+	def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
 		if self._libraries is None:
 			self.SetLibrary("default")
 
-		self._library.AddFile(path)
+		vhdlFile.VHDLVersion = self._vhdlversion
+		self._library.AddFile(vhdlFile)
 
 	def SetTestsuite(self, testsuiteName: str):
 		try:
@@ -281,7 +301,7 @@ class Context:
 
 	def SetTestcaseToplevel(self, toplevel: str) -> TestCase:
 		if self._testcase is None:
-			raise Exception()
+			raise OSVVMException()
 
 		self._testcase.SetToplevel(toplevel)
 

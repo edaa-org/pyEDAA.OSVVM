@@ -34,6 +34,7 @@ from tkinter  import Tk, Tcl, TclError
 from typing   import Any, Dict, Callable, Optional as Nullable
 
 from pyTooling.Decorators import readonly
+from pyVHDLModel import VHDLVersion
 
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
 from pyEDAA.OSVVM.Procedures import noop
@@ -100,23 +101,36 @@ class TclEnvironment:
 
 
 class OsvvmVariables:
+	_toolVendor: str
 	_toolName: str
+	_toolNameVersion: str
 
 	def __init__(
 		self,
-		toolName: Nullable[str] = None
+		toolVendor: Nullable[str] = None,
+		toolName: Nullable[str] = None,
+		toolNameVersion: Nullable[str] = None
 	) -> None:
-		self._toolName = toolName if toolName is not None else "pyEDAA.ProjectModel"
+		self._toolVendor =      toolVendor      if toolVendor      is not None else "EDA²"
+		self._toolName =        toolName        if toolName        is not None else "pyEDAA.ProjectModel"
+		self._toolNameVersion = toolNameVersion if toolNameVersion is not None else "0.1"
+
+	@readonly
+	def ToolVendor(self) -> str:
+		return self._toolVendor
 
 	@readonly
 	def ToolName(self) -> str:
 		return self._toolName
 
+	@readonly
+	def ToolNameVersion(self) -> str:
+		return self._toolNameVersion
+
 
 class OsvvmProFileProcessor(TclEnvironment):
 	def __init__(
 		self,
-		# defaultsFile: Path,
 		context: Nullable[Context] = None,
 		osvvmVariables: Nullable[OsvvmVariables] = None
 	) -> None:
@@ -136,9 +150,9 @@ class OsvvmProFileProcessor(TclEnvironment):
 		code = dedent(f"""\
 			namespace eval ::osvvm {{
 			  variable VhdlVersion     2019
-			  variable ToolVendor      "???"
+			  variable ToolVendor      "{osvvmVariables.ToolVendor}"
 			  variable ToolName        "{osvvmVariables.ToolName}"
-			  variable ToolNameVersion "???"
+			  variable ToolNameVersion "{osvvmVariables.ToolNameVersion}"
 			  variable ToolSupportsDeferredConstants           1
 			  variable ToolSupportsGenericPackages             1
 			  variable FunctionalCoverageIntegratedInSimulator "default"

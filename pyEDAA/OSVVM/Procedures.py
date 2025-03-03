@@ -50,6 +50,7 @@ def include(file: str) -> None:
 def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 	osvvmContext.SetLibrary(libraryName)
 
+
 def analyze(file: str) -> None:
 	file = Path(file)
 	fullPath = (osvvmContext._currentDirectory / file).resolve()
