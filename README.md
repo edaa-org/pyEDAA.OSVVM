@@ -1,7 +1,7 @@
 # Main Goals
 
 This package provides OSVVM-specific data models and parsers. The data models can be used as is or converted to generic
-data models of the pyEDAA data model family. This includes parsing OSVVM's ``*.pro``-files and translating them to a
+data models of the pyEDAA data model family. This includes parsing OSVVM's `*.pro`-files and translating them to a
 pyEDAA.ProjectModel instance as well as reading OSVVM's reports in YAML format like test results, alerts or functional
 coverage.
 
@@ -10,7 +10,7 @@ using one parser that's aligned with OSVVM's data formats.
 
 # Data Models
 
-## Project Description via ``*.pro``-Files
+## Project Description via `*.pro`-Files
 
 
 ## Testsuite Summary Reports
