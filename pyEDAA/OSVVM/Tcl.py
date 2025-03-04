@@ -35,6 +35,7 @@ from typing   import Any, Dict, Callable, Optional as Nullable
 
 from pyTooling.Decorators import readonly
 
+from pyEDAA.OSVVM import OSVVMException
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
 from pyEDAA.OSVVM.Procedures import noop, TestName
 from pyEDAA.OSVVM.Procedures import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
@@ -84,10 +85,9 @@ class TclEnvironment:
 		try:
 			self._tcl.evalfile(str(path))
 		except TclError as ex:
-			# breakpoint()
-			print(f"{'-' * 30}")
-			print(f"Exception from TCL:")
-			print(f"  {ex}")
+			if str(ex) == "":
+				ex = self._context.LastException
+			raise ex
 
 	def __setitem__(self, tclVariableName: str, value: Any) -> None:
 		self._tcl.setvar(tclVariableName, value)
@@ -164,7 +164,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 		try:
 			self._tcl.eval(code)
 		except TclError as ex:
-			raise Exception() from ex
+			raise OSVVMException(f"TCL error occurred, when initializing OSVVM variables.") from ex
 
 	def OverwriteTclProcedures(self) -> None:
 		self.RegisterPythonFunctionAsTclProcedure(noop, "puts")
