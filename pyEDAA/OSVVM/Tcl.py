@@ -52,7 +52,7 @@ class TclEnvironment:
 
 	def __init__(self, context: Context) -> None:
 		self._context = context
-		context._tcl = self
+		context._processor = self
 
 		self._tcl = Tcl()
 		self._procedures = {}

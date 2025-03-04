@@ -31,6 +31,7 @@
 from pathlib import Path
 from typing  import Optional as Nullable, Tuple
 
+from pyEDAA.OSVVM import OSVVMException
 from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
 
 
@@ -57,13 +58,14 @@ def analyze(file: str) -> None:
 
 	if not fullPath.exists():
 		print(f"[analyze] Path '{fullPath}' doesn't exist.")
-		raise Exception() from FileNotFoundError(fullPath)
+		raise OSVVMException(f"Path '{fullPath}' can't be analyzed.") from FileNotFoundError(fullPath)
 
 	if fullPath.suffix in (".vhd", ".vhdl"):
 		vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
 		osvvmContext.AddVHDLFile(vhdlFile)
 	else:
 		print(f"[analyze] Unknown file type for '{fullPath}'.")
+		raise OSVVMException(f"Path '{fullPath}' is no VHDL file.")
 
 
 def simulate(toplevelName: str, *options: Tuple[int]) -> None:
@@ -72,12 +74,12 @@ def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 		try:
 			option = osvvmContext._options[int(optionID)]
 		except KeyError as ex:
-			raise Exception() from KeyError
+			raise OSVVMException(f"Option {optionID} not found in option dictionary.") from ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
 		else:
-			raise Exception() from TypeError()
+			raise OSVVMException(f"Option {optionID} is not a GenericValue.") from TypeError()
 
 	# osvvmContext._testcase = None
 
@@ -104,12 +106,12 @@ def RunTest(file: str, *options: Tuple[int]) -> None:
 		try:
 			option = osvvmContext._options[int(optionID)]
 		except KeyError as ex:
-			raise Exception() from KeyError
+			raise OSVVMException(f"Option {optionID} not found in option dictionary.") from ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
 		else:
-			raise Exception() from TypeError()
+			raise OSVVMException(f"Option {optionID} is not a GenericValue.") from TypeError()
 
 	# osvvmContext._testcase = None
 

@@ -63,14 +63,18 @@ class VHDLSourceFile(SourceFile):
 
 		self._vhdlVersion = vhdlVersion
 
-	@readonly
+	@property
 	def VHDLVersion(self) -> VHDLVersion:
 		return self._vhdlVersion
+
+	@VHDLVersion.setter
+	def VHDLVersion(self, value: VHDLVersion) -> None:
+		self._vhdlVersion = value
 
 
 class Library(Base):
 	"""A VHDL library collecting multiple VHDL files containing VHDL design units."""
-	
+
 	_name: str
 	_files: List[VHDLSourceFile]
 
@@ -186,7 +190,7 @@ class Context(Base):
 	_options:          Dict[int, GenericValue]
 
 	def __init__(self) -> None:
-		self._tcl =              None
+		self._processor =        None
 
 		self._workingDirectory = Path.cwd()
 		self._currentDirectory = self._workingDirectory
@@ -203,8 +207,8 @@ class Context(Base):
 		self._options = {}
 
 	@readonly
-	def TCL(self):  # -> "Tk":
-		return self._tcl
+	def Processor(self):  # -> "Tk":
+		return self._processor
 
 	@readonly
 	def WorkingDirectory(self) -> Path:
@@ -271,7 +275,7 @@ class Context(Base):
 		return proFile
 
 	def EvaluateFile(self, proFile: Path) -> None:
-		self._tcl.EvaluateProFile(proFile)
+		self._processor.EvaluateProFile(proFile)
 
 	def SetLibrary(self, name: str):
 		try:
@@ -281,7 +285,7 @@ class Context(Base):
 			self._libraries[name] = self._library
 
 	def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
-		if self._libraries is None:
+		if self._library is None:
 			self.SetLibrary("default")
 
 		vhdlFile.VHDLVersion = self._vhdlversion
@@ -305,7 +309,7 @@ class Context(Base):
 
 	def SetTestcaseToplevel(self, toplevel: str) -> TestCase:
 		if self._testcase is None:
-			raise OSVVMException()
+			raise OSVVMException("Can't set testcase toplevel, because no testcase setup.")
 
 		self._testcase.SetToplevel(toplevel)
 
