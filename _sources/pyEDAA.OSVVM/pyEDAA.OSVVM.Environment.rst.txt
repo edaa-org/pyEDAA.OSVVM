@@ -1,0 +1,157 @@
+.. # Template modified by Patrick Lehmann
+     * removed automodule on top, because private members are activated for autodoc (no doubled documentation).
+     * Made sections like 'submodules' bold text, but no headlines to reduce number of ToC levels.
+
+========================
+pyEDAA.OSVVM.Environment
+========================
+
+.. automodule:: pyEDAA.OSVVM.Environment
+
+
+.. currentmodule:: pyEDAA.OSVVM.Environment
+
+
+**Variables**
+
+- :py:data:`osvvmContext`
+  
+
+
+**Classes**
+
+- :py:class:`Base`:
+  Undocumented.
+
+- :py:class:`SourceFile`:
+  A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts.
+
+- :py:class:`VHDLSourceFile`:
+  A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts.
+
+- :py:class:`Library`:
+  A VHDL library collecting multiple VHDL files containing VHDL design units.
+
+- :py:class:`GenericValue`:
+  Undocumented.
+
+- :py:class:`Testcase`:
+  Undocumented.
+
+- :py:class:`Testsuite`:
+  Undocumented.
+
+- :py:class:`Context`:
+  Undocumented.
+
+
+
+---------------------
+
+**Variables**
+
+
+
+
+.. autodata:: osvvmContext
+   :annotation:
+
+   .. code-block:: text
+
+      <pyEDAA.OSVVM.Environment.Context object at 0x7f58684ea7b0>
+
+
+---------------------
+
+**Classes**
+
+
+
+
+.. autoclass:: Base
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: Base
+      :parts: 1
+
+.. autoclass:: SourceFile
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: SourceFile
+      :parts: 1
+
+.. autoclass:: VHDLSourceFile
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: VHDLSourceFile
+      :parts: 1
+
+.. autoclass:: Library
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: Library
+      :parts: 1
+
+.. autoclass:: GenericValue
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: GenericValue
+      :parts: 1
+
+.. autoclass:: Testcase
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: Testcase
+      :parts: 1
+
+.. autoclass:: Testsuite
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: Testsuite
+      :parts: 1
+
+.. autoclass:: Context
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: Context
+      :parts: 1
