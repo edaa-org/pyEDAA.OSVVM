@@ -13,9 +13,7 @@ jobs:
     with:
       package_namespace: pyEDAA
       package_name: OSVVM
-#      unittest_disable_list: "mingw64:* ucrt64:*"
-#      apptest_python_version_list: ""   # use latest Python version
-#      apptest_system_list: "ubuntu macos macos-arm"
+      unittest_python_version_list: '3.12 3.13'
     secrets:
       PYPI_TOKEN:           ${{ secrets.PYPI_TOKEN }}
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
