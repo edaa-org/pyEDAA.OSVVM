@@ -86,9 +86,7 @@ class TclEnvironment:
 		try:
 			self._tcl.evalfile(str(path))
 		except TclError as ex:
-			if str(ex) == "":
-				ex = self._context.LastException
-			raise ex
+			raise getException(ex, self._context)
 
 	def __setitem__(self, tclVariableName: str, value: Any) -> None:
 		self._tcl.setvar(tclVariableName, value)
@@ -193,3 +191,12 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.RegisterPythonFunctionAsTclProcedure(FindOsvvmSettingsDirectory)
 		self.RegisterPythonFunctionAsTclProcedure(CreateOsvvmScriptSettingsPkg)
+
+
+@export
+def getException(ex: Exception, context: Context) -> Exception:
+	if str(ex) == "":
+		if (lastException := context.LastException) is not None:
+			return lastException
+
+	return ex

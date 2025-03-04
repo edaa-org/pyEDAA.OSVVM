@@ -38,7 +38,7 @@ from pyTooling.Common import firstPair, firstValue, firstItem
 from pyVHDLModel      import VHDLVersion
 
 from pyEDAA.OSVVM.Environment import Library, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
-from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor
+from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -63,9 +63,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -89,9 +87,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -120,9 +116,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -149,9 +143,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -188,9 +180,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -220,9 +210,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -244,9 +232,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -295,9 +281,7 @@ class BasicProcedures(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
 
@@ -336,8 +320,6 @@ class NoOperation(TestCase):
 		try:
 			processor._tcl.eval(code)
 		except TclError as ex:
-			if str(ex) == "":
-				ex = processor.Context.LastException
-			raise ex
+			raise getException(ex, processor.Context)
 
 		context = processor.Context
