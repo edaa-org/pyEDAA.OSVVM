@@ -31,17 +31,22 @@
 from pathlib import Path
 from typing  import Optional as Nullable, List, Dict
 
-from pyTooling.Decorators  import readonly
+from pyTooling.Decorators  import readonly, export
 from pyTooling.MetaClasses import ExtendedType
 from pyVHDLModel           import VHDLVersion
 
-from pyEDAA.OSVVM import OSVVMException
+from pyEDAA.OSVVM          import OSVVMException
 
 
+__all__ = ["osvvmContext"]
+
+
+@export
 class Base(metaclass=ExtendedType):
 	pass
 
 
+@export
 class SourceFile(Base):
 	"""A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts."""
 
@@ -55,6 +60,7 @@ class SourceFile(Base):
 		return self._path
 
 
+@export
 class VHDLSourceFile(SourceFile):
 	_vhdlVersion: VHDLVersion
 
@@ -72,6 +78,7 @@ class VHDLSourceFile(SourceFile):
 		self._vhdlVersion = value
 
 
+@export
 class Library(Base):
 	"""A VHDL library collecting multiple VHDL files containing VHDL design units."""
 
@@ -97,6 +104,7 @@ class Library(Base):
 		return f"VHDLLibrary: {self._name}"
 
 
+@export
 class GenericValue(Base):
 	_name: str
 	_value: str
@@ -117,6 +125,7 @@ class GenericValue(Base):
 		return f"{self._name} = {self._value}"
 
 
+@export
 class Testcase(Base):
 	_name: str
 	_toplevelName: Nullable[str]
@@ -149,6 +158,7 @@ class Testcase(Base):
 		return f"Testcase: {self._name} - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]"
 
 
+@export
 class Testsuite(Base):
 	_name:      str
 	_testcases: Dict[str, Testcase]
@@ -172,6 +182,7 @@ class Testsuite(Base):
 		return f"Testsuite: {self._name}"
 
 
+@export
 class Context(Base):
 	# _tcl:              TclEnvironment
 
@@ -362,5 +373,6 @@ class Context(Base):
 		self._options[optionID] = genericValue
 
 		return optionID
+
 
 osvvmContext: Context = Context()

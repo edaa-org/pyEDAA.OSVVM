@@ -33,18 +33,19 @@ from textwrap import dedent
 from tkinter  import Tk, Tcl, TclError
 from typing   import Any, Dict, Callable, Optional as Nullable
 
-from pyTooling.Decorators import readonly
+from pyTooling.Decorators     import readonly, export
 
-from pyEDAA.OSVVM import OSVVMException
+from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
-from pyEDAA.OSVVM.Procedures import noop, TestName
-from pyEDAA.OSVVM.Procedures import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
-from pyEDAA.OSVVM.Procedures import build, include, library, analyze, simulate, generic
-from pyEDAA.OSVVM.Procedures import TestSuite, TestName, RunTest
-from pyEDAA.OSVVM.Procedures import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
-from pyEDAA.OSVVM.Procedures import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
+from pyEDAA.OSVVM.Procedures  import noop, TestName
+from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
+from pyEDAA.OSVVM.Procedures  import build, include, library, analyze, simulate, generic
+from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest
+from pyEDAA.OSVVM.Procedures  import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
+from pyEDAA.OSVVM.Procedures  import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
 
 
+@export
 class TclEnvironment:
 	_tcl: Tk
 	_procedures: Dict[str, Callable]
@@ -99,6 +100,7 @@ class TclEnvironment:
 		self._tcl.unsetvar(tclVariableName)
 
 
+@export
 class OsvvmVariables:
 	_toolVendor: str
 	_toolName: str
@@ -127,6 +129,7 @@ class OsvvmVariables:
 		return self._toolNameVersion
 
 
+@export
 class OsvvmProFileProcessor(TclEnvironment):
 	def __init__(
 		self,

@@ -29,17 +29,20 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from tkinter import TclError
 from typing  import Optional as Nullable, Tuple
 
-from pyEDAA.OSVVM import OSVVMException
+from pyTooling.Decorators     import export
+
+from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
 
 
+@export
 def build(file: str) -> None:
 	include(file)
 
 
+@export
 def include(file: str) -> None:
 	currentDirectory = osvvmContext._currentDirectory
 
@@ -49,10 +52,12 @@ def include(file: str) -> None:
 	osvvmContext._currentDirectory = currentDirectory
 
 
+@export
 def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 	osvvmContext.SetLibrary(libraryName)
 
 
+@export
 def analyze(file: str) -> None:
 	file = Path(file)
 	fullPath = (osvvmContext._currentDirectory / file).resolve()
@@ -74,6 +79,7 @@ def analyze(file: str) -> None:
 		raise ex
 
 
+@export
 def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 	testcase = osvvmContext.SetTestcaseToplevel(toplevelName)
 	for optionID in options:
@@ -96,6 +102,7 @@ def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 	# osvvmContext._testcase = None
 
 
+@export
 def generic(name: str, value: str) -> GenericValue:
 	genericValue = GenericValue(name, value)
 	optionID = osvvmContext.AddOption(genericValue)
@@ -103,12 +110,17 @@ def generic(name: str, value: str) -> GenericValue:
 	return optionID
 
 
+@export
 def TestSuite(name: str) -> None:
 	osvvmContext.SetTestsuite(name)
 
+
+@export
 def TestName(name: str) -> None:
 	osvvmContext.AddTestcase(name)
 
+
+@export
 def RunTest(file: str, *options: Tuple[int]) -> None:
 	file = Path(file)
 	vhdlFile = VHDLSourceFile(file)
@@ -136,43 +148,53 @@ def RunTest(file: str, *options: Tuple[int]) -> None:
 	# osvvmContext._testcase = None
 
 
+@export
 def LinkLibrary(libraryName: str, libraryPath: Nullable[str] = None):
 	print(f"[LinkLibrary] {libraryPath}")
 
 
+@export
 def LinkLibraryDirectory(libraryDirectory: str):
 	print(f"[LinkLibraryDirectory] {libraryDirectory}")
 
 
+@export
 def SetCoverageAnalyzeEnable(value: bool) -> None:
 	print(f"[SetCoverageAnalyzeEnable] {value}")
 
 
+@export
 def SetCoverageSimulateEnable(value: bool) -> None:
 	print(f"[SetCoverageSimulateEnable] {value}")
 
 
+@export
 def FileExists(file: str) -> bool:
 	return (osvvmContext._currentDirectory / file).is_file()
 
 
+@export
 def DirectoryExists(directory: str) -> bool:
 	return (osvvmContext._currentDirectory / directory).is_dir()
 
 
+@export
 def ChangeWorkingDirectory(directory: str) -> None:
 	osvvmContext._currentDirectory = (newDirectory := osvvmContext._currentDirectory / directory)
 	if not newDirectory.is_dir():
 		print(f"[ChangeWorkingDirectory] Directory {newDirectory} doesn't exist.")
 
 
+@export
 def FindOsvvmSettingsDirectory(*args):
 	pass
 
 
+@export
 def CreateOsvvmScriptSettingsPkg(*args):
 	pass
 
 
+@export
 def noop(*args):
 	pass
