@@ -175,6 +175,8 @@ class Testsuite(Base):
 class Context(Base):
 	# _tcl:              TclEnvironment
 
+	_lastException:    Exception
+
 	_workingDirectory: Path
 	_currentDirectory: Path
 	_includedFiles:    List[Path]
@@ -191,6 +193,7 @@ class Context(Base):
 
 	def __init__(self) -> None:
 		self._processor =        None
+		self._lastException =    None
 
 		self._workingDirectory = Path.cwd()
 		self._currentDirectory = self._workingDirectory
@@ -201,14 +204,42 @@ class Context(Base):
 		self._library =    None
 		self._libraries =  {}
 
-		self._testcase = None
+		self._testcase =   None
 		self._testsuite =  None
 		self._testsuites = {}
-		self._options = {}
+		self._options =    {}
+
+	def Clear(self) -> None:
+		self._processor =        None
+		self._lastException =    None
+
+		self._workingDirectory = Path.cwd()
+		self._currentDirectory = self._workingDirectory
+		self._includedFiles =    []
+
+		self._vhdlversion = VHDLVersion.VHDL2008
+
+		self._library =    None
+		self._libraries =  {}
+
+		self._testcase =   None
+		self._testsuite =  None
+		self._testsuites = {}
+		self._options =    {}
 
 	@readonly
 	def Processor(self):  # -> "Tk":
 		return self._processor
+
+	@property
+	def LastException(self) -> Exception:
+		lastException = self._lastException
+		self._lastException = None
+		return lastException
+
+	@LastException.setter
+	def LastException(self, value: Exception) -> None:
+		self._lastException = value
 
 	@readonly
 	def WorkingDirectory(self) -> Path:
@@ -252,7 +283,9 @@ class Context(Base):
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if proFileOrBuildDirectory.is_absolute():
-			raise OSVVMException(f"Absolute path '{proFileOrBuildDirectory}' not supported.")
+			ex = OSVVMException(f"Absolute path '{proFileOrBuildDirectory}' not supported.")
+			self._lastException = ex
+			raise ex
 
 		path = (self._currentDirectory / proFileOrBuildDirectory).resolve()
 		if path.is_file():
@@ -260,16 +293,23 @@ class Context(Base):
 				self._currentDirectory = path.parent.relative_to(self._workingDirectory, walk_up=True)
 				proFile = self._currentDirectory / path.name
 			else:
-				raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file.")
+				ex = OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file.")
+				self._lastException = ex
+				raise ex
 		elif path.is_dir():
 			self._currentDirectory = path
 			proFile = path / "build.pro"
 			if not proFile.exists():
 				proFile = path / f"{path.name}.pro"
 				if not proFile.exists():
-					raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a build directory.") from FileNotFoundError(path / "build.pro")
+					ex = OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a build directory.")
+					ex.__cause__ = FileNotFoundError(path / "build.pro")
+					self._lastException = ex
+					raise ex
 		else:
-			raise OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file or build directory.")
+			ex = OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file or build directory.")
+			self._lastException = ex
+			raise ex
 
 		self._includedFiles.append(proFile)
 		return proFile
@@ -309,7 +349,9 @@ class Context(Base):
 
 	def SetTestcaseToplevel(self, toplevel: str) -> TestCase:
 		if self._testcase is None:
-			raise OSVVMException("Can't set testcase toplevel, because no testcase setup.")
+			ex = OSVVMException("Can't set testcase toplevel, because no testcase setup.")
+			self._lastException = ex
+			raise ex
 
 		self._testcase.SetToplevel(toplevel)
 

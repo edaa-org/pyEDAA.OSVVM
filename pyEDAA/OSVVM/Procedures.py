@@ -29,6 +29,7 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
+from tkinter import TclError
 from typing  import Optional as Nullable, Tuple
 
 from pyEDAA.OSVVM import OSVVMException
@@ -58,14 +59,19 @@ def analyze(file: str) -> None:
 
 	if not fullPath.exists():
 		print(f"[analyze] Path '{fullPath}' doesn't exist.")
-		raise OSVVMException(f"Path '{fullPath}' can't be analyzed.") from FileNotFoundError(fullPath)
+		ex = OSVVMException(f"Path '{fullPath}' can't be analyzed.")
+		ex.__cause__ = FileNotFoundError(fullPath)
+		osvvmContext.LastException = ex
+		raise ex
 
 	if fullPath.suffix in (".vhd", ".vhdl"):
 		vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
 		osvvmContext.AddVHDLFile(vhdlFile)
 	else:
 		print(f"[analyze] Unknown file type for '{fullPath}'.")
-		raise OSVVMException(f"Path '{fullPath}' is no VHDL file.")
+		ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
+		osvvmContext.LastException = ex
+		raise ex
 
 
 def simulate(toplevelName: str, *options: Tuple[int]) -> None:
@@ -73,13 +79,19 @@ def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 	for optionID in options:
 		try:
 			option = osvvmContext._options[int(optionID)]
-		except KeyError as ex:
-			raise OSVVMException(f"Option {optionID} not found in option dictionary.") from ex
+		except KeyError as ex2:
+			ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+			ex.__cause__ = ex2
+			osvvmContext.LastException = ex
+			raise ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
 		else:
-			raise OSVVMException(f"Option {optionID} is not a GenericValue.") from TypeError()
+			ex = OSVVMException(f"Option {optionID} is not a GenericValue.")
+			ex.__cause__ = TypeError()
+			osvvmContext.LastException = ex
+			raise ex
 
 	# osvvmContext._testcase = None
 
@@ -94,6 +106,8 @@ def generic(name: str, value: str) -> GenericValue:
 def TestSuite(name: str) -> None:
 	osvvmContext.SetTestsuite(name)
 
+def TestName(name: str) -> None:
+	osvvmContext.AddTestcase(name)
 
 def RunTest(file: str, *options: Tuple[int]) -> None:
 	file = Path(file)
@@ -105,13 +119,19 @@ def RunTest(file: str, *options: Tuple[int]) -> None:
 	for optionID in options:
 		try:
 			option = osvvmContext._options[int(optionID)]
-		except KeyError as ex:
-			raise OSVVMException(f"Option {optionID} not found in option dictionary.") from ex
+		except KeyError as ex2:
+			ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+			ex.__cause__ = ex2
+			osvvmContext.LastException = ex
+			raise ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
 		else:
-			raise OSVVMException(f"Option {optionID} is not a GenericValue.") from TypeError()
+			ex = OSVVMException(f"Option {optionID} is not a GenericValue.")
+			ex.__cause__ = TypeError()
+			osvvmContext.LastException = ex
+			raise ex
 
 	# osvvmContext._testcase = None
 
