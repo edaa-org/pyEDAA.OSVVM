@@ -45,6 +45,7 @@ setup(**DescribePythonPackageHostedOnGitHub(
 	gitHubNamespace=gitHubNamespace,
 	sourceFileWithVersion=packageInformationFile,
 	developmentStatus="alpha",
+	pythonVersions=("3.12", "3.13"),
 	classifiers=list(DEFAULT_CLASSIFIERS) + [
 		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 	],
