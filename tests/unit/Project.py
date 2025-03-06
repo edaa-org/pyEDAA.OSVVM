@@ -34,7 +34,7 @@ from unittest import TestCase as TestCase
 
 from pyVHDLModel import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import Library, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
+from pyEDAA.OSVVM.Environment import VHDLLibrary, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -51,7 +51,7 @@ class Instantiate(TestCase):
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
 
 	def test_Library(self) -> None:
-		library = Library("library")
+		library = VHDLLibrary("library")
 
 		self.assertEqual("library", library.Name)
 		self.assertEqual(0, len(library.Files))

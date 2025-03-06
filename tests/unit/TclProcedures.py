@@ -37,7 +37,7 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import Library, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
+from pyEDAA.OSVVM.Environment import VHDLLibrary, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
 from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
