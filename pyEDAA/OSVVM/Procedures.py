@@ -32,6 +32,7 @@ from pathlib import Path
 from typing  import Optional as Nullable, Tuple
 
 from pyTooling.Decorators     import export
+from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
@@ -156,6 +157,48 @@ def LinkLibrary(libraryName: str, libraryPath: Nullable[str] = None):
 @export
 def LinkLibraryDirectory(libraryDirectory: str):
 	print(f"[LinkLibraryDirectory] {libraryDirectory}")
+
+
+@export
+def SetVHDLVersion(value: str) -> None:
+	print(f"[SetVHDLVersion] {value}:{value.__class__.__name__}")
+	try:
+		value = int(value)
+	except ValueError as e:
+		ex = OSVVMException(f"Unsupported VHDL version '{value}'.")
+		ex.__cause__ = e
+		osvvmContext.LastException = ex
+		raise ex
+
+	match value:
+		case 1993:
+			osvvmContext.VHDLVersion = VHDLVersion.VHDL93
+		case 2001:
+			osvvmContext.VHDLVersion = VHDLVersion.VHDL2002
+		case 2008:
+			osvvmContext.VHDLVersion = VHDLVersion.VHDL2008
+		case 2019:
+			osvvmContext.VHDLVersion = VHDLVersion.VHDL2019
+		case _:
+			ex = OSVVMException(f"Unsupported VHDL version '{value}'.")
+			osvvmContext.LastException = ex
+			raise ex
+
+
+@export
+def GetVHDLVersion() -> int:
+	if osvvmContext.VHDLVersion is VHDLVersion.VHDL93:
+		return 1993
+	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2002:
+		return 2002
+	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2008:
+		return 2008
+	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2019:
+		return 2019
+	else:
+		ex = OSVVMException(f"Potentially unsupported VHDL version '{osvvmContext.VHDLVersion}'.")
+		osvvmContext.LastException = ex
+		raise ex
 
 
 @export

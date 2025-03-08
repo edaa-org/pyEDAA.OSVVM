@@ -34,10 +34,9 @@ from textwrap import dedent
 from tkinter  import TclError
 from unittest import TestCase as TestCase
 
-from pyTooling.Common import firstPair, firstValue, firstItem
+from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import VHDLLibrary, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
 from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
@@ -51,6 +50,56 @@ class BasicProcedures(TestCase):
 		from pyEDAA.OSVVM.Environment import osvvmContext
 
 		osvvmContext.Clear()
+
+	def test_Build(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		path = Path("tests/examples/simple/project.pro")
+
+		code = dedent(f"""\
+			build {path.as_posix()}
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context = processor.Context
+
+		self.assertEqual(4, len(context.IncludedFiles))
+		self.assertEqual(path, firstElement(context.IncludedFiles))
+
+		vhdlLibrary = firstValue(context.Libraries)
+		vhdlFile = firstElement(vhdlLibrary.Files)
+
+		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
+
+	def test_Include(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		path = Path("tests/examples/simple/test.pro")
+
+		code = dedent(f"""\
+			include {path.as_posix()}
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context = processor.Context
+
+		self.assertEqual(2, len(context.IncludedFiles))
+		self.assertEqual(path, firstElement(context.IncludedFiles))
+
+		vhdlLibrary = firstValue(context.Libraries)
+		vhdlFile = firstElement(vhdlLibrary.Files)
+
+		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
 
 	def test_Library(self) -> None:
 		print()
@@ -301,6 +350,45 @@ class BasicProcedures(TestCase):
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("lib1_file1", testcase.Name)
 		self.assertEqual(0, len(testcase.Generics))
+
+
+class SetterGatter(TestCase):
+	def setUp(self):
+		from pyEDAA.OSVVM.Environment import osvvmContext
+
+		osvvmContext.Clear()
+
+	def test_SetVHDLVersion(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		code = dedent(f"""\
+			SetVHDLVersion 2019
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context = processor.Context
+
+		self.assertIs(VHDLVersion.VHDL2019, context.VHDLVersion)
+
+	def test_GetVHDLVersion(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		code = dedent(f"""\
+			set vhdlVersion [GetVHDLVersion]
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		self.assertEqual(2008, processor["vhdlVersion"])
 
 
 class NoOperation(TestCase):
