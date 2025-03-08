@@ -34,14 +34,16 @@ from tkinter  import Tk, Tcl, TclError
 from typing   import Any, Dict, Callable, Optional as Nullable
 
 from pyTooling.Decorators     import readonly, export
+from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
-from pyEDAA.OSVVM.Procedures  import noop, TestName
+from pyEDAA.OSVVM.Procedures  import noop
 from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
 from pyEDAA.OSVVM.Procedures  import build, include, library, analyze, simulate, generic
 from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest
 from pyEDAA.OSVVM.Procedures  import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
+from pyEDAA.OSVVM.Procedures  import SetVHDLVersion, GetVHDLVersion
 from pyEDAA.OSVVM.Procedures  import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
 
 
@@ -100,19 +102,26 @@ class TclEnvironment:
 
 @export
 class OsvvmVariables:
-	_toolVendor: str
-	_toolName: str
-	_toolNameVersion: str
+	_vhdlVersion: VHDLVersion
+	_toolVendor:  str
+	_toolName:    str
+	_toolVersion: str
 
 	def __init__(
 		self,
-		toolVendor: Nullable[str] = None,
-		toolName: Nullable[str] = None,
-		toolNameVersion: Nullable[str] = None
+		vhdlVersion: Nullable[VHDLVersion] = None,
+		toolVendor:  Nullable[str] = None,
+		toolName:    Nullable[str] = None,
+		toolVersion: Nullable[str] = None
 	) -> None:
-		self._toolVendor =      toolVendor      if toolVendor      is not None else "EDA²"
-		self._toolName =        toolName        if toolName        is not None else "pyEDAA.ProjectModel"
-		self._toolNameVersion = toolNameVersion if toolNameVersion is not None else "0.1"
+		self._vhdlVersion = vhdlVersion if vhdlVersion is not None else VHDLVersion.VHDL2008
+		self._toolVendor =  toolVendor  if toolVendor  is not None else "EDA²"
+		self._toolName =    toolName    if toolName    is not None else "pyEDAA.ProjectModel"
+		self._toolVersion = toolVersion if toolVersion is not None else "0.1"
+
+	@readonly
+	def VHDlversion(self) -> VHDLVersion:
+		return self._vhdlVersion
 
 	@readonly
 	def ToolVendor(self) -> str:
@@ -123,8 +132,8 @@ class OsvvmVariables:
 		return self._toolName
 
 	@readonly
-	def ToolNameVersion(self) -> str:
-		return self._toolNameVersion
+	def ToolVersion(self) -> str:
+		return self._toolVersion
 
 
 @export
@@ -147,12 +156,22 @@ class OsvvmProFileProcessor(TclEnvironment):
 		self.RegisterTclProcedures()
 
 	def LoadOsvvmDefaults(self, osvvmVariables: OsvvmVariables) -> None:
+		match osvvmVariables.VHDlversion:
+			case VHDLVersion.VHDL2002:
+				version = "2002"
+			case VHDLVersion.VHDL2008:
+				version = "2008"
+			case VHDLVersion.VHDL2019:
+				version = "2019"
+			case _:
+				version = "unsupported"
+
 		code = dedent(f"""\
 			namespace eval ::osvvm {{
-			  variable VhdlVersion     2019
+			  variable VhdlVersion     {version}
 			  variable ToolVendor      "{osvvmVariables.ToolVendor}"
 			  variable ToolName        "{osvvmVariables.ToolName}"
-			  variable ToolNameVersion "{osvvmVariables.ToolNameVersion}"
+			  variable ToolNameVersion "{osvvmVariables.ToolVersion}"
 			  variable ToolSupportsDeferredConstants           1
 			  variable ToolSupportsGenericPackages             1
 			  variable FunctionalCoverageIntegratedInSimulator "default"
@@ -182,6 +201,8 @@ class OsvvmProFileProcessor(TclEnvironment):
 		self.RegisterPythonFunctionAsTclProcedure(TestName)
 		self.RegisterPythonFunctionAsTclProcedure(RunTest)
 
+		self.RegisterPythonFunctionAsTclProcedure(SetVHDLVersion)
+		self.RegisterPythonFunctionAsTclProcedure(GetVHDLVersion)
 		self.RegisterPythonFunctionAsTclProcedure(SetCoverageAnalyzeEnable)
 		self.RegisterPythonFunctionAsTclProcedure(SetCoverageSimulateEnable)
 
