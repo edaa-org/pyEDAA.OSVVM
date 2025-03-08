@@ -28,19 +28,39 @@ one parser that's aligned with OSVVM's data formats.
 
 ## Project Description via `*.pro`-Files
 
+**Features:**
+
+* Parse OSVVM's `*.pro` files including complex TCL code structures like nested `if`-statements.
+* Emulate tool specific TCL variables: `::osvvm::ToolVendor`, `::osvvm::ToolName` `::osvvm::ToolNameVersion`, ... 
+* Convert the project description stored in one or more `*.pro` files to a
+ [`pyEDAA.ProjectModel`](https://github.com/edaa-org/pyEDAA.ProjectModel) instance.
+
+
 **Basic Data Model:**
 
 * VHDL source files are accumulated in VHDL libraries.
-* The order of files is preserved in a library.
+* The order of source files is preserved in a library.
 * Test cases are accumulated in test suites.
 * Configuration changes are collected in a context.    
-  When a new item is added to the model, certain default values or collected configuration values are used to create
+  * When a new item is added to the model, certain default values or collected configuration values are used to create
   this new item.
 
-**Features:**
+**Quick Example**
 
-* The OSVVM project description stored in one or more `*.pro` files can be converted to a `pyEDAA.ProjectModel`
-  instance.
+```python
+from pyEDAA.OSVVM.Tcl import OsvvmProFileProcessor
+
+processor = OsvvmProFileProcessor()
+processor.LoadProFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
+
+for libraryName, lib in processor.Context.Libraries.items():
+  for file in lib.Files:
+    ...
+
+for testsuiteName, ts in processor.Context.Testsuites.items():
+  for tc in ts.Testcases.values():
+    ...
+```
 
 ## Testsuite Summary Reports
 
@@ -73,12 +93,6 @@ one parser that's aligned with OSVVM's data formats.
 > *TBD*
 
 
-# Features
-
-* Parse OSVVM's `*.pro` files including complex TCL code structures like nested `if`-statements.
-* Emulate tool specific TCL variables: `::osvvm::ToolVendor`, `::osvvm::ToolName` `::osvvm::ToolNameVersion`, ... 
-
-
 # Use Cases
 
 * Reading OSVVM's project description from `*.pro` files.
@@ -103,14 +117,14 @@ def main() -> None:
 
   for libraryName, lib in processor.Context.Libraries.items():
     print(f"Library: {libraryName} ({len(lib.Files)})")
-    for file in lib._files:
+    for file in lib.Files:
       print(f"  {file.Path}")
 
   print()
   for testsuiteName, ts in processor.Context.Testsuites.items():
     print(f"Testsuite: {testsuiteName} ({len(ts.Testcases)})")
     for tc in ts.Testcases.values():
-      print(f"  {tc._name}")
+      print(f"  {tc.Name}")
 ```
 
 # Consumers
