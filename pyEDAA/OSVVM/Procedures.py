@@ -168,9 +168,11 @@ def SetVHDLVersion(value: str) -> None:
 		raise ex
 
 	match value:
+		case 1987:
+			osvvmContext.VHDLVersion = VHDLVersion.VHDL87
 		case 1993:
 			osvvmContext.VHDLVersion = VHDLVersion.VHDL93
-		case 2001:
+		case 2002:
 			osvvmContext.VHDLVersion = VHDLVersion.VHDL2002
 		case 2008:
 			osvvmContext.VHDLVersion = VHDLVersion.VHDL2008
@@ -184,7 +186,9 @@ def SetVHDLVersion(value: str) -> None:
 
 @export
 def GetVHDLVersion() -> int:
-	if osvvmContext.VHDLVersion is VHDLVersion.VHDL93:
+	if osvvmContext.VHDLVersion is VHDLVersion.VHDL87:
+		return 1987
+	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL93:
 		return 1993
 	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2002:
 		return 2002
@@ -193,7 +197,7 @@ def GetVHDLVersion() -> int:
 	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2019:
 		return 2019
 	else:  # pragma: no cover
-		ex = OSVVMException(f"Potentially unsupported VHDL version '{osvvmContext.VHDLVersion}'.")
+		ex = OSVVMException(f"Unsupported VHDL version '{osvvmContext.VHDLVersion}'.")
 		osvvmContext.LastException = ex
 		raise ex
 

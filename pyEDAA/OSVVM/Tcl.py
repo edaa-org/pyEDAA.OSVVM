@@ -38,7 +38,7 @@ from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
-from pyEDAA.OSVVM.Procedures  import noop, TestName
+from pyEDAA.OSVVM.Procedures  import noop
 from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
 from pyEDAA.OSVVM.Procedures  import build, include, library, analyze, simulate, generic
 from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest

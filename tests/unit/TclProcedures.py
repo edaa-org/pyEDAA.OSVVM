@@ -378,7 +378,7 @@ class BasicProcedures(TestCase):
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
-			RunTest {file1.as_posix()}
+			RunTest {file1.as_posix()} [generic param1 value1] [generic param2 value2]
 			""")
 
 		try:
@@ -403,7 +403,10 @@ class BasicProcedures(TestCase):
 		self.assertEqual(1, len(testsuite.Testcases))
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("lib1_file1", testcase.Name)
-		self.assertEqual(0, len(testcase.Generics))
+		self.assertEqual(2, len(testcase.Generics))
+		for i, (param, value) in enumerate(testcase.Generics.items(), start=1):
+			self.assertEqual(f"param{i}", param)
+			self.assertEqual(f"value{i}", value)
 
 
 class SetterGatter(TestCase):
@@ -444,6 +447,88 @@ class SetterGatter(TestCase):
 
 		self.assertEqual(2008, processor["vhdlVersion"])
 
+	def test_SetVHDLVersion_GetVHDLVersion(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		code = dedent(f"""\
+			set vhdlVersion [GetVHDLVersion]
+
+			SetVHDLVersion 1987
+			set vhdlVersion_1987 [GetVHDLVersion]
+
+			SetVHDLVersion 1993
+			set vhdlVersion_1993 [GetVHDLVersion]
+
+			SetVHDLVersion 2002
+			set vhdlVersion_2002 [GetVHDLVersion]
+
+			SetVHDLVersion 2008
+			set vhdlVersion_2008 [GetVHDLVersion]
+
+			SetVHDLVersion 2019
+			set vhdlVersion_2019 [GetVHDLVersion]
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		self.assertEqual(2008, processor["vhdlVersion"])
+		for version in (1987, 1993, 2002, 2008, 2019):
+			self.assertEqual(version, processor[f"vhdlVersion_{version}"])
+
+
+class Helper(TestCase):
+	def setUp(self):
+		from pyEDAA.OSVVM.Environment import osvvmContext
+
+		osvvmContext.Clear()
+
+	def test_FileExists(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		file1 = Path("tests/examples/simple/project.pro")
+		file2 = Path("tests/examples/simple/project.orp")
+
+		code = dedent(f"""\
+    	set exists  [FileExists {file1.as_posix()}]
+    	set missing [FileExists {file2.as_posix()}]
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		self.assertEqual(1, processor["exists"])
+		self.assertEqual(0, processor["missing"])
+
+	def test_DirectoryExists(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		dir1 = Path("tests/examples/simple/")
+		dir2 = Path("tests/examples/simple")
+		dir3 = Path("tests/example/simple")
+
+		code = dedent(f"""\
+				set exists1 [DirectoryExists {dir1.as_posix()}]
+				set exists2 [DirectoryExists {dir1.as_posix()}]
+				set missing [DirectoryExists {dir3.as_posix()}]
+				""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		self.assertEqual(1, processor["exists1"])
+		self.assertEqual(1, processor["exists2"])
+		self.assertEqual(0, processor["missing"])
+
 
 class NoOperation(TestCase):
 	def setUp(self):
@@ -463,5 +548,3 @@ class NoOperation(TestCase):
 			processor._tcl.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
-
-		context = processor.Context
