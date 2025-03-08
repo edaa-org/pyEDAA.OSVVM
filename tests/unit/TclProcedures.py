@@ -149,6 +149,7 @@ class BasicProcedures(TestCase):
 		vhdlFile = library.Files[0]
 		self.assertEqual(file1, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+		self.assertIs(library, vhdlFile.VHDLLibrary)
 
 	def test_Analyze2(self) -> None:
 		print()
@@ -177,6 +178,8 @@ class BasicProcedures(TestCase):
 		self.assertEqual(2, len(library.Files))
 		self.assertEqual(file1, library.Files[0].Path)
 		self.assertEqual(file2, library.Files[1].Path)
+		self.assertIs(library, library.Files[0].VHDLLibrary)
+		self.assertIs(library, library.Files[1].VHDLLibrary)
 
 	def test_Library1_Analyze1(self) -> None:
 		print()
@@ -206,6 +209,7 @@ class BasicProcedures(TestCase):
 		vhdlFile = library.Files[0]
 		self.assertEqual(file1, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+		self.assertIs(library, vhdlFile.VHDLLibrary)
 
 	def test_Library2_Analyze3(self) -> None:
 		print()
@@ -242,11 +246,14 @@ class BasicProcedures(TestCase):
 		self.assertEqual(2, len(library.Files))
 		self.assertEqual(file1_1, library.Files[0].Path)
 		self.assertEqual(file1_2, library.Files[1].Path)
+		self.assertIs(library, library.Files[0].VHDLLibrary)
+		self.assertIs(library, library.Files[1].VHDLLibrary)
 
 		library = context.Libraries["lib2"]
 		self.assertEqual("lib2", library.Name)
 		self.assertEqual(1, len(library.Files))
 		self.assertEqual(file2_1, library.Files[0].Path)
+		self.assertIs(library, library.Files[0].VHDLLibrary)
 
 	def test_Simulate(self) -> None:
 		print()
@@ -535,6 +542,29 @@ class NoOperation(TestCase):
 		from pyEDAA.OSVVM.Environment import osvvmContext
 
 		osvvmContext.Clear()
+
+	def test_Exception(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		osvvmContext = processor.Context
+
+		def throw():
+			ex = ValueError(f"Dummy exception")
+			osvvmContext.LastException = ex
+			raise ex
+
+		processor.RegisterPythonFunctionAsTclProcedure(throw)
+
+		code = dedent(f"""\
+			throw
+			""")
+
+		with self.assertRaises(ValueError) as ex:
+			try:
+				processor._tcl.eval(code)
+			except TclError as e:
+				raise getException(e, processor.Context)
 
 	def test_Puts(self) -> None:
 		print()

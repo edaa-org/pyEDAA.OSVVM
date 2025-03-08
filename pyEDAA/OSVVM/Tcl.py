@@ -132,7 +132,7 @@ class OsvvmVariables:
 		return self._toolName
 
 	@readonly
-	def ToolNameVersion(self) -> str:
+	def ToolVersion(self) -> str:
 		return self._toolVersion
 
 
@@ -171,7 +171,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 			  variable VhdlVersion     {version}
 			  variable ToolVendor      "{osvvmVariables.ToolVendor}"
 			  variable ToolName        "{osvvmVariables.ToolName}"
-			  variable ToolNameVersion "{osvvmVariables.ToolNameVersion}"
+			  variable ToolNameVersion "{osvvmVariables.ToolVersion}"
 			  variable ToolSupportsDeferredConstants           1
 			  variable ToolSupportsGenericPackages             1
 			  variable FunctionalCoverageIntegratedInSimulator "default"
