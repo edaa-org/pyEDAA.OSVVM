@@ -63,8 +63,7 @@ def analyze(file: str) -> None:
 	file = Path(file)
 	fullPath = (osvvmContext._currentDirectory / file).resolve()
 
-	if not fullPath.exists():
-		print(f"[analyze] Path '{fullPath}' doesn't exist.")
+	if not fullPath.exists():  # pragma: no cover
 		ex = OSVVMException(f"Path '{fullPath}' can't be analyzed.")
 		ex.__cause__ = FileNotFoundError(fullPath)
 		osvvmContext.LastException = ex
@@ -73,8 +72,7 @@ def analyze(file: str) -> None:
 	if fullPath.suffix in (".vhd", ".vhdl"):
 		vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
 		osvvmContext.AddVHDLFile(vhdlFile)
-	else:
-		print(f"[analyze] Unknown file type for '{fullPath}'.")
+	else:  # pragma: no cover
 		ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
 		osvvmContext.LastException = ex
 		raise ex
@@ -86,15 +84,15 @@ def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 	for optionID in options:
 		try:
 			option = osvvmContext._options[int(optionID)]
-		except KeyError as ex2:
+		except KeyError as e:  # pragma: no cover
 			ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
-			ex.__cause__ = ex2
+			ex.__cause__ = e
 			osvvmContext.LastException = ex
 			raise ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
-		else:
+		else:  # pragma: no cover
 			ex = OSVVMException(f"Option {optionID} is not a GenericValue.")
 			ex.__cause__ = TypeError()
 			osvvmContext.LastException = ex
@@ -132,15 +130,15 @@ def RunTest(file: str, *options: Tuple[int]) -> None:
 	for optionID in options:
 		try:
 			option = osvvmContext._options[int(optionID)]
-		except KeyError as ex2:
+		except KeyError as e:  # pragma: no cover
 			ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
-			ex.__cause__ = ex2
+			ex.__cause__ = e
 			osvvmContext.LastException = ex
 			raise ex
 
 		if isinstance(option, GenericValue):
 			testcase.AddGeneric(option)
-		else:
+		else:  # pragma: no cover
 			ex = OSVVMException(f"Option {optionID} is not a GenericValue.")
 			ex.__cause__ = TypeError()
 			osvvmContext.LastException = ex
@@ -161,10 +159,9 @@ def LinkLibraryDirectory(libraryDirectory: str):
 
 @export
 def SetVHDLVersion(value: str) -> None:
-	print(f"[SetVHDLVersion] {value}:{value.__class__.__name__}")
 	try:
 		value = int(value)
-	except ValueError as e:
+	except ValueError as e:  # pragma: no cover
 		ex = OSVVMException(f"Unsupported VHDL version '{value}'.")
 		ex.__cause__ = e
 		osvvmContext.LastException = ex
@@ -179,7 +176,7 @@ def SetVHDLVersion(value: str) -> None:
 			osvvmContext.VHDLVersion = VHDLVersion.VHDL2008
 		case 2019:
 			osvvmContext.VHDLVersion = VHDLVersion.VHDL2019
-		case _:
+		case _:  # pragma: no cover
 			ex = OSVVMException(f"Unsupported VHDL version '{value}'.")
 			osvvmContext.LastException = ex
 			raise ex
@@ -195,7 +192,7 @@ def GetVHDLVersion() -> int:
 		return 2008
 	elif osvvmContext.VHDLVersion is VHDLVersion.VHDL2019:
 		return 2019
-	else:
+	else:  # pragma: no cover
 		ex = OSVVMException(f"Potentially unsupported VHDL version '{osvvmContext.VHDLVersion}'.")
 		osvvmContext.LastException = ex
 		raise ex
@@ -203,7 +200,7 @@ def GetVHDLVersion() -> int:
 
 @export
 def SetCoverageAnalyzeEnable(value: bool) -> None:
-	print(f"[SetCoverageAnalyzeEnable] {value}")
+	print(f"[SetCoverageAnalyzeEnable] {value}:{value.__class__.__name__}")
 
 
 @export
@@ -224,8 +221,11 @@ def DirectoryExists(directory: str) -> bool:
 @export
 def ChangeWorkingDirectory(directory: str) -> None:
 	osvvmContext._currentDirectory = (newDirectory := osvvmContext._currentDirectory / directory)
-	if not newDirectory.is_dir():
-		print(f"[ChangeWorkingDirectory] Directory {newDirectory} doesn't exist.")
+	if not newDirectory.is_dir():  # pragma: no cover
+		ex = OSVVMException(f"Directory '{newDirectory}' doesn't exist.")
+		ex.__cause__ = NotADirectoryError(newDirectory)
+		osvvmContext.LastException = ex
+		raise ex
 
 
 @export

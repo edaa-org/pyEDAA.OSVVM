@@ -248,6 +248,60 @@ class BasicProcedures(TestCase):
 		self.assertEqual(1, len(library.Files))
 		self.assertEqual(file2_1, library.Files[0].Path)
 
+	def test_Simulate(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		code = dedent(f"""\
+			TestName tb
+			simulate harness
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context = processor.Context
+
+		self.assertEqual(0, len(context.Libraries))
+
+		self.assertEqual(1, len(context.Testsuites))
+		testsuite = firstValue(context.Testsuites)
+		self.assertEqual(1, len(testsuite.Testcases))
+		testcase = firstValue(testsuite.Testcases)
+		self.assertEqual("tb", testcase.Name)
+		self.assertEqual(0, len(testcase.Generics))
+
+
+	def test_Simulate_Generic(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		code = dedent(f"""\
+			TestName tb
+			simulate harness [generic param value]
+			""")
+
+		try:
+			processor._tcl.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context = processor.Context
+
+		self.assertEqual(0, len(context.Libraries))
+
+		self.assertEqual(1, len(context.Testsuites))
+		testsuite = firstValue(context.Testsuites)
+		self.assertEqual(1, len(testsuite.Testcases))
+		testcase = firstValue(testsuite.Testcases)
+		self.assertEqual("tb", testcase.Name)
+		self.assertEqual(1, len(testcase.Generics))
+		genericValue = firstPair(testcase.Generics)
+		self.assertEqual("param", genericValue[0])
+		self.assertEqual("value", genericValue[1])
+
 	def test_Testsuite(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()

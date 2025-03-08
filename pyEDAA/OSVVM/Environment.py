@@ -59,7 +59,7 @@ class SourceFile(Base):
 	) -> None:
 		super().__init__()
 
-		if not isinstance(path, Path):
+		if not isinstance(path, Path):  # pragma: no cover
 			ex = TypeError(f"Parameter 'path' is not a Path.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 			raise ex
@@ -84,7 +84,7 @@ class VHDLSourceFile(SourceFile):
 	):
 		super().__init__(path)
 
-		if not isinstance(vhdlVersion, VHDLVersion):
+		if not isinstance(vhdlVersion, VHDLVersion):  # pragma: no cover
 			ex = TypeError(f"Parameter 'vhdlVersion' is not a VHDLVersion.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlVersion)}'.")
 			raise ex
@@ -96,7 +96,7 @@ class VHDLSourceFile(SourceFile):
 		elif isinstance(vhdlLibrary, VHDLLibrary):
 			vhdlLibrary._files.append(self)
 			self._vhdlLibrary = vhdlLibrary
-		else:
+		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'vhdlLibrary' is not a Library.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
 			raise ex
@@ -124,7 +124,7 @@ class VHDLLibrary(Base):
 	def __init__(self, name: str) -> None:
 		super().__init__()
 
-		if not isinstance(name, str):
+		if not isinstance(name, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
@@ -141,7 +141,7 @@ class VHDLLibrary(Base):
 		return self._files
 
 	def AddFile(self, file: VHDLSourceFile) -> None:
-		if not isinstance(file, VHDLSourceFile):
+		if not isinstance(file, VHDLSourceFile):  # pragma: no cover
 			ex = TypeError(f"Parameter 'file' is not a VHDLSourceFile.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(file)}'.")
 			raise ex
@@ -161,12 +161,12 @@ class GenericValue(Base):
 	def __init__(self, name: str, value: str) -> None:
 		super().__init__()
 
-		if not isinstance(name, str):
+		if not isinstance(name, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 
-		if not isinstance(value, str):
+		if not isinstance(value, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'value' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 			raise ex
@@ -202,14 +202,14 @@ class Testcase(Base):
 	) -> None:
 		super().__init__()
 
-		if not isinstance(name, str):
+		if not isinstance(name, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 
 		self._name = name
 
-		if not (toplevelName is None or isinstance(toplevelName, str)):
+		if not (toplevelName is None or isinstance(toplevelName, str)):  # pragma: no cover
 			ex = TypeError(f"Parameter 'toplevelName' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(toplevelName)}'.")
 			raise ex
@@ -225,7 +225,7 @@ class Testcase(Base):
 		elif isinstance(generics, dict):
 			for key, value in generics.items():
 				self._generics[key] = value
-		else:
+		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'generics' is not a list of GenericValue nor a dictionary of strings.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
 			raise ex
@@ -235,7 +235,7 @@ class Testcase(Base):
 		elif isinstance(testsuite, Testsuite):
 			testsuite._testcases[name] = self
 			self._testsuite = testsuite
-		else:
+		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
 			raise ex
@@ -253,7 +253,7 @@ class Testcase(Base):
 		return self._generics
 
 	def SetToplevel(self, toplevelName: str) -> None:
-		if not isinstance(toplevelName, str):
+		if not isinstance(toplevelName, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'toplevelName' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(toplevelName)}'.")
 			raise ex
@@ -261,7 +261,7 @@ class Testcase(Base):
 		self._toplevelName = toplevelName
 
 	def AddGeneric(self, genericValue: GenericValue):
-		if not isinstance(genericValue, GenericValue):
+		if not isinstance(genericValue, GenericValue):  # pragma: no cover
 			ex = TypeError(f"Parameter 'genericValue' is not a GenericValue.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(genericValue)}'.")
 			raise ex
@@ -284,7 +284,7 @@ class Testsuite(Base):
 	) -> None:
 		super().__init__()
 
-		if not isinstance(name, str):
+		if not isinstance(name, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
@@ -302,7 +302,7 @@ class Testsuite(Base):
 			for key, value in testcases.items():
 				value._testsuite = self
 				self._testcases[key] = value
-		else:
+		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'testcases' is not a list of Testcase nor a mapping of Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcases)}'.")
 			raise ex
@@ -316,7 +316,7 @@ class Testsuite(Base):
 		return self._testcases
 
 	def AddTestcase(self, testcase: Testcase) -> None:
-		if not isinstance(testcase, Testcase):
+		if not isinstance(testcase, Testcase):  # pragma: no cover
 			ex = TypeError(f"Parameter 'testcase' is not a Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcase)}'.")
 			raise ex
@@ -441,7 +441,7 @@ class Context(Base):
 		return self._testcase
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
-		if not isinstance(proFileOrBuildDirectory, Path):
+		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
 			ex = TypeError(f"Parameter 'proFileOrBuildDirectory' is not a Path.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(proFileOrBuildDirectory)}'.")
 			self._lastException = ex
@@ -466,12 +466,12 @@ class Context(Base):
 			proFile = path / "build.pro"
 			if not proFile.exists():
 				proFile = path / f"{path.name}.pro"
-				if not proFile.exists():
+				if not proFile.exists():  # pragma: no cover
 					ex = OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a build directory.")
 					ex.__cause__ = FileNotFoundError(path / "build.pro")
 					self._lastException = ex
 					raise ex
-		else:
+		else:  # pragma: no cover
 			ex = OSVVMException(f"Path '{proFileOrBuildDirectory}' is not a *.pro file or build directory.")
 			self._lastException = ex
 			raise ex
@@ -514,7 +514,7 @@ class Context(Base):
 
 	def SetTestcaseToplevel(self, toplevel: str) -> TestCase:
 		if self._testcase is None:
-			ex = OSVVMException("Can't set testcase toplevel, because no testcase setup.")
+			ex = OSVVMException("Can't set testcase toplevel, because no testcase was setup.")
 			self._lastException = ex
 			raise ex
 
