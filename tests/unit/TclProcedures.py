@@ -62,7 +62,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -87,7 +87,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -110,7 +110,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -134,7 +134,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -164,7 +164,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -193,7 +193,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -231,7 +231,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -265,7 +265,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -291,7 +291,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -318,7 +318,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -340,7 +340,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -368,7 +368,7 @@ class BasicProcedures(TestCase):
 	# 		""")
 	#
 	# 	try:
-	# 		processor._tcl.eval(code)
+	# 		processor.TCL.eval(code)
 	# 	except TclError as ex:
 	# 		if str(ex) == "":
 	# 			ex = processor.Context.LastException
@@ -389,7 +389,7 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -431,7 +431,7 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -448,7 +448,7 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -478,7 +478,7 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -506,7 +506,7 @@ class Helper(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -528,7 +528,7 @@ class Helper(TestCase):
 				""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -562,7 +562,7 @@ class NoOperation(TestCase):
 
 		with self.assertRaises(ValueError) as ex:
 			try:
-				processor._tcl.eval(code)
+				processor.TCL.eval(code)
 			except TclError as e:
 				raise getException(e, processor.Context)
 
@@ -575,6 +575,6 @@ class NoOperation(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)

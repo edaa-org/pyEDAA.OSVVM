@@ -44,7 +44,7 @@ setup(**DescribePythonPackageHostedOnGitHub(
 	description="Parser and converter for OSVVM-specific data models and report formats.",
 	gitHubNamespace=gitHubNamespace,
 	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
+	developmentStatus="beta",
 	pythonVersions=("3.12", "3.13"),
 	classifiers=list(DEFAULT_CLASSIFIERS) + [
 		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
