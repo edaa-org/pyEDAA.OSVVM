@@ -122,10 +122,26 @@ def TestName(name: str) -> None:
 @export
 def RunTest(file: str, *options: Tuple[int]) -> None:
 	file = Path(file)
-	vhdlFile = VHDLSourceFile(file)
 	testName = file.stem
+
+	# Analyze file
+	fullPath = (osvvmContext._currentDirectory / file).resolve()
+	if not fullPath.exists():  # pragma: no cover
+		ex = OSVVMException(f"Path '{fullPath}' can't be analyzed.")
+		ex.__cause__ = FileNotFoundError(fullPath)
+		osvvmContext.LastException = ex
+		raise ex
+
+	if fullPath.suffix in (".vhd", ".vhdl"):
+		vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
+		osvvmContext.AddVHDLFile(vhdlFile)
+	else:  # pragma: no cover
+		ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
+		osvvmContext.LastException = ex
+		raise ex
+
+	# Add testcase
 	testcase = osvvmContext.AddTestcase(testName)
-	osvvmContext.AddVHDLFile(vhdlFile)
 	testcase.SetToplevel(testName)
 	for optionID in options:
 		try:
