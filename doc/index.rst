@@ -15,7 +15,7 @@
 
 .. only:: html
 
-   |  |SHIELD:svg:OSVVM-github| |SHIELD:svg:OSVVM-src-license| |SHIELD:svg:OSVVM-ghp-doc| |SHIELD:svg:OSVVM-doc-license| |SHIELD:svg:OSVVM-gitter|
+   |  |SHIELD:svg:OSVVM-github| |SHIELD:svg:OSVVM-src-license| |SHIELD:svg:OSVVM-ghp-doc| |SHIELD:svg:OSVVM-doc-license|
    |  |SHIELD:svg:OSVVM-pypi-tag| |SHIELD:svg:OSVVM-pypi-status| |SHIELD:svg:OSVVM-pypi-python|
    |  |SHIELD:svg:OSVVM-gha-test| |SHIELD:svg:OSVVM-lib-status| |SHIELD:svg:OSVVM-codacy-quality| |SHIELD:svg:OSVVM-codacy-coverage| |SHIELD:svg:OSVVM-codecov-coverage|
 
@@ -23,7 +23,7 @@
 
 .. only:: latex
 
-   |SHIELD:png:OSVVM-github| |SHIELD:png:OSVVM-src-license| |SHIELD:png:OSVVM-ghp-doc| |SHIELD:png:OSVVM-doc-license| |SHIELD:svg:OSVVM-gitter|
+   |SHIELD:png:OSVVM-github| |SHIELD:png:OSVVM-src-license| |SHIELD:png:OSVVM-ghp-doc| |SHIELD:png:OSVVM-doc-license|
    |SHIELD:png:OSVVM-pypi-tag| |SHIELD:png:OSVVM-pypi-status| |SHIELD:png:OSVVM-pypi-python|
    |SHIELD:png:OSVVM-gha-test| |SHIELD:png:OSVVM-lib-status| |SHIELD:png:OSVVM-codacy-quality| |SHIELD:png:OSVVM-codacy-coverage| |SHIELD:png:OSVVM-codecov-coverage|
 
@@ -34,37 +34,58 @@
 The pyEDAA.OSVVM Documentation
 ##############################
 
-An abstract model of HDL design projects and EDA tooling.
+Parser and converters for OSVVM-specific data models and report formats.
 
 
-.. _goals:
+.. _GOALS:
 
 Main Goals
 **********
 
-This package provides OSVVM-specific data models and parsers. The data models can be used as is or converted to generic
+This package provides OSVVM-specific data models and parsers. The data models can be used as-is or converted to generic
 data models of the pyEDAA data model family. This includes parsing OSVVM's ``*.pro``-files and translating them to a
-pyEDAA.ProjectModel instance as well as reading OSVVM's reports in YAML format like test results, alerts or functional
-coverage.
+`pyEDAA.ProjectModel <https://edaa-org.github.com/pyEDAA.ProjectModel>`__ instance as well as reading OSVVM's reports in
+YAML format like test results, alerts or functional coverage.
 
 Frameworks consuming these data models can build higher level features and services on top of these models, while
 using one parser that's aligned with OSVVM's data formats.
 
 
-.. _usecase:
+.. _USECASES:
 
 Use Cases
 *********
 
+* Reading :ref:`OSVVM's project <PRO>` description from ``*.pro`` files.
+
+  * Convert to other data or file format.
+
+* Reading OSVVM's reports from ``*.yaml`` files.
+
+  * Convert to other data or file format.
+  * Investigate reports.
+  * Merge reports.
 
 
-
-.. _news:
+.. _NEWS:
 
 News
 ****
 
+.. only:: html
 
+   March 2025 - Reading ``*.pro`` Files
+   ====================================
+
+.. only:: latex
+
+   .. rubric:: Reading ``*.pro`` Files
+
+* Previously, reading OSVVM's ``*.pro`` files was achieved via `pyEDAA.ProjectModel <https://GitHub.com/edaa-org/pyEDAA.ProjectModel>`__,
+  but OSVVM's file format became more complicated, so a new approach was needed. Moreover, OSVVM created more data
+  formats, thus this package was outsourced from ``pyEDAA.ProjectModel``.
+* Thus, OSVVM became a new citizen of `EDA² <https://GitHub.com/edaa-org>`__ and got integrated into the ``pyEDAA``
+  namespace at PyPI.
 
 
 .. _CONTRIBUTORS:
@@ -115,7 +136,12 @@ License
    :hidden:
 
    Project/index
-
+   Testsuite/index
+   Testcase/index
+   AlertLog/index
+   Scoreboard/index
+   FunctionalCoverage/index
+   Requirements/index
 
 .. raw:: latex
 
