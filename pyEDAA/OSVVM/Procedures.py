@@ -28,6 +28,13 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
+"""
+This module implements OSVVM's TCL procedures (used in OSVVM's ``*.pro`` files) as Python functions.
+
+These functions are then registered at the :class:`TCL processor <pyEDAA.OSVVM.TCL.OsvvmProFileProcessor>`, so procedure
+calls within TCL code get "redirected" to these Python functions. Each function has access to a global variable
+:data:`~pyEDAA.OSVVM.Environment.osvvmContext` to preserve its state or modify the context.
+"""
 from pathlib import Path
 from typing  import Optional as Nullable, Tuple
 
@@ -40,11 +47,61 @@ from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
 
 @export
 def build(file: str) -> None:
+	"""
+	This function implements the behavior of OSVVM's ``build`` procedure.
+
+	The current directory of the currently active context is preserved	while the referenced ``*.pro`` file is processed.
+	After processing that file, the context's current directory is restored.
+
+	The referenced file gets appended to a list of included files maintained by the context.
+
+	:underline:`pro-file discovery algorithm:`
+
+	1. If the path explicitly references a ``*.pro`` file, this file is used.
+	2. If the path references a directory, it checks implicitly for a ``build.pro`` file, otherwise
+	3. it checks implicitly for a ``<path>.pro`` file, named like the directories name.
+
+	:param file:            Explicit path to a ``*.pro`` file or a directory containing an implicitly searched ``*.pro`` file.
+	:raises TypeError:      If parameter proFileOrBuildDirectory is not a Path.
+	:raises OSVVMException: If parameter proFileOrBuildDirectory is an absolute path.
+	:raises OSVVMException: If parameter proFileOrBuildDirectory is not a *.pro file or build directory.
+	:raises OSVVMException: If a TclError was caught while processing a *.pro file.
+
+	.. seealso::
+
+	   * :func:`include`
+	   * :func:`ChangeWorkingDirectory`
+	"""
 	include(file)
 
 
 @export
 def include(file: str) -> None:
+	"""
+	This function implements the behavior of OSVVM's ``include`` procedure.
+
+	The current directory of the currently active context is preserved	while the referenced ``*.pro`` file is processed.
+	After processing that file, the context's current directory is restored.
+
+	The referenced file gets appended to a list of included files maintained by the context.
+
+	:underline:`pro-file discovery algorithm:`
+
+	1. If the path explicitly references a ``*.pro`` file, this file is used.
+	2. If the path references a directory, it checks implicitly for a ``build.pro`` file, otherwise
+	3. it checks implicitly for a ``<path>.pro`` file, named like the directories name.
+
+	:param file:            Explicit path to a ``*.pro`` file or a directory containing an implicitly searched ``*.pro`` file.
+	:raises TypeError:      If parameter proFileOrBuildDirectory is not a Path.
+	:raises OSVVMException: If parameter proFileOrBuildDirectory is an absolute path.
+	:raises OSVVMException: If parameter proFileOrBuildDirectory is not a *.pro file or build directory.
+	:raises OSVVMException: If a TclError was caught while processing a *.pro file.
+
+	.. seealso::
+
+	   * :func:`build`
+	   * :func:`ChangeWorkingDirectory`
+	"""
 	currentDirectory = osvvmContext._currentDirectory
 
 	includeFile = osvvmContext.IncludeFile(Path(file))
@@ -55,6 +112,29 @@ def include(file: str) -> None:
 
 @export
 def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
+	"""
+	This function implements the behavior of OSVVM's ``library`` procedure.
+
+	It sets the currently active VHDL library to the specified VHDL library. If no VHDL library with that name exist, a
+	new VHDL library is created and set as active VHDL library.
+
+	.. hint:: All following ``analyze`` calls will use this library as the VHDL file's VHDL library.
+
+	.. caution:: Parameter `libraryPath` is not yet implemented.
+
+	:param libraryName: Name of the VHDL library.
+	:param libraryPath: Optional: Path where to create that VHDL library.
+
+	.. seealso::
+
+	   * :func:`LinkLibrary`
+	   * :func:`LinkLibraryDirectory`
+	"""
+	if libraryPath is not None:
+		ex = NotImplementedError(f"Optional parameter 'libraryPath' not yet supported.")
+		osvvmContext.LastException = ex
+		raise ex
+
 	osvvmContext.SetLibrary(libraryName)
 
 

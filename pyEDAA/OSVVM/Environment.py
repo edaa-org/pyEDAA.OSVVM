@@ -530,3 +530,8 @@ class Context(Base):
 
 
 osvvmContext: Context = Context()
+"""
+Global OSVVM processing context.
+
+:type: Context
+"""

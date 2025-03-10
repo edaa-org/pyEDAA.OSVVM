@@ -56,7 +56,7 @@ using one parser that's aligned with OSVVM's data formats.
 Use Cases
 *********
 
-* Reading :ref:`OSVVM's project <PRO>` description from ``*.pro`` files.
+* Reading :ref:`OSVVM's project <PRJ>` description from ``*.pro`` files.
 
   * Convert to other data or file format.
 

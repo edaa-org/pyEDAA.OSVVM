@@ -37,7 +37,7 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor, getException
+from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
