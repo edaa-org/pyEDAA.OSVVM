@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSVVM Project Files &mdash; pyEDAA.OSVVM 0.3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=55b73dce" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-reports.e44b1595f1e09d5e109d001839ba3f42.css?v=0b41afa8" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/override.css?v=e6c450a4" />
+
+  
+    <link rel="shortcut icon" href="../_static/favicon.svg"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e259d695"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Testsuite Summary Report 🚧" href="../Testsuite/index.html" />
+    <link rel="prev" title="Dependencies" href="../Dependency.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference external" href="https://edaa-org.github.io/">Used as a layer of EDA² ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Installation.html">Installation/Updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Dependency.html">Dependencies</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Main Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OSVVM Project Files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-model">Data Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#osvvm-project">OSVVM Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vhdllibrary">VHDLLibrary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vhdlsourcefile">VHDLSourceFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testsuite">Testsuite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testcase">Testcase</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#implemented-tcl-procedures">Implemented TCL Procedures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#include">include</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#library">library</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analyze">analyze</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#simulate">simulate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generic">generic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">TestSuite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testname">TestName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runtest">RunTest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linklibrary">LinkLibrary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linklibrarydirectory">LinkLibraryDirectory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setvhdlversion-setvhdlversion">SetVHDLVersion / SetVHDLVersion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fileexists">FileExists</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#directoryexists">DirectoryExists</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#changeworkingdirectory">ChangeWorkingDirectory</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Testsuite/index.html">Testsuite Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Testcase/index.html">Testcase Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../AlertLog/index.html">Alert and Log Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Scoreboard/index.html">Scoreboard Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FunctionalCoverage/index.html">Functional Coverage Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Requirements/index.html">Requirements Report 🚧</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References and Reports</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pyEDAA.OSVVM/pyEDAA.OSVVM.html">Python Class Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../unittests/index.html">Unittest Summary Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../coverage/index.html">Code Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DocCoverage.html">Doc. Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing/index.html">Static Type Check Report ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendix</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../License.html">Apache License 2.0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Doc-License.html">Creative Commons Attribution 4.0 International</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../py-modindex.html">Python Module Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../TODO.html">TODOs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyEDAA.OSVVM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">OSVVM Project Files</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/Project/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <style type="text/css">
+  span.bolditalic {font-weight: bold; font-style: italic; }
+  span.underline {text-decoration: underline; }
+  span.strike {text-decoration: line-through; }
+  span.xlarge {font-size: x-large; }
+  span.colorred {color: #CC0000; }
+  span.colorgreen {color: #009933; }
+  span.colorblue {color: #0066FF; }
+  span.colorpurple {color: #9900CC; }
+</style><section id="osvvm-project-files">
+<span id="pro"></span><h1>OSVVM Project Files<a class="headerlink" href="#osvvm-project-files" title="Link to this heading"></a></h1>
+<p class="rubric">Design Goals</p>
+<ul class="simple">
+<li><p>Clearly named classes that model the semantics of an OSVVM project.</p></li>
+<li><p>The OSVVM project model instance can be constructed top-down and bottom-up.</p></li>
+<li><p>Child objects shall have a reference to their parent.</p></li>
+<li><p>Referenced files and directories in a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file are checked for existence when parsing the input file.</p></li>
+</ul>
+<p class="rubric">Features</p>
+<ul class="simple">
+<li><p>OSVVM specific variables (<code class="docutils literal notranslate"><span class="pre">::osvvm::...</span></code>) can be configured before parsing to</p></li>
+</ul>
+<section id="data-model">
+<h2>Data Model<a class="headerlink" href="#data-model" title="Link to this heading"></a></h2>
+<section id="osvvm-project">
+<h3>OSVVM Project<a class="headerlink" href="#osvvm-project" title="Link to this heading"></a></h3>
+</section>
+<section id="vhdllibrary">
+<h3>VHDLLibrary<a class="headerlink" href="#vhdllibrary" title="Link to this heading"></a></h3>
+</section>
+<section id="vhdlsourcefile">
+<h3>VHDLSourceFile<a class="headerlink" href="#vhdlsourcefile" title="Link to this heading"></a></h3>
+</section>
+<section id="testsuite">
+<h3>Testsuite<a class="headerlink" href="#testsuite" title="Link to this heading"></a></h3>
+</section>
+<section id="testcase">
+<h3>Testcase<a class="headerlink" href="#testcase" title="Link to this heading"></a></h3>
+</section>
+</section>
+<section id="implemented-tcl-procedures">
+<h2>Implemented TCL Procedures<a class="headerlink" href="#implemented-tcl-procedures" title="Link to this heading"></a></h2>
+<section id="build">
+<h3>build<a class="headerlink" href="#build" title="Link to this heading"></a></h3>
+<div class="highlight-TCL notranslate"><div class="highlight"><pre><span></span><span class="c"># Examples</span>
+<span class="nv">build</span><span class="w"> </span>ref<span class="o">/</span>MyLibrary.pro<span class="w">  </span><span class="k">;</span><span class="w"> </span><span class="c"># explicit pro file</span>
+<span class="nv">build</span><span class="w"> </span>ref<span class="o">/</span>build.pro<span class="w">      </span><span class="k">;</span><span class="w"> </span><span class="c"># implicit build.pro file</span>
+<span class="nv">build</span><span class="w"> </span>ref<span class="o">/</span>ref.pro<span class="w">        </span><span class="k">;</span><span class="w"> </span><span class="c"># implicit &lt;ref&gt;.pro file</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.build" title="pyEDAA.OSVVM.Procedures.build"><code class="xref py py-func docutils literal notranslate"><span class="pre">pyEDAA.OSVVM.Procedures.build()</span></code></a> references a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file, which is then loaded and processed. The context’s
+current path is changed to the parent directory of the referenced file. The referenced file is added to the list of
+included files collected by the context.</p>
+<p>The reference can refer to:</p>
+<ul class="simple">
+<li><p>an explicitly named <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/*.pro</span></code> file,</p></li>
+<li><p>an implicitly named <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/build.pro</span></code> file,</p></li>
+<li><p>an implicitly named <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/&lt;path&gt;.pro</span></code> file.</p></li>
+</ul>
+<p>Each build will create a separate set of reports.</p>
+</section>
+<section id="include">
+<h3>include<a class="headerlink" href="#include" title="Link to this heading"></a></h3>
+</section>
+<section id="library">
+<h3>library<a class="headerlink" href="#library" title="Link to this heading"></a></h3>
+</section>
+<section id="analyze">
+<h3>analyze<a class="headerlink" href="#analyze" title="Link to this heading"></a></h3>
+</section>
+<section id="simulate">
+<h3>simulate<a class="headerlink" href="#simulate" title="Link to this heading"></a></h3>
+</section>
+<section id="generic">
+<h3>generic<a class="headerlink" href="#generic" title="Link to this heading"></a></h3>
+</section>
+<section id="id1">
+<h3>TestSuite<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+</section>
+<section id="testname">
+<h3>TestName<a class="headerlink" href="#testname" title="Link to this heading"></a></h3>
+</section>
+<section id="runtest">
+<h3>RunTest<a class="headerlink" href="#runtest" title="Link to this heading"></a></h3>
+</section>
+<section id="linklibrary">
+<h3>LinkLibrary<a class="headerlink" href="#linklibrary" title="Link to this heading"></a></h3>
+</section>
+<section id="linklibrarydirectory">
+<h3>LinkLibraryDirectory<a class="headerlink" href="#linklibrarydirectory" title="Link to this heading"></a></h3>
+</section>
+<section id="setvhdlversion-setvhdlversion">
+<h3>SetVHDLVersion / SetVHDLVersion<a class="headerlink" href="#setvhdlversion-setvhdlversion" title="Link to this heading"></a></h3>
+</section>
+<section id="fileexists">
+<h3>FileExists<a class="headerlink" href="#fileexists" title="Link to this heading"></a></h3>
+</section>
+<section id="directoryexists">
+<h3>DirectoryExists<a class="headerlink" href="#directoryexists" title="Link to this heading"></a></h3>
+</section>
+<section id="changeworkingdirectory">
+<h3>ChangeWorkingDirectory<a class="headerlink" href="#changeworkingdirectory" title="Link to this heading"></a></h3>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../Dependency.html" class="btn btn-neutral float-left" title="Dependencies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../Testsuite/index.html" class="btn btn-neutral float-right" title="Testsuite Summary Report 🚧" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2025, Patrick Lehmann.
+      <span class="lastupdated">Last updated on 10.03.2025.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
