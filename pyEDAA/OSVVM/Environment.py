@@ -161,20 +161,31 @@ class VHDLLibrary(Named["Build"]):
 
 	def __init__(
 		self,
-		name:  str,
-		build: Nullable["Build"] = None
+		name:      str,
+		vhdlFiles: Nullable[Iterable[VHDLSourceFile]] = None,
+		build:     Nullable["Build"] = None
 	) -> None:
 		if build is None:
 			super().__init__(name, None)
 		elif isinstance(build, Build):
 			super().__init__(name, build)
-			build._libraries[name] = self
+			build._vhdlLibraries[name] = self
 		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'build' is not a Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
 		self._files = []
+		if vhdlFiles is None:
+			pass
+		elif isinstance(vhdlFiles, Iterable):
+			for vhdlFile in vhdlFiles:
+				vhdlFile._parent = self
+				self._files.append(vhdlFile)
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'vhdlFiles' is not a list of VHDLSourceFile.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFiles)}'.")
+			raise ex
 
 	@readonly
 	def Build(self) -> Nullable["Build"]:
@@ -296,7 +307,8 @@ class Testcase(Named["Testsuite"]):
 		self._generics[genericValue._name] = genericValue._value
 
 	def __repr__(self) -> str:
-		return f"Testcase: {self._name} - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]"
+		generics = f" - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]" if len(self._generics) > 0 else ""
+		return f"Testcase: {self._name}{generics}"
 
 
 @export
@@ -358,15 +370,15 @@ class Testsuite(Named["Build"]):
 
 @export
 class Build(Named["Project"]):
-	_libraries:  Dict[str, VHDLLibrary]
-	_testsuites: Dict[str, Testsuite]
+	_vhdlLibraries: Dict[str, VHDLLibrary]
+	_testsuites:    Dict[str, Testsuite]
 
 	def __init__(
 		self,
-		name:       str,
-		libraries:  Nullable[Iterable[VHDLLibrary] | Mapping[str, VHDLLibrary]] = None,
-		testsuites: Nullable[Iterable[Testsuite] | Mapping[str, Testsuite]] = None,
-		project:    Nullable[Base] = None
+		name:          str,
+		vhdlLibraries: Nullable[Iterable[VHDLLibrary] | Mapping[str, VHDLLibrary]] = None,
+		testsuites:    Nullable[Iterable[Testsuite] | Mapping[str, Testsuite]] = None,
+		project:       Nullable[Base] = None
 	) -> None:
 		if project is None:
 			super().__init__(name, None)
@@ -378,20 +390,20 @@ class Build(Named["Project"]):
 			ex.add_note(f"Got type '{getFullyQualifiedName(project)}'.")
 			raise ex
 
-		self._libraries = {}
-		if libraries is None:
+		self._vhdlLibraries = {}
+		if vhdlLibraries is None:
 			pass
-		elif isinstance(libraries, list):
-			for item in libraries:
+		elif isinstance(vhdlLibraries, list):
+			for item in vhdlLibraries:
 				item._parent = self
-				self._libraries[item._name] = item
-		elif isinstance(libraries, dict):
-			for key, value in libraries.items():
+				self._vhdlLibraries[item._name] = item
+		elif isinstance(vhdlLibraries, dict):
+			for key, value in vhdlLibraries.items():
 				value._parent = self
-				self._libraries[key] = value
+				self._vhdlLibraries[key] = value
 		else:  # pragma: no cover
 			ex = TypeError(f"Parameter 'libraries' is not a list of VHDLLibrary nor a mapping of VHDLLibrary.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(libraries)}'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibraries)}'.")
 			raise ex
 
 		self._testsuites = {}
@@ -413,6 +425,10 @@ class Build(Named["Project"]):
 	@readonly
 	def Project(self) -> Nullable["Project"]:
 		return self._parent
+
+	@readonly
+	def VHDLLibraries(self) -> Dict[str, Testsuite]:
+		return self._vhdlLibraries
 
 	@readonly
 	def Testsuites(self) -> Dict[str, Testsuite]:
