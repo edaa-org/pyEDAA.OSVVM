@@ -34,7 +34,10 @@ from unittest import TestCase as TestCase
 
 from pyVHDLModel import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import VHDLLibrary, VHDLSourceFile, GenericValue, Testcase, Testsuite, Context
+from pyEDAA.OSVVM.Environment import VHDLSourceFile, VHDLLibrary
+from pyEDAA.OSVVM.Environment import GenericValue, Testcase, Testsuite
+from pyEDAA.OSVVM.Environment import Context, Project, Build
+
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -47,13 +50,58 @@ class Instantiate(TestCase):
 		path = Path("source.vhdl")
 		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008)
 
+		self.assertIsNone(vhdlFile.Parent)
+		self.assertIsNone(vhdlFile.VHDLLibrary)
 		self.assertEqual(path, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+
+	def test_VHDLSourceFile_Library(self) -> None:
+		library = VHDLLibrary("library")
+
+		path = Path("source.vhdl")
+		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008, library)
+
+		self.assertIs(library, vhdlFile.Parent)
+		self.assertIs(library, vhdlFile.VHDLLibrary)
+		self.assertEqual(path, vhdlFile.Path)
+		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+		self.assertEqual(f"VHDLSourceFile: source.vhdl", repr(vhdlFile))
 
 	def test_Library(self) -> None:
 		library = VHDLLibrary("library")
 
 		self.assertEqual("library", library.Name)
+		self.assertIsNone(library.Parent)
+		self.assertIsNone(library.Build)
+		self.assertEqual(0, len(library.Files))
+		self.assertEqual(f"VHDLLibrary: library", repr(library))
+
+	def test_Library_VHDLSourceFiles(self) -> None:
+		path1 = Path("source1.vhdl")
+		path2 = Path("source2.vhdl")
+		paths = (path1, path2)
+		vhdlFile1 = VHDLSourceFile(path1, VHDLVersion.VHDL2008)
+		vhdlFile2 = VHDLSourceFile(path2, VHDLVersion.VHDL2008)
+		vhdlFiles = (vhdlFile1, vhdlFile2)
+
+		library = VHDLLibrary("library", vhdlFiles)
+
+		self.assertEqual("library", library.Name)
+		self.assertIsNone(library.Parent)
+		self.assertIsNone(library.Build)
+		self.assertEqual(2, len(library.Files))
+		for i, vhdlFile in enumerate(library.Files):
+			self.assertIs(library, vhdlFile.VHDLLibrary)
+			self.assertEqual(vhdlFiles[i], vhdlFile)
+			self.assertEqual(paths[i], vhdlFile.Path)
+
+	def test_Library_Build(self) -> None:
+		build = Build("build")
+		library = VHDLLibrary("library", build=build)
+
+		self.assertEqual("library", library.Name)
+		self.assertIs(build, library.Parent)
+		self.assertIs(build, library.Build)
 		self.assertEqual(0, len(library.Files))
 
 	def test_GenericValue(self) -> None:
@@ -66,14 +114,38 @@ class Instantiate(TestCase):
 		tc = Testcase("tc")
 
 		self.assertEqual("tc", tc.Name)
+		self.assertIsNone(tc.Parent)
+		self.assertIsNone(tc.Testsuite)
 		self.assertIsNone(tc.ToplevelName)
 		self.assertEqual(0, len(tc.Generics))
+		self.assertEqual(f"Testcase: tc", repr(tc))
 
 	def test_Testsuite(self) -> None:
 		ts = Testsuite("ts")
 
 		self.assertEqual("ts", ts.Name)
+		self.assertIsNone(ts.Parent)
+		self.assertIsNone(ts.Build)
 		self.assertEqual(0, len(ts.Testcases))
+		self.assertEqual(f"Testsuite: ts", repr(ts))
+
+	def test_Build(self) -> None:
+		build = Build("build")
+
+		self.assertEqual("build", build.Name)
+		self.assertIsNone(build.Parent)
+		self.assertIsNone(build.Project)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(0, len(build.Testsuites))
+		self.assertEqual(f"Build: build", repr(build))
+
+	def test_Project(self) -> None:
+		project = Project("project")
+
+		self.assertEqual("project", project.Name)
+		self.assertIsNone(project.Parent)
+		self.assertEqual(0, len(project.Builds))
+		self.assertEqual(f"Project: project", repr(project))
 
 	def test_Context(self) -> None:
 		context = Context()
