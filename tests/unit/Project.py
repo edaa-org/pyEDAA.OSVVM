@@ -32,7 +32,8 @@
 from pathlib  import Path
 from unittest import TestCase as TestCase
 
-from pyVHDLModel import VHDLVersion
+from pyTooling.Common import firstPair
+from pyVHDLModel      import VHDLVersion
 
 from pyEDAA.OSVVM.Environment import VHDLSourceFile, VHDLLibrary
 from pyEDAA.OSVVM.Environment import GenericValue, Testcase, Testsuite
@@ -358,3 +359,53 @@ class Instantiate(TestCase):
 		self.assertEqual(0, len(context.IncludedFiles))
 		self.assertEqual(0, len(context.Libraries))
 		self.assertEqual(0, len(context.Testsuites))
+
+
+class Operations(TestCase):
+	def test_Testsuite_AddTestcase(self) -> None:
+		tc = Testcase("tc")
+		ts = Testsuite("ts")
+		ts.AddTestcase(tc)
+
+		self.assertEqual(1, len(ts.Testcases))
+
+		testcaseName, testcase = firstPair(ts.Testcases)
+		self.assertIs(tc, testcase)
+		self.assertIs(ts, testcase.Testsuite)
+		self.assertEqual("tc", testcaseName)
+
+	def test_Build_AddLibrary(self) -> None:
+		lib = VHDLLibrary("lib")
+		build = Build("build")
+		build.AddVHDLLibrary(lib)
+
+		self.assertEqual(1, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(lib, library)
+		self.assertIs(build, library.Build)
+		self.assertEqual("lib", libraryName)
+
+	def test_Build_AddTestsuite(self) -> None:
+		ts = Testsuite("ts")
+		build = Build("build")
+		build.AddTestsuite(ts)
+
+		self.assertEqual(1, len(build.Testsuites))
+
+		testsuiteName, testsuite = firstPair(build.Testsuites)
+		self.assertIs(ts, testsuite)
+		self.assertIs(build, testsuite.Build)
+		self.assertEqual("ts", testsuiteName)
+
+	def test_Project_AddBuild(self) -> None:
+		bld = Build("build")
+		project = Project("project")
+		project.AddBuild(bld)
+
+		self.assertEqual(1, len(project.Builds))
+
+		buildName, build = firstPair(project.Builds)
+		self.assertIs(bld, build)
+		self.assertIs(project, build.Project)
+		self.assertEqual("build", buildName)
