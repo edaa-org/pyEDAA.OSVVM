@@ -120,6 +120,50 @@ class Instantiate(TestCase):
 		self.assertEqual(0, len(tc.Generics))
 		self.assertEqual(f"Testcase: tc", repr(tc))
 
+	def test_Testcase_Testsuite(self) -> None:
+		ts = Testsuite("ts")
+		tc = Testcase("tc", testsuite=ts)
+
+		self.assertEqual("tc", tc.Name)
+		self.assertIs(ts, tc.Parent)
+		self.assertIs(ts, tc.Testsuite)
+		self.assertIsNone(tc.ToplevelName)
+		self.assertEqual(0, len(tc.Generics))
+		self.assertEqual(f"Testcase: tc", repr(tc))
+
+	def test_Testcase_GenericsList(self) -> None:
+		generic1 = GenericValue("param1", "value1")
+		generic2 = GenericValue("param2", "value2")
+		generics = (generic1, generic2)
+		tc = Testcase("tc", generics=generics)
+
+		self.assertEqual("tc", tc.Name)
+		self.assertIsNone(tc.Parent)
+		self.assertIsNone(tc.Testsuite)
+		self.assertIsNone(tc.ToplevelName)
+		self.assertEqual(2, len(tc.Generics))
+		for i, (genericName, genericValue) in enumerate(tc.Generics.items(), start=1):
+			self.assertEqual(f"param{i}", genericName)
+			self.assertEqual(f"value{i}", genericValue)
+		self.assertEqual(f"Testcase: tc - [param1=value1, param2=value2]", repr(tc))
+
+	def test_Testcase_GenericsDict(self) -> None:
+		generics = {
+			"param1": "value1",
+			"param2": "value2",
+		}
+		tc = Testcase("tc", generics=generics)
+
+		self.assertEqual("tc", tc.Name)
+		self.assertIsNone(tc.Parent)
+		self.assertIsNone(tc.Testsuite)
+		self.assertIsNone(tc.ToplevelName)
+		self.assertEqual(2, len(tc.Generics))
+		for i, (genericName, genericValue) in enumerate(tc.Generics.items(), start=1):
+			self.assertEqual(f"param{i}", genericName)
+			self.assertEqual(f"value{i}", genericValue)
+		self.assertEqual(f"Testcase: tc - [param1=value1, param2=value2]", repr(tc))
+
 	def test_Testsuite(self) -> None:
 		ts = Testsuite("ts")
 
@@ -127,6 +171,49 @@ class Instantiate(TestCase):
 		self.assertIsNone(ts.Parent)
 		self.assertIsNone(ts.Build)
 		self.assertEqual(0, len(ts.Testcases))
+		self.assertEqual(f"Testsuite: ts", repr(ts))
+
+	def test_Testsuite_Build(self) -> None:
+		build = Build("build")
+		ts = Testsuite("ts", build=build)
+
+		self.assertEqual("ts", ts.Name)
+		self.assertIs(build, ts.Parent)
+		self.assertIs(build, ts.Build)
+		self.assertEqual(0, len(ts.Testcases))
+		self.assertEqual(f"Testsuite: ts", repr(ts))
+
+	def test_Testsuite_TestcasesList(self) -> None:
+		tc1 = Testcase("tc1")
+		tc2 = Testcase("tc2")
+		testcases = (tc1, tc2)
+		ts = Testsuite("ts", testcases)
+
+		self.assertEqual("ts", ts.Name)
+		self.assertIsNone(ts.Parent)
+		self.assertIsNone(ts.Build)
+		self.assertEqual(2, len(ts.Testcases))
+		for i, (testcaseName, testcase) in enumerate(ts.Testcases.items()):
+			self.assertIs(ts, testcase.Testsuite)
+			self.assertEqual(f"tc{i+1}", testcaseName)
+			self.assertEqual(testcases[i], testcase)
+		self.assertEqual(f"Testsuite: ts", repr(ts))
+
+	def test_Testsuite_TestcasesDict(self) -> None:
+		testcases = {
+			"tc1": Testcase("tc1"),
+			"tc2": Testcase("tc2")
+		}
+		ts = Testsuite("ts", testcases)
+
+		self.assertEqual("ts", ts.Name)
+		self.assertIsNone(ts.Parent)
+		self.assertIsNone(ts.Build)
+		self.assertEqual(2, len(ts.Testcases))
+		for i, (testcaseName, testcase) in enumerate(ts.Testcases.items()):
+			self.assertIs(ts, testcase.Testsuite)
+			self.assertEqual(f"tc{i+1}", testcaseName)
+			self.assertEqual(testcases[testcaseName], testcase)
 		self.assertEqual(f"Testsuite: ts", repr(ts))
 
 	def test_Build(self) -> None:
@@ -139,12 +226,124 @@ class Instantiate(TestCase):
 		self.assertEqual(0, len(build.Testsuites))
 		self.assertEqual(f"Build: build", repr(build))
 
+	def test_Build_Project(self) -> None:
+		project = Project("project")
+		build = Build("build", project=project)
+
+		self.assertEqual("build", build.Name)
+		self.assertIs(project, build.Parent)
+		self.assertIs(project, build.Project)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(0, len(build.Testsuites))
+		self.assertEqual(f"Build: build", repr(build))
+
+	def test_Build_LibrariesList(self) -> None:
+		library1 = VHDLLibrary("lib1")
+		library2 = VHDLLibrary("lib2")
+		libraries = (library1, library2)
+		build = Build("build", vhdlLibraries=libraries)
+
+		self.assertEqual("build", build.Name)
+		self.assertIsNone(build.Parent)
+		self.assertIsNone(build.Project)
+		self.assertEqual(2, len(build.VHDLLibraries))
+		for i, (libraryName, library) in enumerate(build.VHDLLibraries.items()):
+			self.assertIs(build, library.Build)
+			self.assertEqual(f"lib{i+1}", libraryName)
+			self.assertEqual(libraries[i], library)
+		self.assertEqual(0, len(build.Testsuites))
+		self.assertEqual(f"Build: build", repr(build))
+
+	def test_Build_LibrariesDict(self) -> None:
+		libraries = {
+			"lib1": VHDLLibrary("lib1"),
+			"lib2": VHDLLibrary("lib2")
+		}
+		build = Build("build", vhdlLibraries=libraries)
+
+		self.assertEqual("build", build.Name)
+		self.assertIsNone(build.Parent)
+		self.assertIsNone(build.Project)
+		self.assertEqual(2, len(build.VHDLLibraries))
+		for i, (libraryName, library) in enumerate(build.VHDLLibraries.items()):
+			self.assertIs(build, library.Build)
+			self.assertEqual(f"lib{i+1}", libraryName)
+			self.assertEqual(libraries[libraryName], library)
+		self.assertEqual(0, len(build.Testsuites))
+		self.assertEqual(f"Build: build", repr(build))
+
+	def test_Build_TestsuitesList(self) -> None:
+		ts1 = Testsuite("ts1")
+		ts2 = Testsuite("ts2")
+		testsuites = (ts1, ts2)
+		build = Build("build", testsuites=testsuites)
+
+		self.assertEqual("build", build.Name)
+		self.assertIsNone(build.Parent)
+		self.assertIsNone(build.Project)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(2, len(build.Testsuites))
+		for i, (testsuiteName, testsuite) in enumerate(build.Testsuites.items()):
+			self.assertIs(build, testsuite.Build)
+			self.assertEqual(f"ts{i+1}", testsuiteName)
+			self.assertEqual(testsuites[i], testsuite)
+		self.assertEqual(f"Build: build", repr(build))
+
+	def test_Build_TestsuitesDict(self) -> None:
+		testsuites = {
+			"ts1": Testsuite("ts1"),
+			"ts2": Testsuite("ts2")
+		}
+		build = Build("build", testsuites=testsuites)
+
+		self.assertEqual("build", build.Name)
+		self.assertIsNone(build.Parent)
+		self.assertIsNone(build.Project)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(2, len(build.Testsuites))
+		for i, (testsuiteName, testsuite) in enumerate(build.Testsuites.items()):
+			self.assertIs(build, testsuite.Build)
+			self.assertEqual(f"ts{i+1}", testsuiteName)
+			self.assertEqual(testsuites[testsuiteName], testsuite)
+		self.assertEqual(f"Build: build", repr(build))
+
 	def test_Project(self) -> None:
 		project = Project("project")
 
 		self.assertEqual("project", project.Name)
 		self.assertIsNone(project.Parent)
 		self.assertEqual(0, len(project.Builds))
+		self.assertEqual(f"Project: project", repr(project))
+
+	def test_Project_BuildsList(self) -> None:
+		build1 = Build("build1")
+		build2 = Build("build2")
+		builds = (build1, build2)
+		project = Project("project", builds)
+
+		self.assertEqual("project", project.Name)
+		self.assertIsNone(project.Parent)
+		self.assertEqual(2, len(project.Builds))
+		for i, (buildName, build) in enumerate(project.Builds.items()):
+			self.assertIs(project, build.Project)
+			self.assertEqual(f"build{i+1}", buildName)
+			self.assertEqual(builds[i], build)
+		self.assertEqual(f"Project: project", repr(project))
+
+	def test_Project_BuildsDict(self) -> None:
+		builds = {
+			"build1": Build("build1"),
+			"build2": Build("build2")
+		}
+		project = Project("project", builds)
+
+		self.assertEqual("project", project.Name)
+		self.assertIsNone(project.Parent)
+		self.assertEqual(2, len(project.Builds))
+		for i, (buildName, build) in enumerate(project.Builds.items()):
+			self.assertIs(project, build.Project)
+			self.assertEqual(f"build{i+1}", buildName)
+			self.assertEqual(builds[buildName], build)
 		self.assertEqual(f"Project: project", repr(project))
 
 	def test_Context(self) -> None:

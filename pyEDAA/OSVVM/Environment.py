@@ -183,7 +183,7 @@ class VHDLLibrary(Named["Build"]):
 				vhdlFile._parent = self
 				self._files.append(vhdlFile)
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlFiles' is not a list of VHDLSourceFile.")
+			ex = TypeError(f"Parameter 'vhdlFiles' is not an iterable of VHDLSourceFile.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFiles)}'.")
 			raise ex
 
@@ -267,14 +267,14 @@ class Testcase(Named["Testsuite"]):
 		self._generics = {}
 		if generics is None:
 			pass
-		elif isinstance(generics, list):
-			for item in generics:
-				self._generics[item._name] = item._value
-		elif isinstance(generics, dict):
+		elif isinstance(generics, Mapping):
 			for key, value in generics.items():
 				self._generics[key] = value
+		elif isinstance(generics, Iterable):
+			for item in generics:
+				self._generics[item._name] = item._value
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'generics' is not a list of GenericValue nor a dictionary of strings.")
+			ex = TypeError(f"Parameter 'generics' is not an iterable of GenericValue nor a dictionary of strings.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
 			raise ex
 
@@ -334,16 +334,16 @@ class Testsuite(Named["Build"]):
 		self._testcases = {}
 		if testcases is None:
 			pass
-		elif isinstance(testcases, list):
-			for item in testcases:
-				item._parent = self
-				self._testcases[item._name] = item
-		elif isinstance(testcases, dict):
+		elif isinstance(testcases, Mapping):
 			for key, value in testcases.items():
 				value._parent = self
 				self._testcases[key] = value
+		elif isinstance(testcases, Iterable):
+			for item in testcases:
+				item._parent = self
+				self._testcases[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testcases' is not a list of Testcase nor a mapping of Testcase.")
+			ex = TypeError(f"Parameter 'testcases' is not an iterable of Testcase nor a mapping of Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcases)}'.")
 			raise ex
 
@@ -393,32 +393,32 @@ class Build(Named["Project"]):
 		self._vhdlLibraries = {}
 		if vhdlLibraries is None:
 			pass
-		elif isinstance(vhdlLibraries, list):
-			for item in vhdlLibraries:
-				item._parent = self
-				self._vhdlLibraries[item._name] = item
-		elif isinstance(vhdlLibraries, dict):
+		elif isinstance(vhdlLibraries, Mapping):
 			for key, value in vhdlLibraries.items():
 				value._parent = self
 				self._vhdlLibraries[key] = value
+		elif isinstance(vhdlLibraries, Iterable):
+			for item in vhdlLibraries:
+				item._parent = self
+				self._vhdlLibraries[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'libraries' is not a list of VHDLLibrary nor a mapping of VHDLLibrary.")
+			ex = TypeError(f"Parameter 'libraries' is not an iterable of VHDLLibrary nor a mapping of VHDLLibrary.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibraries)}'.")
 			raise ex
 
 		self._testsuites = {}
 		if testsuites is None:
 			pass
-		elif isinstance(testsuites, list):
-			for item in testsuites:
-				item._parent = self
-				self._testsuites[item._name] = item
-		elif isinstance(testsuites, dict):
+		elif isinstance(testsuites, Mapping):
 			for key, value in testsuites.items():
 				value._parent = self
 				self._testsuites[key] = value
+		elif isinstance(testsuites, Iterable):
+			for item in testsuites:
+				item._parent = self
+				self._testsuites[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testsuites' is not a list of Testsuite nor a mapping of Testsuite.")
+			ex = TypeError(f"Parameter 'testsuites' is not an iterable of Testsuite nor a mapping of Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuites)}'.")
 			raise ex
 
@@ -461,16 +461,16 @@ class Project(Named[None]):
 		self._builds = {}
 		if builds is None:
 			pass
-		elif isinstance(builds, list):
-			for item in builds:
-				item._parent = self
-				self._builds[item._name] = item
-		elif isinstance(builds, dict):
+		elif isinstance(builds, Mapping):
 			for key, value in builds.items():
 				value._parent = self
 				self._builds[key] = value
+		elif isinstance(builds, Iterable):
+			for item in builds:
+				item._parent = self
+				self._builds[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'builds' is not a list of Build nor a mapping of Build.")
+			ex = TypeError(f"Parameter 'builds' is not an iterable of Build nor a mapping of Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(builds)}'.")
 			raise ex
 
