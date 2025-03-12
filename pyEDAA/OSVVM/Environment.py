@@ -361,7 +361,7 @@ class Testsuite(Named["Build"]):
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcase)}'.")
 			raise ex
 
-		testcase._testsuite = self
+		testcase._parent = self
 		self._testcases[testcase._name] = testcase
 
 	def __repr__(self) -> str:
@@ -434,13 +434,22 @@ class Build(Named["Project"]):
 	def Testsuites(self) -> Dict[str, Testsuite]:
 		return self._testsuites
 
-	def AddTestcase(self, testsuite: Testsuite) -> None:
+	def AddVHDLLibrary(self, vhdlLibrary: VHDLLibrary) -> None:
+		if not isinstance(vhdlLibrary, VHDLLibrary):  # pragma: no cover
+			ex = TypeError(f"Parameter 'vhdlLibrary' is not a VHDLLibrary.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
+			raise ex
+
+		vhdlLibrary._parent = self
+		self._vhdlLibraries[vhdlLibrary._name] = vhdlLibrary
+
+	def AddTestsuite(self, testsuite: Testsuite) -> None:
 		if not isinstance(testsuite, Testsuite):  # pragma: no cover
 			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
 			raise ex
 
-		testsuite._testsuite = self
+		testsuite._parent = self
 		self._testsuites[testsuite._name] = testsuite
 
 	def __repr__(self) -> str:
