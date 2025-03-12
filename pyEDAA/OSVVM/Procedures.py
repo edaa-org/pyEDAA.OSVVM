@@ -72,7 +72,22 @@ def build(file: str) -> None:
 	   * :func:`include`
 	   * :func:`ChangeWorkingDirectory`
 	"""
-	include(file)
+	try:
+		file = Path(file)
+		buildName = file.name
+
+		currentDirectory = osvvmContext._currentDirectory
+
+		osvvmContext.StartBuild(buildName)
+		includeFile = osvvmContext.IncludeFile(file)
+		osvvmContext.EvaluateFile(includeFile)
+
+		osvvmContext._currentDirectory = currentDirectory
+
+	except Exception as ex:
+		osvvmContext.LastException = ex
+		raise ex
+
 
 
 @export

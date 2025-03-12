@@ -519,6 +519,9 @@ class Context(Base):
 	_testcase:         Nullable[Testcase]
 	_options:          Dict[int, GenericValue]
 
+	_builds:           Dict[str, Build]
+	_build:            Nullable[Build]
+
 	def __init__(self) -> None:
 		super().__init__()
 
@@ -539,6 +542,9 @@ class Context(Base):
 		self._testsuites = {}
 		self._options =    {}
 
+		self._build =      None
+		self._builds =     {}
+
 	def Clear(self) -> None:
 		self._processor =        None
 		self._lastException =    None
@@ -556,6 +562,9 @@ class Context(Base):
 		self._testsuite =  None
 		self._testsuites = {}
 		self._options =    {}
+
+		self._build =      None
+		self._builds =     {}
 
 	@readonly
 	def Processor(self):  # -> "Tk":
@@ -610,6 +619,18 @@ class Context(Base):
 	@readonly
 	def TestCase(self) -> Testcase:
 		return self._testcase
+
+	@readonly
+	def Build(self) -> Build:
+		return self._build
+
+	@readonly
+	def Builds(self) -> Dict[str, Build]:
+		return self._builds
+
+	def StartBuild(self, buildName: str):
+		self._build = Build(buildName)
+		self._builds[buildName] = self._build
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
