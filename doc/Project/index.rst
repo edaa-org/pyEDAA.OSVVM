@@ -19,14 +19,14 @@ OSVVM Project Files
 Data Model
 **********
 
+A OSVVM project can be summarized as follows:
 
-.. rubric:: Overall Hierarchy
-
-An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
-via :ref:`PRJ:Procedure:build` command). Each build can contain multiple :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>`
-as well as multiple :ref:`testsuites <PRJ:DataModel:`Testsuite`>. Each VHDL library references multiple
-:ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>` in compile order. Again, each testsuite contains multiple
-:ref:`testcases <PRJ:DataModel:Testcase>` in execution order.
+1. An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
+   via :ref:`PRJ:Procedure:build` command).
+2. Each build can contain multiple :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>` as well as multiple
+   :ref:`testsuites <PRJ:DataModel:Testsuite>`.
+3. Each VHDL library references multiple :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>` in compile order.
+4. Again, each testsuite contains multiple :ref:`testcases <PRJ:DataModel:Testcase>` in execution order.
 
 .. mermaid::
 
@@ -64,11 +64,42 @@ as well as multiple :ref:`testsuites <PRJ:DataModel:`Testsuite`>. Each VHDL libr
 OSVVM Project
 =============
 
-.. todo::
+.. grid:: 2
 
-   **Data model: OSVVM Project**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      A OSVVM project
+
+      .. todo::
+
+         **Data model: OSVVM Project**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Project(Named[None]):
+           _builds: Dict[str, Build]
+
+           def __init__(self,
+             name: str, builds: Nullable[Iterable[Build] | Mapping[str, Build]] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def Builds(self) -> Dict[str, Build]:
+             ...
+
+           def AddBuild(self, build: Build) -> None:
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:DataModel:Build:
@@ -76,11 +107,55 @@ OSVVM Project
 Build
 =====
 
-.. todo::
+.. grid:: 2
 
-   **Data model: Build**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      .. todo::
+
+         **Data model: Build**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Build(Named["Project"]):
+           _vhdlLibraries: Dict[str, VHDLLibrary]
+           _testsuites:    Dict[str, Testsuite]
+
+           def __init__(self,
+             name:          str,
+             vhdlLibraries: Nullable[Iterable[VHDLLibrary] | Mapping[str, VHDLLibrary]] = None,
+             testsuites:    Nullable[Iterable[Testsuite] | Mapping[str, Testsuite]] = None,
+             project:       Nullable[Base] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def Project(self) -> Nullable["Project"]:
+             ...
+
+           @readonly
+           def VHDLLibraries(self) -> Dict[str, Testsuite]:
+             ...
+
+           @readonly
+           def Testsuites(self) -> Dict[str, Testsuite]:
+             ...
+
+           def AddVHDLLibrary(self, vhdlLibrary: VHDLLibrary) -> None:
+             ...
+
+           def AddTestsuite(self, testsuite: Testsuite) -> None:
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:DataModel:VHDLLibrary:
@@ -88,11 +163,46 @@ Build
 VHDLLibrary
 ===========
 
-.. todo::
+.. grid:: 2
 
-   **Data model: VHDL Library**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      .. todo::
+
+         **Data model: VHDL Library**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class VHDLLibrary(Named["Build"]):
+           _files: List[VHDLSourceFile]
+
+           def __init__(self,
+             name:      str,
+             vhdlFiles: Nullable[Iterable[VHDLSourceFile]] = None,
+             build:     Nullable["Build"] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def Build(self) -> Nullable["Build"]:
+             ...
+
+           @readonly
+           def Files(self) -> List[SourceFile]:
+             ...
+
+           def AddFile(self, file: VHDLSourceFile) -> None:
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:DataModel:VHDLSourceFile:
@@ -100,11 +210,47 @@ VHDLLibrary
 VHDLSourceFile
 ==============
 
-.. todo::
+.. grid:: 2
 
-   **Data model: VHDL source file**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      .. todo::
+
+         **Data model: VHDL source file**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class VHDLSourceFile(SourceFile["VHDLLibrary"]):
+           _vhdlVersion: VHDLVersion
+
+           def __init__(self,
+             path: Path,
+             vhdlVersion: VHDLVersion = VHDLVersion.VHDL2008,
+             vhdlLibrary: Nullable["VHDLLibrary"] = None
+           ):
+             ...
+
+           @readonly
+           def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
+             ...
+
+           @property
+           def VHDLVersion(self) -> VHDLVersion:
+             ...
+
+           @VHDLVersion.setter
+           def VHDLVersion(self, value: VHDLVersion) -> None:
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:DataModel:Testsuite:
@@ -112,11 +258,46 @@ VHDLSourceFile
 Testsuite
 =========
 
-.. todo::
+.. grid:: 2
 
-   **Data model: Testsuite**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      .. todo::
+
+         **Data model: Testsuite**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Testsuite(Named["Build"]):
+           _testcases: Dict[str, Testcase]
+
+           def __init__(self,
+             name: str,
+             testcases: Nullable[Iterable[Testcase] | Mapping[str, Testcase]] = None,
+             build:     Nullable["Build"] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def Build(self) -> Nullable["Build"]:
+             ...
+
+           @readonly
+           def Testcases(self) -> Dict[str, Testcase]:
+             ...
+
+           def AddTestcase(self, testcase: Testcase) -> None:
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:DataModel:Testcase:
@@ -124,11 +305,55 @@ Testsuite
 Testcase
 ========
 
-.. todo::
+.. grid:: 2
 
-   **Data model: Testcase**
+   .. grid-item::
+      :columns: 6
 
-   To be documented.
+      .. todo::
+
+         **Data model: Testcase**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Testcase(Named["Testsuite"]):
+           _toplevelName: Nullable[str]
+           _generics:     Dict[str, str]
+
+           def __init__(self,
+             name:         str,
+             toplevelName: Nullable[str] = None,
+             generics:     Nullable[Iterable[GenericValue] | Mapping[str, str]] = None,
+             testsuite:    Nullable["Testsuite"] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def Testsuite(self) -> "Testsuite":
+             ...
+
+           @readonly
+           def ToplevelName(self) -> str:
+             ...
+
+           @readonly
+           def Generics(self) -> Dict[str, str]:
+             ...
+
+           def SetToplevel(self, toplevelName: str) -> None:
+             ...
+
+           def AddGeneric(self, genericValue: GenericValue):
+             ...
+
+           def __repr__(self) -> str:
+             ...
 
 
 .. _PRJ:Procedure:
@@ -435,3 +660,221 @@ DirectoryExists
 
 ChangeWorkingDirectory
 ======================
+
+
+
+.. _PRJ:Context:
+
+OSVVM Processing Context
+************************
+
+.. grid:: 2
+
+   .. grid-item::
+      :columns: 6
+
+      .. todo::
+
+         **Context**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Context(Base):
+           _tcl:              TclEnvironment
+
+           _lastException:    Exception
+
+           _workingDirectory: Path
+           _currentDirectory: Path
+           _includedFiles:    List[Path]
+
+           _vhdlversion:      VHDLVersion
+
+           _libraries:        Dict[str, VHDLLibrary]
+           _library:          Nullable[VHDLLibrary]
+
+           _testsuites:       Dict[str, Testsuite]
+           _testsuite:        Nullable[Testsuite]
+           _testcase:         Nullable[Testcase]
+           _options:          Dict[int, GenericValue]
+
+           _builds:           Dict[str, Build]
+           _build:            Nullable[Build]
+
+            def __init__(self) -> None:
+             ...
+
+            def Clear(self) -> None:
+             ...
+
+            @readonly
+            def Processor(self) -> "Tk":
+             ...
+
+            @property
+            def LastException(self) -> Exception:
+             ...
+
+            @readonly
+            def WorkingDirectory(self) -> Path:
+             ...
+
+            @readonly
+            def CurrentDirectory(self) -> Path:
+             ...
+
+            @property
+            def VHDLVersion(self) -> VHDLVersion:
+             ...
+
+            @readonly
+            def IncludedFiles(self) -> List[Path]:
+             ...
+
+            @readonly
+            def Libraries(self) -> Dict[str, VHDLLibrary]:
+             ...
+
+            @readonly
+            def Library(self) -> VHDLLibrary:
+             ...
+
+            @readonly
+            def Testsuites(self) -> Dict[str, Testsuite]:
+             ...
+
+            @readonly
+            def Testsuite(self) -> Testsuite:
+             ...
+
+            @readonly
+            def TestCase(self) -> Testcase:
+             ...
+
+            @readonly
+            def Build(self) -> Build:
+             ...
+
+            @readonly
+            def Builds(self) -> Dict[str, Build]:
+             ...
+
+            def StartBuild(self, buildName: str):
+             ...
+
+            def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
+             ...
+
+            def EvaluateFile(self, proFile: Path) -> None:
+             ...
+
+            def SetLibrary(self, name: str):
+             ...
+
+            def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
+             ...
+
+            def SetTestsuite(self, testsuiteName: str):
+             ...
+
+            def AddTestcase(self, testName: str) -> TestCase:
+             ...
+
+            def SetTestcaseToplevel(self, toplevel: str) -> TestCase:
+             ...
+
+            def AddOption(self, genericValue: GenericValue):
+             ...
+
+
+.. _PRJ:Processor:
+
+OSVVM ``pro``-File Processor
+****************************
+
+OSVVM Variables
+===============
+
+.. grid:: 2
+
+   .. grid-item::
+      :columns: 6
+
+      .. todo::
+
+         **OsvvmProFileProcessor**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class OsvvmVariables:
+           _vhdlVersion: VHDLVersion
+           _toolVendor:  str
+           _toolName:    str
+           _toolVersion: str
+
+           def __init__(self,
+             vhdlVersion: Nullable[VHDLVersion] = None,
+             toolVendor:  Nullable[str] = None,
+             toolName:    Nullable[str] = None,
+             toolVersion: Nullable[str] = None
+           ) -> None:
+             ...
+
+           @readonly
+           def VHDlversion(self) -> VHDLVersion:
+             ...
+
+           @readonly
+           def ToolVendor(self) -> str:
+             ...
+
+           @readonly
+           def ToolName(self) -> str:
+             ...
+
+           @readonly
+           def ToolVersion(self) -> str:
+             ...
+
+
+OSVVM ``pro``-File Processor
+============================
+
+.. grid:: 2
+
+   .. grid-item::
+      :columns: 6
+
+      .. todo::
+
+         **OsvvmProFileProcessor**
+
+         To be documented.
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class OsvvmProFileProcessor(TclEnvironment):
+           def __init__(self,
+             context: Nullable[Context] = None,
+             osvvmVariables: Nullable[OsvvmVariables] = None
+           ) -> None:
+             ...
+
+           def LoadOsvvmDefaults(self, osvvmVariables: OsvvmVariables) -> None:
+             ...

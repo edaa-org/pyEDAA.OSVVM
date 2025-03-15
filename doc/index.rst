@@ -34,7 +34,7 @@
 The pyEDAA.OSVVM Documentation
 ##############################
 
-Parser and converters for OSVVM-specific data models and report formats.
+Parser and converters for `OSVVM-specific <https://github.com/OSVVM>`__ data models and report formats.
 
 
 .. _GOALS:
@@ -44,7 +44,7 @@ Main Goals
 
 This package provides OSVVM-specific data models and parsers. The data models can be used as-is or converted to generic
 data models of the pyEDAA data model family. This includes parsing OSVVM's ``*.pro``-files and translating them to a
-`pyEDAA.ProjectModel <https://edaa-org.github.com/pyEDAA.ProjectModel>`__ instance as well as reading OSVVM's reports in
+`pyEDAA.ProjectModel <https://edaa-org.github.io/pyEDAA.ProjectModel>`__ instance as well as reading OSVVM's reports in
 YAML format like test results, alerts or functional coverage.
 
 Frameworks consuming these data models can build higher level features and services on top of these models, while
@@ -56,17 +56,6 @@ using one parser that's aligned with OSVVM's data formats.
 Use Cases
 *********
 
-* Reading :ref:`OSVVM's project <PRJ>` description from ``*.pro`` files.
-
-  * Convert to other data or file format.
-
-* Reading OSVVM's reports from ``*.yaml`` files.
-
-  * Convert to other data or file format.
-  * Investigate reports.
-  * Merge reports.
-
-
 .. _USECASE:Project:
 
 OSVVM Project
@@ -77,15 +66,19 @@ OSVVM Project
    .. grid-item::
       :columns: 5
 
-      OSVVM describes it's projects using imperative TCL code in so called ``*.pro`` files. These contain lots of
-      compilation information like VHDL library names, used VHDL standard, compile order. On the other hand these files
-      also contain information about grouping testcases into testsuites as well as variants of a test by applying
-      top-level generics to a simulation.
+      OSVVM describes its projects using imperative TCL code in so called ``*.pro`` files. These contain lots of
+      information like VHDL library names, used VHDL standard, or compile order. Besides compilation information, these
+      files also contain information about grouping testcases into testsuites as well as variants of a test by applying
+      top-level generics to a simulation. In addition various tool options can be enabled and disabled, e.g. code
+      coverage collection. These options can be set globally, locally or per item.
 
       pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ:Procedure>`, so OSVVM's ``*.pro`` files can be
-      executed and contained information are collected in a data model representing :ref:`builds <PRJ:DataModel:Build>`,
+      executed and contained information is collected in a data model representing :ref:`builds <PRJ:DataModel:Build>`,
       :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>`, :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>`,
       :ref:`testsuites <PRJ:DataModel:Testsuite>`, and :ref:`testcases <PRJ:DataModel:Testcase>`.
+
+      Afterwards, the :ref:`OSVVM project model <PRJ>` can be used as-is, or it can be converted to other data or file
+      formats. One unified data model is `pyEDAA.ProjectModel <https://edaa-org.github.com/pyEDAA.ProjectModel>`__.
 
    .. grid-item::
       :columns: 7
@@ -151,6 +144,12 @@ OSVVM Reports
 =============
 
 OSVVM provides multiple reports in YAML files.
+
+* Reading OSVVM's reports from ``*.yaml`` files.
+
+  * Convert to other data or file format.
+  * Investigate reports.
+  * Merge reports.
 
 
 .. _NEWS:
