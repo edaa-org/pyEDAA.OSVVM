@@ -42,11 +42,22 @@ from pyTooling.Decorators     import export
 from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
+from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue, BuildName as OSVVM_BuildName
 
 
 @export
-def build(file: str) -> None:
+def BuildName(name: str) -> int:
+	try:
+		buildName = OSVVM_BuildName(name)
+		optionID = osvvmContext.AddOption(buildName)
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+	return optionID
+
+@export
+def build(file: str, *options: Tuple[int]) -> None:
 	"""
 	This function implements the behavior of OSVVM's ``build`` procedure.
 
@@ -62,6 +73,7 @@ def build(file: str) -> None:
 	3. it checks implicitly for a ``<path>.pro`` file, named like the directories name.
 
 	:param file:            Explicit path to a ``*.pro`` file or a directory containing an implicitly searched ``*.pro`` file.
+	:param options:         Optional list of option IDs.
 	:raises TypeError:      If parameter proFileOrBuildDirectory is not a Path.
 	:raises OSVVMException: If parameter proFileOrBuildDirectory is an absolute path.
 	:raises OSVVMException: If parameter proFileOrBuildDirectory is not a *.pro file or build directory.
@@ -69,14 +81,32 @@ def build(file: str) -> None:
 
 	.. seealso::
 
+	   * :func:`BuildName`
 	   * :func:`include`
 	   * :func:`ChangeWorkingDirectory`
 	"""
 	try:
 		file = Path(file)
-		buildName = file.name
+		buildName = file.stem
 
 		currentDirectory = osvvmContext._currentDirectory
+
+		for optionID in options:
+			try:
+				option = osvvmContext._options[int(optionID)]
+			except KeyError as e:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+				ex.__cause__ = e
+				osvvmContext.LastException = ex
+				raise ex
+
+			if isinstance(option, OSVVM_BuildName):
+				buildName = option.Name
+			else:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} is not a BuildName.")
+				ex.__cause__ = TypeError()
+				osvvmContext.LastException = ex
+				raise ex
 
 		osvvmContext.StartBuild(buildName)
 		includeFile = osvvmContext.IncludeFile(file)
@@ -215,7 +245,7 @@ def simulate(toplevelName: str, *options: Tuple[int]) -> None:
 
 
 @export
-def generic(name: str, value: str) -> GenericValue:
+def generic(name: str, value: str) -> int:
 	try:
 		genericValue = GenericValue(name, value)
 		optionID = osvvmContext.AddOption(genericValue)

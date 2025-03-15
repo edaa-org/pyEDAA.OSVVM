@@ -37,7 +37,8 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor, getException
+from pyEDAA.OSVVM.Environment import Context
+from pyEDAA.OSVVM.TCL         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -66,8 +67,35 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
+		self.assertEqual("project", context.Build.Name)
+		self.assertEqual(4, len(context.IncludedFiles))
+		self.assertEqual(path, firstElement(context.IncludedFiles))
+
+		vhdlLibrary = firstValue(context.Libraries)
+		vhdlFile = firstElement(vhdlLibrary.Files)
+
+		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
+
+	def test_Build_BuildName(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		path = Path("tests/examples/simple/project.pro")
+
+		code = dedent(f"""\
+			build {path.as_posix()} [BuildName {{build}}]
+			""")
+
+		try:
+			processor.TCL.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context: Context = processor.Context
+
+		self.assertEqual("build", context.Build.Name)
 		self.assertEqual(4, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
@@ -91,7 +119,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(2, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
@@ -114,7 +142,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Libraries))
 		libraryName, library = firstPair(context.Libraries)
@@ -138,7 +166,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Libraries))
 		self.assertEqual("default", context.Library.Name)
@@ -168,7 +196,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Libraries))
 		self.assertEqual("default", context.Library.Name)
@@ -197,7 +225,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Libraries))
 		libraryName, library = firstPair(context.Libraries)
@@ -235,7 +263,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(2, len(context.Libraries))
 		libraryName, library = firstPair(context.Libraries)
@@ -269,7 +297,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(0, len(context.Libraries))
 
@@ -295,7 +323,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(0, len(context.Libraries))
 
@@ -322,7 +350,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Testsuites))
 		testsuiteName, testsuite = firstPair(context.Testsuites)
@@ -344,7 +372,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Testsuites))
 		testsuiteName, testsuite = firstPair(context.Testsuites)
@@ -374,7 +402,7 @@ class BasicProcedures(TestCase):
 	# 			ex = processor.Context.LastException
 	# 		raise ex
 	#
-	# 	context = processor.Context
+	# 	context: Context = processor.Context
 	#
 	# 	self.assertEqual(1, len(context.Libraries))
 
@@ -393,7 +421,7 @@ class BasicProcedures(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertEqual(1, len(context.Libraries))
 		library = firstValue(context.Libraries)
@@ -435,7 +463,7 @@ class SetterGatter(TestCase):
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertIs(VHDLVersion.VHDL2019, context.VHDLVersion)
 

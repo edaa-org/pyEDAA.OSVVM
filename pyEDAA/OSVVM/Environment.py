@@ -385,6 +385,31 @@ class Testsuite(Named["Build"]):
 
 
 @export
+class BuildName(Option):
+	_name: str
+
+	def __init__(
+		self,
+		name: str,
+	) -> None:
+		super().__init__()
+
+		if not isinstance(name, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		self._name = name
+
+	@readonly
+	def Name(self) -> str:
+		return self._name
+
+	def __repr__(self) -> str:
+		return f"BuildName: {self._name}"
+
+
+@export
 class Build(Named["Project"]):
 	_vhdlLibraries: Dict[str, VHDLLibrary]
 	_testsuites:    Dict[str, Testsuite]
