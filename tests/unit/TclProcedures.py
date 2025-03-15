@@ -37,13 +37,35 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import Context
+from pyEDAA.OSVVM.Environment import Context, osvvmContext
 from pyEDAA.OSVVM.TCL         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
 	print("Use: 'python -m unitest <testcase module>'")
 	exit(1)
+
+
+def BeginBuild(buildName: str) -> None:
+	try:
+		osvvmContext.BeginBuild(buildName)
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+def EndBuild() -> None:
+	try:
+		osvvmContext.EndBuild()
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+def throw():
+	ex = ValueError(f"Dummy exception")
+	osvvmContext.LastException = ex
+	raise ex
 
 
 class BasicProcedures(TestCase):
@@ -115,11 +137,15 @@ class BasicProcedures(TestCase):
 	def test_Include(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		path = Path("tests/examples/simple/test.pro")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			include {path.as_posix()}
+			EndBuild
 			""")
 
 		try:
@@ -140,9 +166,13 @@ class BasicProcedures(TestCase):
 	def test_Library(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib
+			EndBuild
 			""")
 
 		try:
@@ -162,11 +192,15 @@ class BasicProcedures(TestCase):
 	def test_Analyze1(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			analyze {file1.as_posix()}
+			EndBuild
 			""")
 
 		try:
@@ -190,13 +224,17 @@ class BasicProcedures(TestCase):
 	def test_Analyze2(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 		file2 = Path("tests/examples/simple/lib1_file2.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			analyze {file1.as_posix()}
 			analyze {file2.as_posix()}
+			EndBuild
 			""")
 
 		try:
@@ -220,12 +258,16 @@ class BasicProcedures(TestCase):
 	def test_Library1_Analyze1(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib
 			analyze {file1.as_posix()}
+			EndBuild
 			""")
 
 		try:
@@ -250,12 +292,15 @@ class BasicProcedures(TestCase):
 	def test_Library2_Analyze3(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1_1 = Path("tests/examples/simple/lib1_file1.vhdl")
 		file2_1 = Path("tests/examples/simple/lib2_file1.vhdl")
 		file1_2 = Path("tests/examples/simple/lib1_file2.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib1
 			analyze {file1_1.as_posix()}
 
@@ -264,6 +309,7 @@ class BasicProcedures(TestCase):
 
 			library lib1
 			analyze {file1_2.as_posix()}
+			EndBuild
 			""")
 
 		try:
@@ -294,10 +340,14 @@ class BasicProcedures(TestCase):
 	def test_Simulate(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tb
 			simulate harness
+			EndBuild
 			""")
 
 		try:
@@ -320,10 +370,14 @@ class BasicProcedures(TestCase):
 	def test_Simulate_Generic(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tb
 			simulate harness [generic param value]
+			EndBuild
 			""")
 
 		try:
@@ -348,9 +402,13 @@ class BasicProcedures(TestCase):
 	def test_Testsuite(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestSuite ts
+			EndBuild
 			""")
 
 		try:
@@ -370,9 +428,13 @@ class BasicProcedures(TestCase):
 	def test_TestName(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tn
+			EndBuild
 			""")
 
 		try:
@@ -417,10 +479,13 @@ class BasicProcedures(TestCase):
 	def test_RunTest(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			RunTest {file1.as_posix()} [generic param1 value1] [generic param2 value2]
 			""")
 
@@ -582,14 +647,6 @@ class NoOperation(TestCase):
 	def test_Exception(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
-
-		osvvmContext = processor.Context
-
-		def throw():
-			ex = ValueError(f"Dummy exception")
-			osvvmContext.LastException = ex
-			raise ex
-
 		processor.RegisterPythonFunctionAsTclProcedure(throw)
 
 		code = dedent(f"""\
