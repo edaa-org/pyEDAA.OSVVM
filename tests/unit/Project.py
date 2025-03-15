@@ -353,11 +353,11 @@ class Instantiate(TestCase):
 		cwd = Path.cwd()
 		self.assertEqual(cwd, context.WorkingDirectory)
 		self.assertEqual(cwd, context.CurrentDirectory)
-		self.assertIsNone(context.Library)
+		self.assertIsNone(context.VHDLLibrary)
 		self.assertIsNone(context.TestCase)
 		self.assertIsNone(context.Testsuite)
 		self.assertEqual(0, len(context.IncludedFiles))
-		self.assertEqual(0, len(context.Libraries))
+		self.assertEqual(0, len(context.VHDLLibraries))
 		self.assertEqual(0, len(context.Testsuites))
 
 

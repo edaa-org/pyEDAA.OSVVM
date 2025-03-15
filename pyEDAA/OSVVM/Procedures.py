@@ -87,8 +87,9 @@ def build(file: str, *options: Tuple[int]) -> None:
 	"""
 	try:
 		file = Path(file)
-		buildName = file.stem
+		buildName = None
 
+		# Preserve current directory
 		currentDirectory = osvvmContext._currentDirectory
 
 		for optionID in options:
@@ -108,10 +109,16 @@ def build(file: str, *options: Tuple[int]) -> None:
 				osvvmContext.LastException = ex
 				raise ex
 
-		osvvmContext.StartBuild(buildName)
+		# If no build name was specified, derive a name from *.pro file.
+		if buildName is None:
+			buildName = file.stem
+
+		osvvmContext.BeginBuild(buildName)
 		includeFile = osvvmContext.IncludeFile(file)
 		osvvmContext.EvaluateFile(includeFile)
+		osvvmContext.EndBuild()
 
+		# Restore current directory after recursively evaluating *.pro files.
 		osvvmContext._currentDirectory = currentDirectory
 
 	except Exception as ex:  # pragma: no cover
@@ -147,11 +154,13 @@ def include(file: str) -> None:
 	   * :func:`ChangeWorkingDirectory`
 	"""
 	try:
+		# Preserve current directory
 		currentDirectory = osvvmContext._currentDirectory
 
 		includeFile = osvvmContext.IncludeFile(Path(file))
 		osvvmContext.EvaluateFile(includeFile)
 
+		# Restore current directory after recursively evaluating *.pro files.
 		osvvmContext._currentDirectory = currentDirectory
 
 	except Exception as ex:  # pragma: no cover

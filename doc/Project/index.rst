@@ -738,11 +738,11 @@ OSVVM Processing Context
              ...
 
             @readonly
-            def Libraries(self) -> Dict[str, VHDLLibrary]:
+            def VHDLLibraries(self) -> Dict[str, VHDLLibrary]:
              ...
 
             @readonly
-            def Library(self) -> VHDLLibrary:
+            def VHDLLibrary(self) -> VHDLLibrary:
              ...
 
             @readonly

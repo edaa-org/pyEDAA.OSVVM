@@ -552,8 +552,8 @@ class Context(Base):
 
 	_vhdlversion:      VHDLVersion
 
-	_libraries:        Dict[str, VHDLLibrary]
-	_library:          Nullable[VHDLLibrary]
+	_vhdlLibraries:    Dict[str, VHDLLibrary]
+	_vhdlLibrary:      Nullable[VHDLLibrary]
 
 	_testsuites:       Dict[str, Testsuite]
 	_testsuite:        Nullable[Testsuite]
@@ -573,18 +573,18 @@ class Context(Base):
 		self._currentDirectory = self._workingDirectory
 		self._includedFiles =    []
 
-		self._vhdlversion = VHDLVersion.VHDL2008
+		self._vhdlversion =      VHDLVersion.VHDL2008
 
-		self._library =    None
-		self._libraries =  {}
+		self._vhdlLibrary =      None
+		self._vhdlLibraries =    {}
 
-		self._testcase =   None
-		self._testsuite =  None
-		self._testsuites = {}
-		self._options =    {}
+		self._testcase =         None
+		self._testsuite =        None
+		self._testsuites =       {}
+		self._options =          {}
 
-		self._build =      None
-		self._builds =     {}
+		self._build =            None
+		self._builds =           {}
 
 	def Clear(self) -> None:
 		self._processor =        None
@@ -594,18 +594,18 @@ class Context(Base):
 		self._currentDirectory = self._workingDirectory
 		self._includedFiles =    []
 
-		self._vhdlversion = VHDLVersion.VHDL2008
+		self._vhdlversion =      VHDLVersion.VHDL2008
 
-		self._library =    None
-		self._libraries =  {}
+		self._vhdlLibrary =      None
+		self._vhdlLibraries =    {}
 
-		self._testcase =   None
-		self._testsuite =  None
-		self._testsuites = {}
-		self._options =    {}
+		self._testcase =         None
+		self._testsuite =        None
+		self._testsuites =       {}
+		self._options =          {}
 
-		self._build =      None
-		self._builds =     {}
+		self._build =            None
+		self._builds =           {}
 
 	@readonly
 	def Processor(self):  # -> "Tk":
@@ -642,12 +642,12 @@ class Context(Base):
 		return self._includedFiles
 
 	@readonly
-	def Libraries(self) -> Dict[str, VHDLLibrary]:
-		return self._libraries
+	def VHDLLibraries(self) -> Dict[str, VHDLLibrary]:
+		return self._vhdlLibraries
 
 	@readonly
-	def Library(self) -> VHDLLibrary:
-		return self._library
+	def VHDLLibrary(self) -> VHDLLibrary:
+		return self._vhdlLibrary
 
 	@readonly
 	def Testsuites(self) -> Dict[str, Testsuite]:
@@ -669,9 +669,20 @@ class Context(Base):
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
 
-	def StartBuild(self, buildName: str):
+	def BeginBuild(self, buildName: str):
 		self._build = Build(buildName)
+		self._build._vhdlLibraries = self._vhdlLibraries
+		self._build._testsuites = self._testsuites
+
 		self._builds[buildName] = self._build
+
+	def EndBuild(self):
+		self._vhdlLibrary = None
+		self._vhdlLibraries = {}
+		self._testcase = None
+		self._testsuite = None
+		self._testsuites = {}
+		self._build = None
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
@@ -717,17 +728,17 @@ class Context(Base):
 
 	def SetLibrary(self, name: str):
 		try:
-			self._library = self._libraries[name]
+			self._vhdlLibrary = self._vhdlLibraries[name]
 		except KeyError:
-			self._library = VHDLLibrary(name)
-			self._libraries[name] = self._library
+			self._vhdlLibrary = VHDLLibrary(name)
+			self._vhdlLibraries[name] = self._vhdlLibrary
 
 	def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
-		if self._library is None:
+		if self._vhdlLibrary is None:
 			self.SetLibrary("default")
 
 		vhdlFile.VHDLVersion = self._vhdlversion
-		self._library.AddFile(vhdlFile)
+		self._vhdlLibrary.AddFile(vhdlFile)
 
 	def SetTestsuite(self, testsuiteName: str):
 		try:

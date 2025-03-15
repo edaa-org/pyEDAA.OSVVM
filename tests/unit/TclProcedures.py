@@ -69,11 +69,15 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual("project", context.Build.Name)
+		self.assertIsNone(context.Build)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("project", buildName)
+		self.assertEqual("project", build.Name)
+		self.assertEqual(1, len(context.Builds))
 		self.assertEqual(4, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
-		vhdlLibrary = firstValue(context.Libraries)
+		vhdlLibrary = firstValue(build.VHDLLibraries)
 		vhdlFile = firstElement(vhdlLibrary.Files)
 
 		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
@@ -95,11 +99,15 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual("build", context.Build.Name)
+		self.assertIsNone(context.Build)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(context.Builds))
 		self.assertEqual(4, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
-		vhdlLibrary = firstValue(context.Libraries)
+		vhdlLibrary = firstValue(build.VHDLLibraries)
 		vhdlFile = firstElement(vhdlLibrary.Files)
 
 		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
