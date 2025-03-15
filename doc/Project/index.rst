@@ -19,20 +19,116 @@ OSVVM Project Files
 Data Model
 **********
 
+
+.. rubric:: Overall Hierarchy
+
+An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
+via :ref:`PRJ:Procedure:build` command). Each build can contain multiple :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>`
+as well as multiple :ref:`testsuites <PRJ:DataModel:`Testsuite`>. Each VHDL library references multiple
+:ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>` in compile order. Again, each testsuite contains multiple
+:ref:`testcases <PRJ:DataModel:Testcase>` in execution order.
+
+.. mermaid::
+
+   graph TD;
+     P[Project<br/>&quot;OSVVM&quot;]:::clsPrj-->B1[Build<br/>&quot;OsvvmLibraries&quot;]:::clsBld
+     P   -->B2[Build<br/>&quot;RunAllTests&quot;]:::clsBld
+     B1  -->Lib1[VHDLLibrary<br/>&quot;osvvm&quot;]:::clsLib
+     B1  -->Lib2[VHDLLibrary<br/>&quot;osccm_common&quot;]:::clsLib
+
+     Lib1-->F1[VHDLSourceFile<br/>&quot;file1.vhdl&quot;]:::clsFile
+     Lib1-->F2[VHDLSourceFile<br/>&quot;file2.vhdl&quot;]:::clsFile
+     Lib2-->F3[VHDLSourceFile<br/>&quot;file3.vhdl&quot;]:::clsFile
+     Lib2-->F4[VHDLSourceFile<br/>&quot;file4.vhdl&quot;]:::clsFile
+
+     B2  -->Lib4[VHDLLibrary<br/>&quot;osvvm_uart&quot;]:::clsLib
+     Lib4-->F7[VHDLSourceFile<br/>&quot;file7.vhdl&quot;]:::clsFile
+     Lib4-->F8[VHDLSourceFile<br/>&quot;file8.vhdl&quot;]:::clsFile
+     B2  -->TS1[Testsuite<br/>&quot;UART&quot;]:::clsTS
+     B2  -->TS2[Testsuite<br/>&quot;AXI4_Lite&quot;]:::clsTS
+     TS1 -->TC1[Testcase<br/>&quot;SendGet&quot;]:::clsTC
+     TS1 -->TC2[Testcase<br/>&quot;SetOption&quot;]:::clsTC
+     TS2 -->TC3[Testcase<br/>&quot;ReadWrite&quot;]:::clsTC
+     TS2 -->TC4[Testcase<br/>&quot;SetOption&quot;]:::clsTC
+
+     classDef clsPrj  fill:#bf80ff
+     classDef clsBld  fill:#9f9fdf
+     classDef clsLib  fill:#ffdf80
+     classDef clsFile fill:#d5ff80
+     classDef clsTS   fill:#8080ff
+     classDef clsTC   fill:#80ff80
+
+
+.. _PRJ:DataModel:Project:
+
 OSVVM Project
 =============
+
+.. todo::
+
+   **Data model: OSVVM Project**
+
+   To be documented.
+
+
+.. _PRJ:DataModel:Build:
+
+Build
+=====
+
+.. todo::
+
+   **Data model: Build**
+
+   To be documented.
+
+
+.. _PRJ:DataModel:VHDLLibrary:
 
 VHDLLibrary
 ===========
 
+.. todo::
+
+   **Data model: VHDL Library**
+
+   To be documented.
+
+
+.. _PRJ:DataModel:VHDLSourceFile:
+
 VHDLSourceFile
 ==============
+
+.. todo::
+
+   **Data model: VHDL source file**
+
+   To be documented.
+
+
+.. _PRJ:DataModel:Testsuite:
 
 Testsuite
 =========
 
+.. todo::
+
+   **Data model: Testsuite**
+
+   To be documented.
+
+
+.. _PRJ:DataModel:Testcase:
+
 Testcase
 ========
+
+.. todo::
+
+   **Data model: Testcase**
+
+   To be documented.
 
 
 .. _PRJ:Procedure:

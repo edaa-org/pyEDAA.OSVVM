@@ -67,6 +67,92 @@ Use Cases
   * Merge reports.
 
 
+.. _USECASE:Project:
+
+OSVVM Project
+=============
+
+.. grid:: 2
+
+   .. grid-item::
+      :columns: 5
+
+      OSVVM describes it's projects using imperative TCL code in so called ``*.pro`` files. These contain lots of
+      compilation information like VHDL library names, used VHDL standard, compile order. On the other hand these files
+      also contain information about grouping testcases into testsuites as well as variants of a test by applying
+      top-level generics to a simulation.
+
+      pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ:Procedure>`, so OSVVM's ``*.pro`` files can be
+      executed and contained information are collected in a data model representing :ref:`builds <PRJ:DataModel:Build>`,
+      :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>`, :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>`,
+      :ref:`testsuites <PRJ:DataModel:Testsuite>`, and :ref:`testcases <PRJ:DataModel:Testcase>`.
+
+   .. grid-item::
+      :columns: 7
+
+      .. tab-set::
+
+         .. tab-item:: Usage
+            :sync: usage
+
+            .. code-block:: Python
+
+               from pathlib import Path
+               from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
+
+               processor = OsvvmProFileProcessor()
+               processor.LoadProFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
+
+               for libraryName, lib in processor.Context.Libraries.items():
+                 for file in lib.Files:
+                   ...
+
+               for testsuiteName, ts in processor.Context.Testsuites.items():
+                 for tc in ts.Testcases.values():
+                   ...
+
+         .. tab-item:: Data Model
+            :sync: datamodel
+            :selected:
+
+            .. mermaid::
+
+               graph TD;
+                 P[Project<br/>&quot;OSVVM&quot;]:::clsPrj-->B1[Build<br/>&quot;OsvvmLibraries&quot;]:::clsBld
+                 P   -->B2[Build<br/>&quot;RunAllTests&quot;]:::clsBld
+                 B1  -->Lib1[VHDLLibrary<br/>&quot;osvvm&quot;]:::clsLib
+                 B1  -->Lib2[VHDLLibrary<br/>&quot;osccm_common&quot;]:::clsLib
+
+                 Lib1-->F1[VHDLSourceFile<br/>&quot;file1.vhdl&quot;]:::clsFile
+                 Lib1-->F2[VHDLSourceFile<br/>&quot;file2.vhdl&quot;]:::clsFile
+                 Lib2-->F3[VHDLSourceFile<br/>&quot;file3.vhdl&quot;]:::clsFile
+                 Lib2-->F4[VHDLSourceFile<br/>&quot;file4.vhdl&quot;]:::clsFile
+
+                 B2  -->Lib4[VHDLLibrary<br/>&quot;osvvm_uart&quot;]:::clsLib
+                 Lib4-->F7[VHDLSourceFile<br/>&quot;file7.vhdl&quot;]:::clsFile
+                 Lib4-->F8[VHDLSourceFile<br/>&quot;file8.vhdl&quot;]:::clsFile
+                 B2  -->TS1[Testsuite<br/>&quot;UART&quot;]:::clsTS
+                 B2  -->TS2[Testsuite<br/>&quot;AXI4_Lite&quot;]:::clsTS
+                 TS1 -->TC1[Testcase<br/>&quot;SendGet&quot;]:::clsTC
+                 TS1 -->TC2[Testcase<br/>&quot;SetOption&quot;]:::clsTC
+                 TS2 -->TC3[Testcase<br/>&quot;ReadWrite&quot;]:::clsTC
+                 TS2 -->TC4[Testcase<br/>&quot;SetOption&quot;]:::clsTC
+
+                 classDef clsPrj  fill:#bf80ff
+                 classDef clsBld  fill:#9f9fdf
+                 classDef clsLib  fill:#ffdf80
+                 classDef clsFile fill:#d5ff80
+                 classDef clsTS   fill:#8080ff
+                 classDef clsTC   fill:#80ff80
+
+.. _USECASE:Reports:
+
+OSVVM Reports
+=============
+
+OSVVM provides multiple reports in YAML files.
+
+
 .. _NEWS:
 
 News
