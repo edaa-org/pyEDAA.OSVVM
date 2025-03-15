@@ -48,7 +48,7 @@ one parser that's aligned with OSVVM's data formats.
 **Quick Example**
 
 ```python
-from pyEDAA.OSVVM.Tcl import OsvvmProFileProcessor
+from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
 
 processor = OsvvmProFileProcessor()
 processor.LoadProFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
@@ -107,7 +107,7 @@ for testsuiteName, ts in processor.Context.Testsuites.items():
 
 ```python
 from pathlib import Path
-from pyEDAA.OSVVM.Tcl import OsvvmProFileProcessor
+from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
 
 def main() -> None:
   processor = OsvvmProFileProcessor()

@@ -28,7 +28,7 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Package installer for 'Parser and converter for OSVVM-specific data models and report formats'."""
+"""Package installer for 'Parser and converters for OSVVM-specific data models and report formats'."""
 from setuptools          import setup
 
 from pathlib             import Path
@@ -41,10 +41,10 @@ packageInformationFile = Path(f"{packageDirectory}/__init__.py")
 
 setup(**DescribePythonPackageHostedOnGitHub(
 	packageName=packageName,
-	description="Parser and converter for OSVVM-specific data models and report formats.",
+	description="Parser and converters for OSVVM-specific data models and report formats.",
 	gitHubNamespace=gitHubNamespace,
 	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
+	developmentStatus="beta",
 	pythonVersions=("3.12", "3.13"),
 	classifiers=list(DEFAULT_CLASSIFIERS) + [
 		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"

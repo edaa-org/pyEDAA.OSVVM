@@ -37,12 +37,35 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Tcl         import OsvvmProFileProcessor, getException
+from pyEDAA.OSVVM.Environment import Context, osvvmContext
+from pyEDAA.OSVVM.TCL         import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
 	print("Use: 'python -m unitest <testcase module>'")
 	exit(1)
+
+
+def BeginBuild(buildName: str) -> None:
+	try:
+		osvvmContext.BeginBuild(buildName)
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+def EndBuild() -> None:
+	try:
+		osvvmContext.EndBuild()
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+def throw():
+	ex = ValueError(f"Dummy exception")
+	osvvmContext.LastException = ex
+	raise ex
 
 
 class BasicProcedures(TestCase):
@@ -62,16 +85,51 @@ class BasicProcedures(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
+		self.assertIsNone(context.Build)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("project", buildName)
+		self.assertEqual("project", build.Name)
+		self.assertEqual(1, len(context.Builds))
 		self.assertEqual(4, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
-		vhdlLibrary = firstValue(context.Libraries)
+		vhdlLibrary = firstValue(build.VHDLLibraries)
+		vhdlFile = firstElement(vhdlLibrary.Files)
+
+		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
+
+	def test_Build_BuildName(self) -> None:
+		print()
+		processor = OsvvmProFileProcessor()
+
+		path = Path("tests/examples/simple/project.pro")
+
+		code = dedent(f"""\
+			build {path.as_posix()} [BuildName {{build}}]
+			""")
+
+		try:
+			processor.TCL.eval(code)
+		except TclError as ex:
+			raise getException(ex, processor.Context)
+
+		context: Context = processor.Context
+
+		self.assertIsNone(context.Build)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(context.Builds))
+		self.assertEqual(4, len(context.IncludedFiles))
+		self.assertEqual(path, firstElement(context.IncludedFiles))
+
+		vhdlLibrary = firstValue(build.VHDLLibraries)
 		vhdlFile = firstElement(vhdlLibrary.Files)
 
 		self.assertEqual(VHDLVersion.VHDL2019, vhdlFile.VHDLVersion)
@@ -79,24 +137,31 @@ class BasicProcedures(TestCase):
 	def test_Include(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		path = Path("tests/examples/simple/test.pro")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			include {path.as_posix()}
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
 		self.assertEqual(2, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
-		vhdlLibrary = firstValue(context.Libraries)
+		vhdlLibrary = firstValue(build.VHDLLibraries)
 		vhdlFile = firstElement(vhdlLibrary.Files)
 
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
@@ -104,21 +169,29 @@ class BasicProcedures(TestCase):
 	def test_Library(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
 		self.assertEqual("lib", libraryName)
 		self.assertEqual("lib", library.Name)
 		self.assertEqual(0, len(library.Files))
@@ -126,82 +199,111 @@ class BasicProcedures(TestCase):
 	def test_Analyze1(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			analyze {file1.as_posix()}
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		self.assertEqual("default", context.Library.Name)
-		self.assertEqual(context.Library, context.Libraries["default"])
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
 
-		library = context.Library
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertEqual(library, build.VHDLLibraries["default"])
+		self.assertIs(build, library.Build)
+		self.assertEqual("default", libraryName)
+		self.assertEqual("default", library.Name)
 		self.assertEqual(1, len(library.Files))
+
 		vhdlFile = library.Files[0]
+		self.assertIs(library, vhdlFile.VHDLLibrary)
 		self.assertEqual(file1, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
-		self.assertIs(library, vhdlFile.VHDLLibrary)
 
 	def test_Analyze2(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 		file2 = Path("tests/examples/simple/lib1_file2.vhdl")
+		files = (file1, file2)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			analyze {file1.as_posix()}
 			analyze {file2.as_posix()}
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		self.assertEqual("default", context.Library.Name)
-		self.assertEqual(context.Library, context.Libraries["default"])
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
 
-		library = context.Library
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(library, build.VHDLLibraries["default"])
+		self.assertIs(build, library.Build)
+		self.assertEqual("default", libraryName)
+		self.assertEqual("default", library.Name)
 		self.assertEqual(2, len(library.Files))
-		self.assertEqual(file1, library.Files[0].Path)
-		self.assertEqual(file2, library.Files[1].Path)
-		self.assertIs(library, library.Files[0].VHDLLibrary)
-		self.assertIs(library, library.Files[1].VHDLLibrary)
+
+		for i, file in enumerate(library.Files):
+			self.assertEqual(files[i], library.Files[i].Path)
+			self.assertIs(library, library.Files[i].VHDLLibrary)
 
 	def test_Library1_Analyze1(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib
 			analyze {file1.as_posix()}
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
+		self.assertIs(library, build.VHDLLibraries["lib"])
 		self.assertEqual("lib", libraryName)
 		self.assertEqual("lib", library.Name)
 
@@ -214,12 +316,15 @@ class BasicProcedures(TestCase):
 	def test_Library2_Analyze3(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1_1 = Path("tests/examples/simple/lib1_file1.vhdl")
 		file2_1 = Path("tests/examples/simple/lib2_file1.vhdl")
 		file1_2 = Path("tests/examples/simple/lib1_file2.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			library lib1
 			analyze {file1_1.as_posix()}
 
@@ -228,18 +333,24 @@ class BasicProcedures(TestCase):
 
 			library lib1
 			analyze {file1_2.as_posix()}
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(2, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(2, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
+		self.assertIs(library, build.VHDLLibraries["lib1"])
 		self.assertEqual("lib1", libraryName)
 		self.assertEqual("lib1", library.Name)
 
@@ -249,7 +360,8 @@ class BasicProcedures(TestCase):
 		self.assertIs(library, library.Files[0].VHDLLibrary)
 		self.assertIs(library, library.Files[1].VHDLLibrary)
 
-		library = context.Libraries["lib2"]
+		library = build.VHDLLibraries["lib2"]
+		self.assertIs(build, library.Build)
 		self.assertEqual("lib2", library.Name)
 		self.assertEqual(1, len(library.Files))
 		self.assertEqual(file2_1, library.Files[0].Path)
@@ -258,53 +370,69 @@ class BasicProcedures(TestCase):
 	def test_Simulate(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tb
 			simulate harness
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(0, len(context.Libraries))
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuite = firstValue(context.Testsuites)
+		testsuite = firstValue(build.Testsuites)
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("tb", testcase.Name)
 		self.assertEqual(0, len(testcase.Generics))
 
-
 	def test_Simulate_Generic(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tb
 			simulate harness [generic param value]
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(0, len(context.Libraries))
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuite = firstValue(context.Testsuites)
+		testsuite = firstValue(build.Testsuites)
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("tb", testcase.Name)
 		self.assertEqual(1, len(testcase.Generics))
+
 		genericValue = firstPair(testcase.Generics)
 		self.assertEqual("param", genericValue[0])
 		self.assertEqual("value", genericValue[1])
@@ -312,51 +440,66 @@ class BasicProcedures(TestCase):
 	def test_Testsuite(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestSuite ts
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuiteName, testsuite = firstPair(context.Testsuites)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
+
+		testsuiteName, testsuite = firstPair(build.Testsuites)
 		self.assertEqual("ts", testsuiteName)
 		self.assertEqual("ts", testsuite.Name)
-		self.assertEqual(testsuite, context.Testsuite)
 		self.assertEqual(0, len(testsuite.Testcases))
 
 	def test_TestName(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			TestName tn
+			EndBuild
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuiteName, testsuite = firstPair(context.Testsuites)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
+
+		testsuiteName, testsuite = firstPair(build.Testsuites)
 		self.assertEqual("default", testsuiteName)
 		self.assertEqual("default", testsuite.Name)
-		self.assertEqual(testsuite, context.Testsuite)
-
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcaseName, testcase = firstPair(testsuite.Testcases)
 		self.assertEqual("tn", testcaseName)
 		self.assertEqual("tn", testcase.Name)
-		self.assertEqual(testcase, context.TestCase)
 		self.assertEqual(0, len(testcase.Generics))
 
 	# def test_Simulate(self) -> None:
@@ -368,46 +511,53 @@ class BasicProcedures(TestCase):
 	# 		""")
 	#
 	# 	try:
-	# 		processor._tcl.eval(code)
+	# 		processor.TCL.eval(code)
 	# 	except TclError as ex:
 	# 		if str(ex) == "":
 	# 			ex = processor.Context.LastException
 	# 		raise ex
 	#
-	# 	context = processor.Context
+	# 	context: Context = processor.Context
 	#
 	# 	self.assertEqual(1, len(context.Libraries))
 
 	def test_RunTest(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
+		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
+		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 
 		code = dedent(f"""\
+			BeginBuild {{build}}
 			RunTest {file1.as_posix()} [generic param1 value1] [generic param2 value2]
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		library = firstValue(context.Libraries)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
+
+		library = firstValue(build.VHDLLibraries)
 		self.assertEqual("default", library.Name)
-
 		self.assertEqual(1, len(library.Files))
+
 		vhdlFile = firstItem(library.Files)
 		self.assertEqual(file1, vhdlFile.Path)
 
-		self.assertEqual(1, len(context.Testsuites))
 		testsuite = firstValue(context.Testsuites)
 		self.assertEqual("default", testsuite.Name)
-
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("lib1_file1", testcase.Name)
 		self.assertEqual(2, len(testcase.Generics))
@@ -431,11 +581,11 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
-		context = processor.Context
+		context: Context = processor.Context
 
 		self.assertIs(VHDLVersion.VHDL2019, context.VHDLVersion)
 
@@ -448,7 +598,7 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -478,7 +628,7 @@ class SetterGatter(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -506,7 +656,7 @@ class Helper(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -528,7 +678,7 @@ class Helper(TestCase):
 				""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)
 
@@ -546,14 +696,6 @@ class NoOperation(TestCase):
 	def test_Exception(self) -> None:
 		print()
 		processor = OsvvmProFileProcessor()
-
-		osvvmContext = processor.Context
-
-		def throw():
-			ex = ValueError(f"Dummy exception")
-			osvvmContext.LastException = ex
-			raise ex
-
 		processor.RegisterPythonFunctionAsTclProcedure(throw)
 
 		code = dedent(f"""\
@@ -562,7 +704,7 @@ class NoOperation(TestCase):
 
 		with self.assertRaises(ValueError) as ex:
 			try:
-				processor._tcl.eval(code)
+				processor.TCL.eval(code)
 			except TclError as e:
 				raise getException(e, processor.Context)
 
@@ -575,6 +717,6 @@ class NoOperation(TestCase):
 			""")
 
 		try:
-			processor._tcl.eval(code)
+			processor.TCL.eval(code)
 		except TclError as ex:
 			raise getException(ex, processor.Context)

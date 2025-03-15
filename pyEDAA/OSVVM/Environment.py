@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from typing  import Optional as Nullable, List, Dict, Mapping, Iterable
+from typing  import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic
 
 from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Decorators  import readonly, export
@@ -42,22 +42,64 @@ from pyEDAA.OSVVM          import OSVVMException
 __all__ = ["osvvmContext"]
 
 
+_ParentType = TypeVar("_ParentType", bound="Base")
+
+
 @export
-class Base(metaclass=ExtendedType):
+class Base(Generic[_ParentType], metaclass=ExtendedType):
+	_parent: Nullable[_ParentType]
+
+	def __init__(self, parent: Nullable[_ParentType] = None):
+		self._parent = parent
+
+	@readonly
+	def Parent(self) -> _ParentType:
+		return self._parent
+
+
+@export
+class Named(Base[_ParentType], Generic[_ParentType]):
+	_name:  str
+
+	def __init__(
+		self,
+		name:   str,
+		parent: Nullable[_ParentType] = None
+	) -> None:
+		super().__init__(parent)
+
+		if not isinstance(name, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		self._name = name
+
+	@readonly
+	def Name(self) -> str:
+		return self._name
+
+	def __repr__(self) -> str:
+		return f"{self.__class__.__name__}: {self._name}"
+
+
+@export
+class Option(metaclass=ExtendedType):
 	pass
 
 
 @export
-class SourceFile(Base):
+class SourceFile(Base[_ParentType], Generic[_ParentType]):
 	"""A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts."""
 
 	_path: Path
 
 	def __init__(
 		self,
-		path: Path
+		path:   Path,
+		parent: Nullable[Base] = None
 	) -> None:
-		super().__init__()
+		super().__init__(parent)
 
 		if not isinstance(path, Path):  # pragma: no cover
 			ex = TypeError(f"Parameter 'path' is not a Path.")
@@ -70,11 +112,13 @@ class SourceFile(Base):
 	def Path(self) -> Path:
 		return self._path
 
+	def __repr__(self) -> str:
+		return f"SourceFile: {self._path}"
+
 
 @export
-class VHDLSourceFile(SourceFile):
+class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	_vhdlVersion: VHDLVersion
-	_vhdlLibrary: Nullable["VHDLLibrary"]
 
 	def __init__(
 		self,
@@ -82,7 +126,15 @@ class VHDLSourceFile(SourceFile):
 		vhdlVersion: VHDLVersion = VHDLVersion.VHDL2008,
 		vhdlLibrary: Nullable["VHDLLibrary"] = None
 	):
-		super().__init__(path)
+		if vhdlLibrary is None:
+			super().__init__(path, None)
+		elif isinstance(vhdlLibrary, VHDLLibrary):
+			super().__init__(path, vhdlLibrary)
+			vhdlLibrary._files.append(self)
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'vhdlLibrary' is not a Library.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
+			raise ex
 
 		if not isinstance(vhdlVersion, VHDLVersion):  # pragma: no cover
 			ex = TypeError(f"Parameter 'vhdlVersion' is not a VHDLVersion.")
@@ -91,15 +143,9 @@ class VHDLSourceFile(SourceFile):
 
 		self._vhdlVersion = vhdlVersion
 
-		if vhdlLibrary is None:
-			self._vhdlLibrary = None
-		elif isinstance(vhdlLibrary, VHDLLibrary):
-			vhdlLibrary._files.append(self)
-			self._vhdlLibrary = vhdlLibrary
-		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlLibrary' is not a Library.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
-			raise ex
+	@readonly
+	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
+		return self._parent
 
 	@property
 	def VHDLVersion(self) -> VHDLVersion:
@@ -109,32 +155,46 @@ class VHDLSourceFile(SourceFile):
 	def VHDLVersion(self, value: VHDLVersion) -> None:
 		self._vhdlVersion = value
 
-	@readonly
-	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
-		return self._vhdlLibrary
-
+	def __repr__(self) -> str:
+		return f"VHDLSourceFile: {self._path}"
 
 @export
-class VHDLLibrary(Base):
+class VHDLLibrary(Named["Build"]):
 	"""A VHDL library collecting multiple VHDL files containing VHDL design units."""
 
-	_name: str
 	_files: List[VHDLSourceFile]
 
-	def __init__(self, name: str) -> None:
-		super().__init__()
-
-		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+	def __init__(
+		self,
+		name:      str,
+		vhdlFiles: Nullable[Iterable[VHDLSourceFile]] = None,
+		build:     Nullable["Build"] = None
+	) -> None:
+		if build is None:
+			super().__init__(name, None)
+		elif isinstance(build, Build):
+			super().__init__(name, build)
+			build._vhdlLibraries[name] = self
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
-		self._name = name
 		self._files = []
+		if vhdlFiles is None:
+			pass
+		elif isinstance(vhdlFiles, Iterable):
+			for vhdlFile in vhdlFiles:
+				vhdlFile._parent = self
+				self._files.append(vhdlFile)
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'vhdlFiles' is not an iterable of VHDLSourceFile.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFiles)}'.")
+			raise ex
 
 	@readonly
-	def Name(self) -> str:
-		return self._name
+	def Build(self) -> Nullable["Build"]:
+		return self._parent
 
 	@readonly
 	def Files(self) -> List[SourceFile]:
@@ -146,7 +206,7 @@ class VHDLLibrary(Base):
 			ex.add_note(f"Got type '{getFullyQualifiedName(file)}'.")
 			raise ex
 
-		file._vhdlLibrary = self
+		file._parent = self
 		self._files.append(file)
 
 	def __repr__(self) -> str:
@@ -154,11 +214,15 @@ class VHDLLibrary(Base):
 
 
 @export
-class GenericValue(Base):
+class GenericValue(Option):
 	_name:  str
 	_value: str
 
-	def __init__(self, name: str, value: str) -> None:
+	def __init__(
+		self,
+		name:   str,
+		value:  str
+	) -> None:
 		super().__init__()
 
 		if not isinstance(name, str):  # pragma: no cover
@@ -166,12 +230,13 @@ class GenericValue(Base):
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 
+		self._name = name
+
 		if not isinstance(value, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'value' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 			raise ex
 
-		self._name = name
 		self._value = value
 
 	@readonly
@@ -187,11 +252,9 @@ class GenericValue(Base):
 
 
 @export
-class Testcase(Base):
-	_name:         str
+class Testcase(Named["Testsuite"]):
 	_toplevelName: Nullable[str]
 	_generics:     Dict[str, str]
-	_testsuite:    Nullable["Testsuite"]
 
 	def __init__(
 		self,
@@ -200,14 +263,15 @@ class Testcase(Base):
 		generics:     Nullable[Iterable[GenericValue] | Mapping[str, str]] = None,
 		testsuite:    Nullable["Testsuite"] = None
 	) -> None:
-		super().__init__()
-
-		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+		if testsuite is None:
+			super().__init__(name, None)
+		elif isinstance(testsuite, Testsuite):
+			super().__init__(name, testsuite)
+			testsuite._testcases[name] = self
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
 			raise ex
-
-		self._name = name
 
 		if not (toplevelName is None or isinstance(toplevelName, str)):  # pragma: no cover
 			ex = TypeError(f"Parameter 'toplevelName' is not a string.")
@@ -219,30 +283,20 @@ class Testcase(Base):
 		self._generics = {}
 		if generics is None:
 			pass
-		elif isinstance(generics, list):
-			for item in generics:
-				self._generics[item._name] = item._value
-		elif isinstance(generics, dict):
+		elif isinstance(generics, Mapping):
 			for key, value in generics.items():
 				self._generics[key] = value
+		elif isinstance(generics, Iterable):
+			for item in generics:
+				self._generics[item._name] = item._value
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'generics' is not a list of GenericValue nor a dictionary of strings.")
+			ex = TypeError(f"Parameter 'generics' is not an iterable of GenericValue nor a dictionary of strings.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
 			raise ex
 
-		if testsuite is None:
-			self._vhdlLibrary = None
-		elif isinstance(testsuite, Testsuite):
-			testsuite._testcases[name] = self
-			self._testsuite = testsuite
-		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
-			raise ex
-
 	@readonly
-	def Name(self) -> str:
-		return self._name
+	def Testsuite(self) -> "Testsuite":
+		return self._parent
 
 	@readonly
 	def ToplevelName(self) -> str:
@@ -269,47 +323,49 @@ class Testcase(Base):
 		self._generics[genericValue._name] = genericValue._value
 
 	def __repr__(self) -> str:
-		return f"Testcase: {self._name} - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]"
+		generics = f" - [{', '.join([f'{n}={v}' for n,v in self._generics.items()])}]" if len(self._generics) > 0 else ""
+		return f"Testcase: {self._name}{generics}"
 
 
 @export
-class Testsuite(Base):
-	_name:      str
+class Testsuite(Named["Build"]):
 	_testcases: Dict[str, Testcase]
 
 	def __init__(
 		self,
 		name: str,
-		testcases: Nullable[Iterable[Testcase] | Mapping[str, Testcase]] = None
+		testcases: Nullable[Iterable[Testcase] | Mapping[str, Testcase]] = None,
+		build:     Nullable["Build"] = None
 	) -> None:
-		super().__init__()
-
-		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+		if build is None:
+			super().__init__(name, None)
+		elif isinstance(build, Build):
+			super().__init__(name, build)
+			build._testsuites[name] = self
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
-
-		self._name = name
 
 		self._testcases = {}
 		if testcases is None:
 			pass
-		elif isinstance(testcases, list):
-			for item in testcases:
-				item._testsuite = self
-				self._testcases[item._name] = item
-		elif isinstance(testcases, dict):
+		elif isinstance(testcases, Mapping):
 			for key, value in testcases.items():
-				value._testsuite = self
+				value._parent = self
 				self._testcases[key] = value
+		elif isinstance(testcases, Iterable):
+			for item in testcases:
+				item._parent = self
+				self._testcases[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testcases' is not a list of Testcase nor a mapping of Testcase.")
+			ex = TypeError(f"Parameter 'testcases' is not an iterable of Testcase nor a mapping of Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcases)}'.")
 			raise ex
 
 	@readonly
-	def Name(self) -> str:
-		return self._name
+	def Build(self) -> Nullable["Build"]:
+		return self._parent
 
 	@readonly
 	def Testcases(self) -> Dict[str, Testcase]:
@@ -321,12 +377,168 @@ class Testsuite(Base):
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcase)}'.")
 			raise ex
 
-		testcase._testsuite = self
+		testcase._parent = self
 		self._testcases[testcase._name] = testcase
 
 	def __repr__(self) -> str:
 		return f"Testsuite: {self._name}"
 
+
+@export
+class BuildName(Option):
+	_name: str
+
+	def __init__(
+		self,
+		name: str,
+	) -> None:
+		super().__init__()
+
+		if not isinstance(name, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		self._name = name
+
+	@readonly
+	def Name(self) -> str:
+		return self._name
+
+	def __repr__(self) -> str:
+		return f"BuildName: {self._name}"
+
+
+@export
+class Build(Named["Project"]):
+	_vhdlLibraries: Dict[str, VHDLLibrary]
+	_testsuites:    Dict[str, Testsuite]
+
+	def __init__(
+		self,
+		name:          str,
+		vhdlLibraries: Nullable[Iterable[VHDLLibrary] | Mapping[str, VHDLLibrary]] = None,
+		testsuites:    Nullable[Iterable[Testsuite] | Mapping[str, Testsuite]] = None,
+		project:       Nullable[Base] = None
+	) -> None:
+		if project is None:
+			super().__init__(name, None)
+		elif isinstance(project, Project):
+			super().__init__(name, project)
+			project._builds[name] = self
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'project' is not a Project.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(project)}'.")
+			raise ex
+
+		self._vhdlLibraries = {}
+		if vhdlLibraries is None:
+			pass
+		elif isinstance(vhdlLibraries, Mapping):
+			for key, value in vhdlLibraries.items():
+				value._parent = self
+				self._vhdlLibraries[key] = value
+		elif isinstance(vhdlLibraries, Iterable):
+			for item in vhdlLibraries:
+				item._parent = self
+				self._vhdlLibraries[item._name] = item
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'libraries' is not an iterable of VHDLLibrary nor a mapping of VHDLLibrary.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibraries)}'.")
+			raise ex
+
+		self._testsuites = {}
+		if testsuites is None:
+			pass
+		elif isinstance(testsuites, Mapping):
+			for key, value in testsuites.items():
+				value._parent = self
+				self._testsuites[key] = value
+		elif isinstance(testsuites, Iterable):
+			for item in testsuites:
+				item._parent = self
+				self._testsuites[item._name] = item
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'testsuites' is not an iterable of Testsuite nor a mapping of Testsuite.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(testsuites)}'.")
+			raise ex
+
+	@readonly
+	def Project(self) -> Nullable["Project"]:
+		return self._parent
+
+	@readonly
+	def VHDLLibraries(self) -> Dict[str, Testsuite]:
+		return self._vhdlLibraries
+
+	@readonly
+	def Testsuites(self) -> Dict[str, Testsuite]:
+		return self._testsuites
+
+	def AddVHDLLibrary(self, vhdlLibrary: VHDLLibrary) -> None:
+		if not isinstance(vhdlLibrary, VHDLLibrary):  # pragma: no cover
+			ex = TypeError(f"Parameter 'vhdlLibrary' is not a VHDLLibrary.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
+			raise ex
+
+		vhdlLibrary._parent = self
+		self._vhdlLibraries[vhdlLibrary._name] = vhdlLibrary
+
+	def AddTestsuite(self, testsuite: Testsuite) -> None:
+		if not isinstance(testsuite, Testsuite):  # pragma: no cover
+			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
+			raise ex
+
+		testsuite._parent = self
+		self._testsuites[testsuite._name] = testsuite
+
+	def __repr__(self) -> str:
+		return f"Build: {self._name}"
+
+
+@export
+class Project(Named[None]):
+	_builds: Dict[str, Build]
+
+	def __init__(
+		self,
+		name:   str,
+		builds: Nullable[Iterable[Build] | Mapping[str, Build]] = None
+	) -> None:
+		super().__init__(name, None)
+
+		self._builds = {}
+		if builds is None:
+			pass
+		elif isinstance(builds, Mapping):
+			for key, value in builds.items():
+				value._parent = self
+				self._builds[key] = value
+		elif isinstance(builds, Iterable):
+			for item in builds:
+				item._parent = self
+				self._builds[item._name] = item
+		else:  # pragma: no cover
+			ex = TypeError(f"Parameter 'builds' is not an iterable of Build nor a mapping of Build.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(builds)}'.")
+			raise ex
+
+	@readonly
+	def Builds(self) -> Dict[str, Build]:
+		return self._builds
+
+	def AddBuild(self, build: Build) -> None:
+		if not isinstance(build, Build):  # pragma: no cover
+			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
+			raise ex
+
+		build._parent = self
+		self._builds[build._name] = build
+
+	def __repr__(self) -> str:
+		return f"Project: {self._name}"
 
 @export
 class Context(Base):
@@ -340,13 +552,16 @@ class Context(Base):
 
 	_vhdlversion:      VHDLVersion
 
-	_libraries:        Dict[str, VHDLLibrary]
-	_library:          Nullable[VHDLLibrary]
+	_vhdlLibraries:    Dict[str, VHDLLibrary]
+	_vhdlLibrary:      Nullable[VHDLLibrary]
 
 	_testsuites:       Dict[str, Testsuite]
 	_testsuite:        Nullable[Testsuite]
 	_testcase:         Nullable[Testcase]
-	_options:          Dict[int, GenericValue]
+	_options:          Dict[int, Option]
+
+	_builds:           Dict[str, Build]
+	_build:            Nullable[Build]
 
 	def __init__(self) -> None:
 		super().__init__()
@@ -358,15 +573,18 @@ class Context(Base):
 		self._currentDirectory = self._workingDirectory
 		self._includedFiles =    []
 
-		self._vhdlversion = VHDLVersion.VHDL2008
+		self._vhdlversion =      VHDLVersion.VHDL2008
 
-		self._library =    None
-		self._libraries =  {}
+		self._vhdlLibrary =      None
+		self._vhdlLibraries =    {}
 
-		self._testcase =   None
-		self._testsuite =  None
-		self._testsuites = {}
-		self._options =    {}
+		self._testcase =         None
+		self._testsuite =        None
+		self._testsuites =       {}
+		self._options =          {}
+
+		self._build =            None
+		self._builds =           {}
 
 	def Clear(self) -> None:
 		self._processor =        None
@@ -376,15 +594,18 @@ class Context(Base):
 		self._currentDirectory = self._workingDirectory
 		self._includedFiles =    []
 
-		self._vhdlversion = VHDLVersion.VHDL2008
+		self._vhdlversion =      VHDLVersion.VHDL2008
 
-		self._library =    None
-		self._libraries =  {}
+		self._vhdlLibrary =      None
+		self._vhdlLibraries =    {}
 
-		self._testcase =   None
-		self._testsuite =  None
-		self._testsuites = {}
-		self._options =    {}
+		self._testcase =         None
+		self._testsuite =        None
+		self._testsuites =       {}
+		self._options =          {}
+
+		self._build =            None
+		self._builds =           {}
 
 	@readonly
 	def Processor(self):  # -> "Tk":
@@ -421,12 +642,12 @@ class Context(Base):
 		return self._includedFiles
 
 	@readonly
-	def Libraries(self) -> Dict[str, VHDLLibrary]:
-		return self._libraries
+	def VHDLLibraries(self) -> Dict[str, VHDLLibrary]:
+		return self._vhdlLibraries
 
 	@readonly
-	def Library(self) -> VHDLLibrary:
-		return self._library
+	def VHDLLibrary(self) -> VHDLLibrary:
+		return self._vhdlLibrary
 
 	@readonly
 	def Testsuites(self) -> Dict[str, Testsuite]:
@@ -439,6 +660,34 @@ class Context(Base):
 	@readonly
 	def TestCase(self) -> Testcase:
 		return self._testcase
+
+	@readonly
+	def Build(self) -> Build:
+		return self._build
+
+	@readonly
+	def Builds(self) -> Dict[str, Build]:
+		return self._builds
+
+	def BeginBuild(self, buildName: str):
+		if len(self._vhdlLibraries) > 0:
+			raise OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")
+		if len(self._testsuites) > 0:
+			raise OSVVMException(f"Testsuites have been created outside of an OSVVM build script.")
+
+		self._build = Build(buildName)
+		self._build._vhdlLibraries = self._vhdlLibraries
+		self._build._testsuites = self._testsuites
+
+		self._builds[buildName] = self._build
+
+	def EndBuild(self):
+		self._vhdlLibrary = None
+		self._vhdlLibraries = {}
+		self._testcase = None
+		self._testsuite = None
+		self._testsuites = {}
+		self._build = None
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
@@ -484,17 +733,17 @@ class Context(Base):
 
 	def SetLibrary(self, name: str):
 		try:
-			self._library = self._libraries[name]
+			self._vhdlLibrary = self._vhdlLibraries[name]
 		except KeyError:
-			self._library = VHDLLibrary(name)
-			self._libraries[name] = self._library
+			self._vhdlLibrary = VHDLLibrary(name, build=self._build)
+			self._vhdlLibraries[name] = self._vhdlLibrary
 
 	def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
-		if self._library is None:
+		if self._vhdlLibrary is None:
 			self.SetLibrary("default")
 
 		vhdlFile.VHDLVersion = self._vhdlversion
-		self._library.AddFile(vhdlFile)
+		self._vhdlLibrary.AddFile(vhdlFile)
 
 	def SetTestsuite(self, testsuiteName: str):
 		try:
@@ -522,11 +771,16 @@ class Context(Base):
 
 		return self._testcase
 
-	def AddOption(self, genericValue: GenericValue):
-		optionID = id(genericValue)
-		self._options[optionID] = genericValue
+	def AddOption(self, option: Option) -> int:
+		optionID = id(option)
+		self._options[optionID] = option
 
 		return optionID
 
 
 osvvmContext: Context = Context()
+"""
+Global OSVVM processing context.
+
+:type: Context
+"""
