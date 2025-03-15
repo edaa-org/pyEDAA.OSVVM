@@ -84,6 +84,11 @@ class Named(Base[_ParentType], Generic[_ParentType]):
 
 
 @export
+class Option(metaclass=ExtendedType):
+	pass
+
+
+@export
 class SourceFile(Base[_ParentType], Generic[_ParentType]):
 	"""A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts."""
 
@@ -209,16 +214,23 @@ class VHDLLibrary(Named["Build"]):
 
 
 @export
-class GenericValue(Named):
+class GenericValue(Option):
+	_name:  str
 	_value: str
 
 	def __init__(
 		self,
 		name:   str,
-		value:  str,
-		parent: Nullable[Base] = None
+		value:  str
 	) -> None:
-		super().__init__(name, parent)
+		super().__init__()
+
+		if not isinstance(name, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		self._name = name
 
 		if not isinstance(value, str):  # pragma: no cover
 			ex = TypeError(f"Parameter 'value' is not a string.")
@@ -226,6 +238,10 @@ class GenericValue(Named):
 			raise ex
 
 		self._value = value
+
+	@readonly
+	def Name(self) -> str:
+		return self._name
 
 	@readonly
 	def Value(self) -> str:
@@ -517,7 +533,7 @@ class Context(Base):
 	_testsuites:       Dict[str, Testsuite]
 	_testsuite:        Nullable[Testsuite]
 	_testcase:         Nullable[Testcase]
-	_options:          Dict[int, GenericValue]
+	_options:          Dict[int, Option]
 
 	_builds:           Dict[str, Build]
 	_build:            Nullable[Build]
@@ -714,9 +730,9 @@ class Context(Base):
 
 		return self._testcase
 
-	def AddOption(self, genericValue: GenericValue):
-		optionID = id(genericValue)
-		self._options[optionID] = genericValue
+	def AddOption(self, option: Option) -> int:
+		optionID = id(option)
+		self._options[optionID] = option
 
 		return optionID
 
