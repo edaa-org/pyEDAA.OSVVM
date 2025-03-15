@@ -28,18 +28,3 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Parser and converters for OSVVM-specific data models and report formats."""
-__author__ =    "Patrick Lehmann"
-__email__ =     "Paebbels@gmail.com"
-__copyright__ = "2025-2025, Patrick Lehmann"
-__license__ =   "Apache License, Version 2.0"
-__version__ =   "0.3.0"
-__keywords__ =  ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
-
-from pyTooling.Decorators import export
-from pyTooling.Exceptions import ExceptionBase
-
-
-@export
-class OSVVMException(ExceptionBase):
-	pass

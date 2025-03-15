@@ -40,7 +40,7 @@ from pyEDAA.OSVVM             import OSVVMException
 from pyEDAA.OSVVM.Environment import Context, osvvmContext
 from pyEDAA.OSVVM.Procedures  import noop
 from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
-from pyEDAA.OSVVM.Procedures  import build, include, library, analyze, simulate, generic
+from pyEDAA.OSVVM.Procedures  import build, BuildName, include, library, analyze, simulate, generic
 from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest
 from pyEDAA.OSVVM.Procedures  import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
 from pyEDAA.OSVVM.Procedures  import SetVHDLVersion, GetVHDLVersion
@@ -87,8 +87,9 @@ class TclEnvironment:
 	def EvaluateProFile(self, path: Path) -> None:
 		try:
 			self._tcl.evalfile(str(path))
-		except TclError as ex:
-			raise getException(ex, self._context)
+		except TclError as e:
+			ex = getException(e, self._context)
+			raise OSVVMException(f"Caught TclError while processing '{path}'.") from ex
 
 	def __setitem__(self, tclVariableName: str, value: Any) -> None:
 		self._tcl.setvar(tclVariableName, value)
@@ -191,6 +192,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 	def RegisterTclProcedures(self) -> None:
 		self.RegisterPythonFunctionAsTclProcedure(build)
+		self.RegisterPythonFunctionAsTclProcedure(BuildName)
 		self.RegisterPythonFunctionAsTclProcedure(include)
 		self.RegisterPythonFunctionAsTclProcedure(library)
 		self.RegisterPythonFunctionAsTclProcedure(analyze)
