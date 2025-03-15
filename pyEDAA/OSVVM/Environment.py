@@ -735,7 +735,7 @@ class Context(Base):
 		try:
 			self._vhdlLibrary = self._vhdlLibraries[name]
 		except KeyError:
-			self._vhdlLibrary = VHDLLibrary(name)
+			self._vhdlLibrary = VHDLLibrary(name, build=self._build)
 			self._vhdlLibraries[name] = self._vhdlLibrary
 
 	def AddVHDLFile(self, vhdlFile: VHDLSourceFile) -> None:
