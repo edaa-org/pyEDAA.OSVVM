@@ -670,6 +670,11 @@ class Context(Base):
 		return self._builds
 
 	def BeginBuild(self, buildName: str):
+		if len(self._vhdlLibraries) > 0:
+			raise OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")
+		if len(self._testsuites) > 0:
+			raise OSVVMException(f"Testsuites have been created outside of an OSVVM build script.")
+
 		self._build = Build(buildName)
 		self._build._vhdlLibraries = self._vhdlLibraries
 		self._build._testsuites = self._testsuites
