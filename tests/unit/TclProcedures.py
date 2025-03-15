@@ -155,10 +155,13 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
 		self.assertEqual(2, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
-		vhdlLibrary = firstValue(context.Libraries)
+		vhdlLibrary = firstValue(build.VHDLLibraries)
 		vhdlFile = firstElement(vhdlLibrary.Files)
 
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
@@ -182,7 +185,9 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		build = firstValue(context.Builds)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
 		self.assertEqual(1, len(build.VHDLLibraries))
 
 		libraryName, library = firstPair(build.VHDLLibraries)
@@ -212,7 +217,9 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		build = firstValue(context.Builds)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
 		self.assertEqual(1, len(build.VHDLLibraries))
 
 		libraryName, library = firstPair(build.VHDLLibraries)
@@ -251,7 +258,9 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		build = firstValue(context.Builds)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
 		self.assertEqual(1, len(build.VHDLLibraries))
 
 		libraryName, library = firstPair(build.VHDLLibraries)
@@ -287,9 +296,14 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
+		self.assertIs(library, build.VHDLLibraries["lib"])
 		self.assertEqual("lib", libraryName)
 		self.assertEqual("lib", library.Name)
 
@@ -329,9 +343,14 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(2, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(2, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
+		self.assertIs(library, build.VHDLLibraries["lib1"])
 		self.assertEqual("lib1", libraryName)
 		self.assertEqual("lib1", library.Name)
 
@@ -341,7 +360,8 @@ class BasicProcedures(TestCase):
 		self.assertIs(library, library.Files[0].VHDLLibrary)
 		self.assertIs(library, library.Files[1].VHDLLibrary)
 
-		library = context.Libraries["lib2"]
+		library = build.VHDLLibraries["lib2"]
+		self.assertIs(build, library.Build)
 		self.assertEqual("lib2", library.Name)
 		self.assertEqual(1, len(library.Files))
 		self.assertEqual(file2_1, library.Files[0].Path)
@@ -367,15 +387,18 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(0, len(context.Libraries))
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuite = firstValue(context.Testsuites)
+		testsuite = firstValue(build.Testsuites)
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("tb", testcase.Name)
 		self.assertEqual(0, len(testcase.Generics))
-
 
 	def test_Simulate_Generic(self) -> None:
 		print()
@@ -397,14 +420,19 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(0, len(context.Libraries))
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuite = firstValue(context.Testsuites)
+		testsuite = firstValue(build.Testsuites)
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("tb", testcase.Name)
 		self.assertEqual(1, len(testcase.Generics))
+
 		genericValue = firstPair(testcase.Generics)
 		self.assertEqual("param", genericValue[0])
 		self.assertEqual("value", genericValue[1])
@@ -428,11 +456,15 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuiteName, testsuite = firstPair(context.Testsuites)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
+
+		testsuiteName, testsuite = firstPair(build.Testsuites)
 		self.assertEqual("ts", testsuiteName)
 		self.assertEqual("ts", testsuite.Name)
-		self.assertEqual(testsuite, context.Testsuite)
 		self.assertEqual(0, len(testsuite.Testcases))
 
 	def test_TestName(self) -> None:
@@ -454,17 +486,20 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Testsuites))
-		testsuiteName, testsuite = firstPair(context.Testsuites)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(0, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
+
+		testsuiteName, testsuite = firstPair(build.Testsuites)
 		self.assertEqual("default", testsuiteName)
 		self.assertEqual("default", testsuite.Name)
-		self.assertEqual(testsuite, context.Testsuite)
-
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcaseName, testcase = firstPair(testsuite.Testcases)
 		self.assertEqual("tn", testcaseName)
 		self.assertEqual("tn", testcase.Name)
-		self.assertEqual(testcase, context.TestCase)
 		self.assertEqual(0, len(testcase.Generics))
 
 	# def test_Simulate(self) -> None:
@@ -506,19 +541,23 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		library = firstValue(context.Libraries)
-		self.assertEqual("default", library.Name)
+		buildName, build = firstPair(context.Builds)
+		self.assertEqual("build", buildName)
+		self.assertEqual("build", build.Name)
+		self.assertEqual(1, len(build.VHDLLibraries))
+		self.assertEqual(1, len(build.Testsuites))
 
+		library = firstValue(build.VHDLLibraries)
+		self.assertEqual("default", library.Name)
 		self.assertEqual(1, len(library.Files))
+
 		vhdlFile = firstItem(library.Files)
 		self.assertEqual(file1, vhdlFile.Path)
 
-		self.assertEqual(1, len(context.Testsuites))
 		testsuite = firstValue(context.Testsuites)
 		self.assertEqual("default", testsuite.Name)
-
 		self.assertEqual(1, len(testsuite.Testcases))
+
 		testcase = firstValue(testsuite.Testcases)
 		self.assertEqual("lib1_file1", testcase.Name)
 		self.assertEqual(2, len(testcase.Generics))
