@@ -182,9 +182,11 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		libraryName, library = firstPair(context.Libraries)
-		self.assertEqual(library, context.Library)
+		build = firstValue(context.Builds)
+		self.assertEqual(1, len(build.VHDLLibraries))
+
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(build, library.Build)
 		self.assertEqual("lib", libraryName)
 		self.assertEqual("lib", library.Name)
 		self.assertEqual(0, len(library.Files))
@@ -210,16 +212,20 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		self.assertEqual("default", context.Library.Name)
-		self.assertEqual(context.Library, context.Libraries["default"])
+		build = firstValue(context.Builds)
+		self.assertEqual(1, len(build.VHDLLibraries))
 
-		library = context.Library
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertEqual(library, build.VHDLLibraries["default"])
+		self.assertIs(build, library.Build)
+		self.assertEqual("default", libraryName)
+		self.assertEqual("default", library.Name)
 		self.assertEqual(1, len(library.Files))
+
 		vhdlFile = library.Files[0]
+		self.assertIs(library, vhdlFile.VHDLLibrary)
 		self.assertEqual(file1, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
-		self.assertIs(library, vhdlFile.VHDLLibrary)
 
 	def test_Analyze2(self) -> None:
 		print()
@@ -229,6 +235,7 @@ class BasicProcedures(TestCase):
 
 		file1 = Path("tests/examples/simple/lib1_file1.vhdl")
 		file2 = Path("tests/examples/simple/lib1_file2.vhdl")
+		files = (file1, file2)
 
 		code = dedent(f"""\
 			BeginBuild {{build}}
@@ -244,16 +251,19 @@ class BasicProcedures(TestCase):
 
 		context: Context = processor.Context
 
-		self.assertEqual(1, len(context.Libraries))
-		self.assertEqual("default", context.Library.Name)
-		self.assertEqual(context.Library, context.Libraries["default"])
+		build = firstValue(context.Builds)
+		self.assertEqual(1, len(build.VHDLLibraries))
 
-		library = context.Library
+		libraryName, library = firstPair(build.VHDLLibraries)
+		self.assertIs(library, build.VHDLLibraries["default"])
+		self.assertIs(build, library.Build)
+		self.assertEqual("default", libraryName)
+		self.assertEqual("default", library.Name)
 		self.assertEqual(2, len(library.Files))
-		self.assertEqual(file1, library.Files[0].Path)
-		self.assertEqual(file2, library.Files[1].Path)
-		self.assertIs(library, library.Files[0].VHDLLibrary)
-		self.assertIs(library, library.Files[1].VHDLLibrary)
+
+		for i, file in enumerate(library.Files):
+			self.assertEqual(files[i], library.Files[i].Path)
+			self.assertIs(library, library.Files[i].VHDLLibrary)
 
 	def test_Library1_Analyze1(self) -> None:
 		print()
