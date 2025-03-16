@@ -51,5 +51,8 @@ setup(**DescribePythonPackageHostedOnGitHub(
 	],
 	dataFiles={
 		packageName: ["py.typed"]
+	},
+	consoleScripts={
+		"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
 	}
 ))
