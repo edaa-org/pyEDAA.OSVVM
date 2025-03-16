@@ -708,6 +708,11 @@ class Context(Base):
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
 
+	def ToProject(self, projectName: str) -> Project:
+		project = Project(projectName, self._builds)
+
+		return project
+
 	def BeginBuild(self, buildName: str) -> Build:
 		if len(self._vhdlLibraries) > 0:
 			raise OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")

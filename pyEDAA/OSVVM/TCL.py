@@ -226,23 +226,23 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.EvaluateProFile(includeFile)
 
-	def LoadBuildFile(self, path: Path, buildName: Nullable[str] = None) -> Build:
+	def LoadBuildFile(self, buildFile: Path, buildName: Nullable[str] = None) -> Build:
 		if buildName is None:
-			buildName = path.stem
+			buildName = buildFile.stem
 
 		self._context.BeginBuild(buildName)
-		includeFile = self._context.IncludeFile(path)
+		includeFile = self._context.IncludeFile(buildFile)
 		self.EvaluateProFile(includeFile)
 
 		return self._context.EndBuild()
 
-	def LoadRegressionFile(self, path: Path, projectName: Nullable[str] = None) -> Project:
+	def LoadRegressionFile(self, regressionFile: Path, projectName: Nullable[str] = None) -> Project:
 		if projectName is None:
-			projectName = path.stem
+			projectName = regressionFile.stem
 
-		includeFile = self._context.IncludeFile(path)
+		self.EvaluateProFile(regressionFile)
 
-		self.EvaluateProFile(includeFile)
+		return self._context.ToProject(projectName)
 
 
 @export
