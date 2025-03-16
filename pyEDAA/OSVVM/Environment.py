@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from typing  import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic
+from typing import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator
 
 from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Decorators  import readonly, export
@@ -46,7 +46,7 @@ _ParentType = TypeVar("_ParentType", bound="Base")
 
 
 @export
-class Base(Generic[_ParentType], metaclass=ExtendedType):
+class Base(Generic[_ParentType], metaclass=ExtendedType, slots=True):
 	_parent: Nullable[_ParentType]
 
 	def __init__(self, parent: Nullable[_ParentType] = None):
@@ -84,7 +84,7 @@ class Named(Base[_ParentType], Generic[_ParentType]):
 
 
 @export
-class Option(metaclass=ExtendedType):
+class Option(metaclass=ExtendedType, slots=True):
 	pass
 
 
@@ -450,6 +450,7 @@ class BuildName(Option):
 
 @export
 class Build(Named["Project"]):
+	_includedFiles: List[Path]
 	_vhdlLibraries: Dict[str, VHDLLibrary]
 	_testsuites:    Dict[str, Testsuite]
 
@@ -470,6 +471,7 @@ class Build(Named["Project"]):
 			ex.add_note(f"Got type '{getFullyQualifiedName(project)}'.")
 			raise ex
 
+		self._includedFiles = []
 		self._vhdlLibraries = {}
 		if vhdlLibraries is None:
 			pass
@@ -507,7 +509,11 @@ class Build(Named["Project"]):
 		return self._parent
 
 	@readonly
-	def VHDLLibraries(self) -> Dict[str, Testsuite]:
+	def IncludedFiles(self) -> Generator[Path, None, None]:
+		return (file for file in self._includedFiles)
+
+	@readonly
+	def VHDLLibraries(self) -> Dict[str, VHDLLibrary]:
 		return self._vhdlLibraries
 
 	@readonly
@@ -566,6 +572,11 @@ class Project(Named[None]):
 	@readonly
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
+
+	@readonly
+	def IncludedFiles(self) -> Generator[Path, None, None]:
+		for build in self._builds.values():
+			yield from build.IncludedFiles
 
 	def AddBuild(self, build: Build) -> None:
 		if not isinstance(build, Build):  # pragma: no cover

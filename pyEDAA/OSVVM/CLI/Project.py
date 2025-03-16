@@ -1,6 +1,6 @@
 from argparse import Namespace
 from pathlib  import Path
-from typing   import List, Tuple, NoReturn, Type
+from typing   import NoReturn
 
 from pyTooling.Decorators                     import readonly
 from pyTooling.MetaClasses                    import ExtendedType
@@ -37,9 +37,9 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 
 			self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
 			self.WriteNormal(f"  Builds:           {len(project.Builds)}")
-			self.WriteNormal(f"  Processed files:  ???")  #{len(project.IncludedFiles)}")
+			self.WriteNormal(f"  Processed files:  {count(project.IncludedFiles)}")
 
-			if args.render is True:
+			if args.render == "all":
 				for build in project.Builds.values():
 					print(f"Build: {build.Name}")
 					for libraryName, lib in build.VHDLLibraries.items():
