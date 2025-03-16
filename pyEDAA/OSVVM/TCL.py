@@ -37,7 +37,7 @@ from pyTooling.Decorators     import readonly, export
 from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import Context, osvvmContext
+from pyEDAA.OSVVM.Environment import Context, osvvmContext, Build, Project
 from pyEDAA.OSVVM.Procedures  import noop, NoNullRangeWarning
 from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
 from pyEDAA.OSVVM.Procedures  import build, BuildName, include, library, analyze, simulate, generic
@@ -79,10 +79,14 @@ class TclEnvironment:
 		self._tcl.createcommand(tclProcedureName, pythonFunction)
 		self._procedures[tclProcedureName] = pythonFunction
 
-	def LoadProFile(self, path: Path) -> None:
-		includeFile = self._context.IncludeFile(path)
-
-		self.EvaluateProFile(includeFile)
+	def EvaluateTclCode(self, tclCode: str) -> None:
+		try:
+			self._tcl.eval(tclCode)
+		except TclError as e:
+			e = getException(e, self._context)
+			ex = OSVVMException(f"Caught TclError while evaluating TCL code.")
+			ex.add_note(tclCode)
+			raise ex from e
 
 	def EvaluateProFile(self, path: Path) -> None:
 		try:
@@ -216,6 +220,29 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.RegisterPythonFunctionAsTclProcedure(FindOsvvmSettingsDirectory)
 		self.RegisterPythonFunctionAsTclProcedure(CreateOsvvmScriptSettingsPkg)
+
+	def LoadIncludeFile(self, path: Path) -> None:
+		includeFile = self._context.IncludeFile(path)
+
+		self.EvaluateProFile(includeFile)
+
+	def LoadBuildFile(self, path: Path, buildName: Nullable[str] = None) -> Build:
+		if buildName is None:
+			buildName = path.stem
+
+		self._context.BeginBuild(buildName)
+		includeFile = self._context.IncludeFile(path)
+		self.EvaluateProFile(includeFile)
+
+		return self._context.EndBuild()
+
+	def LoadRegressionFile(self, path: Path, projectName: Nullable[str] = None) -> Project:
+		if projectName is None:
+			projectName = path.stem
+
+		includeFile = self._context.IncludeFile(path)
+
+		self.EvaluateProFile(includeFile)
 
 
 @export
