@@ -89,6 +89,15 @@ class Option(metaclass=ExtendedType):
 
 
 @export
+class NoNullRangeWarning(Option):
+	def __init__(self) -> None:
+		super().__init__()
+
+	def __repr__(self) -> str:
+		return "NoNullRangeWarning"
+
+
+@export
 class SourceFile(Base[_ParentType], Generic[_ParentType]):
 	"""A base-class describing any source file (VHDL, Verilog, ...) supported by OSVVM Scripts."""
 
@@ -118,13 +127,15 @@ class SourceFile(Base[_ParentType], Generic[_ParentType]):
 
 @export
 class VHDLSourceFile(SourceFile["VHDLLibrary"]):
-	_vhdlVersion: VHDLVersion
+	_vhdlVersion:        VHDLVersion
+	_noNullRangeWarning: Nullable[bool]
 
 	def __init__(
 		self,
 		path: Path,
-		vhdlVersion: VHDLVersion = VHDLVersion.VHDL2008,
-		vhdlLibrary: Nullable["VHDLLibrary"] = None
+		vhdlVersion:        VHDLVersion = VHDLVersion.VHDL2008,
+		vhdlLibrary:        Nullable["VHDLLibrary"] = None,
+		noNullRangeWarning: Nullable[bool] = None
 	):
 		if vhdlLibrary is None:
 			super().__init__(path, None)
@@ -143,6 +154,13 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 		self._vhdlVersion = vhdlVersion
 
+		if noNullRangeWarning is not None and not isinstance(noNullRangeWarning, bool):
+			ex = TypeError(f"Parameter 'noNullRangeWarning' is not a boolean.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(noNullRangeWarning)}'.")
+			raise ex
+
+		self._noNullRangeWarning = noNullRangeWarning
+
 	@readonly
 	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
 		return self._parent
@@ -155,8 +173,24 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	def VHDLVersion(self, value: VHDLVersion) -> None:
 		self._vhdlVersion = value
 
+	@property
+	def NoNullRangeWarning(self) -> bool:
+		return self._noNullRangeWarning
+
+	@NoNullRangeWarning.setter
+	def NoNullRangeWarning(self, value: bool) -> None:
+		if value is not None and not isinstance(value, bool):
+			ex = TypeError(f"Parameter 'value' is not a boolean.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+			raise ex
+
+		self._noNullRangeWarning = value
+
 	def __repr__(self) -> str:
-		return f"VHDLSourceFile: {self._path}"
+		options = ""
+		if self._noNullRangeWarning is not None:
+			options += f", NoNullRangeWarning"
+		return f"VHDLSourceFile: {self._path} ({self._vhdlVersion}{options})"
 
 @export
 class VHDLLibrary(Named["Build"]):

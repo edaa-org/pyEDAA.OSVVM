@@ -42,7 +42,8 @@ from pyTooling.Decorators     import export
 from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue, BuildName as OSVVM_BuildName
+from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
+from pyEDAA.OSVVM.Environment import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
 @export
@@ -202,10 +203,40 @@ def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 
 
 @export
-def analyze(file: str) -> None:
+def NoNullRangeWarning() -> int:
+	try:
+		option = OSVVM_NoNullRangeWarning()
+		optionID = osvvmContext.AddOption(option)
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+	return optionID
+
+
+@export
+def analyze(file: str, *options: int) -> None:
 	try:
 		file = Path(file)
 		fullPath = (osvvmContext._currentDirectory / file).resolve()
+
+		noNullRangeWarning = None
+		for optionID in options:
+			try:
+				option = osvvmContext._options[int(optionID)]
+			except KeyError as e:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+				ex.__cause__ = e
+				osvvmContext.LastException = ex
+				raise ex
+
+			if isinstance(option, OSVVM_NoNullRangeWarning):
+				noNullRangeWarning = True
+			else:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} is not a NoNullRangeWarning.")
+				ex.__cause__ = TypeError()
+				osvvmContext.LastException = ex
+				raise ex
 
 		if not fullPath.exists():  # pragma: no cover
 			ex = OSVVMException(f"Path '{fullPath}' can't be analyzed.")
