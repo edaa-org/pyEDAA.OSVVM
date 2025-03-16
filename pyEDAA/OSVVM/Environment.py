@@ -171,6 +171,11 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 	@VHDLVersion.setter
 	def VHDLVersion(self, value: VHDLVersion) -> None:
+		if not isinstance(value, VHDLVersion):
+			ex = TypeError(f"Parameter 'value' is not a VHDLVersion.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+			raise ex
+
 		self._vhdlVersion = value
 
 	@property
@@ -703,25 +708,32 @@ class Context(Base):
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
 
-	def BeginBuild(self, buildName: str):
+	def BeginBuild(self, buildName: str) -> Build:
 		if len(self._vhdlLibraries) > 0:
 			raise OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")
 		if len(self._testsuites) > 0:
 			raise OSVVMException(f"Testsuites have been created outside of an OSVVM build script.")
 
-		self._build = Build(buildName)
-		self._build._vhdlLibraries = self._vhdlLibraries
-		self._build._testsuites = self._testsuites
+		build = Build(buildName)
+		build._vhdlLibraries = self._vhdlLibraries
+		build._testsuites = self._testsuites
 
-		self._builds[buildName] = self._build
+		self._build = build
+		self._builds[buildName] = build
 
-	def EndBuild(self):
+		return build
+
+	def EndBuild(self) -> Build:
+		build = self._build
+
 		self._vhdlLibrary = None
 		self._vhdlLibraries = {}
 		self._testcase = None
 		self._testsuite = None
 		self._testsuites = {}
 		self._build = None
+
+		return build
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
