@@ -58,7 +58,7 @@ def BuildName(name: str) -> int:
 	return optionID
 
 @export
-def build(file: str, *options: Tuple[int]) -> None:
+def build(file: str, *options: int) -> None:
 	"""
 	This function implements the behavior of OSVVM's ``build`` procedure.
 
@@ -245,7 +245,10 @@ def analyze(file: str, *options: int) -> None:
 			raise ex
 
 		if fullPath.suffix in (".vhd", ".vhdl"):
-			vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
+			vhdlFile = VHDLSourceFile(
+				fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True),
+				noNullRangeWarning=noNullRangeWarning
+			)
 			osvvmContext.AddVHDLFile(vhdlFile)
 		else:  # pragma: no cover
 			ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
@@ -258,7 +261,7 @@ def analyze(file: str, *options: int) -> None:
 
 
 @export
-def simulate(toplevelName: str, *options: Tuple[int]) -> None:
+def simulate(toplevelName: str, *options: int) -> None:
 	try:
 		testcase = osvvmContext.SetTestcaseToplevel(toplevelName)
 		for optionID in options:
@@ -315,7 +318,7 @@ def TestName(name: str) -> None:
 
 
 @export
-def RunTest(file: str, *options: Tuple[int]) -> None:
+def RunTest(file: str, *options: int) -> None:
 	try:
 		file = Path(file)
 		testName = file.stem
