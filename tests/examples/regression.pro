@@ -1,3 +1,2 @@
-
-build project.pro
-build test.pro
+build simple/project.pro
+build simple/test.pro
