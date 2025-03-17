@@ -594,6 +594,7 @@ class Project(Named[None]):
 class Context(Base):
 	# _tcl:              TclEnvironment
 
+	_processor:        "OsvvmProFileProcessor"
 	_lastException:    Exception
 
 	_workingDirectory: Path
