@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from typing  import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic
+from typing import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator
 
 from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Decorators  import readonly, export
@@ -46,7 +46,7 @@ _ParentType = TypeVar("_ParentType", bound="Base")
 
 
 @export
-class Base(Generic[_ParentType], metaclass=ExtendedType):
+class Base(Generic[_ParentType], metaclass=ExtendedType, slots=True):
 	_parent: Nullable[_ParentType]
 
 	def __init__(self, parent: Nullable[_ParentType] = None):
@@ -84,8 +84,17 @@ class Named(Base[_ParentType], Generic[_ParentType]):
 
 
 @export
-class Option(metaclass=ExtendedType):
+class Option(metaclass=ExtendedType, slots=True):
 	pass
+
+
+@export
+class NoNullRangeWarning(Option):
+	def __init__(self) -> None:
+		super().__init__()
+
+	def __repr__(self) -> str:
+		return "NoNullRangeWarning"
 
 
 @export
@@ -118,13 +127,15 @@ class SourceFile(Base[_ParentType], Generic[_ParentType]):
 
 @export
 class VHDLSourceFile(SourceFile["VHDLLibrary"]):
-	_vhdlVersion: VHDLVersion
+	_vhdlVersion:        VHDLVersion
+	_noNullRangeWarning: Nullable[bool]
 
 	def __init__(
 		self,
 		path: Path,
-		vhdlVersion: VHDLVersion = VHDLVersion.VHDL2008,
-		vhdlLibrary: Nullable["VHDLLibrary"] = None
+		vhdlVersion:        VHDLVersion = VHDLVersion.VHDL2008,
+		vhdlLibrary:        Nullable["VHDLLibrary"] = None,
+		noNullRangeWarning: Nullable[bool] = None
 	):
 		if vhdlLibrary is None:
 			super().__init__(path, None)
@@ -143,6 +154,13 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 		self._vhdlVersion = vhdlVersion
 
+		if noNullRangeWarning is not None and not isinstance(noNullRangeWarning, bool):
+			ex = TypeError(f"Parameter 'noNullRangeWarning' is not a boolean.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(noNullRangeWarning)}'.")
+			raise ex
+
+		self._noNullRangeWarning = noNullRangeWarning
+
 	@readonly
 	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
 		return self._parent
@@ -153,10 +171,31 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 	@VHDLVersion.setter
 	def VHDLVersion(self, value: VHDLVersion) -> None:
+		if not isinstance(value, VHDLVersion):
+			ex = TypeError(f"Parameter 'value' is not a VHDLVersion.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+			raise ex
+
 		self._vhdlVersion = value
 
+	@property
+	def NoNullRangeWarning(self) -> bool:
+		return self._noNullRangeWarning
+
+	@NoNullRangeWarning.setter
+	def NoNullRangeWarning(self, value: bool) -> None:
+		if value is not None and not isinstance(value, bool):
+			ex = TypeError(f"Parameter 'value' is not a boolean.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+			raise ex
+
+		self._noNullRangeWarning = value
+
 	def __repr__(self) -> str:
-		return f"VHDLSourceFile: {self._path}"
+		options = ""
+		if self._noNullRangeWarning is not None:
+			options += f", NoNullRangeWarning"
+		return f"VHDLSourceFile: {self._path} ({self._vhdlVersion}{options})"
 
 @export
 class VHDLLibrary(Named["Build"]):
@@ -411,6 +450,7 @@ class BuildName(Option):
 
 @export
 class Build(Named["Project"]):
+	_includedFiles: List[Path]
 	_vhdlLibraries: Dict[str, VHDLLibrary]
 	_testsuites:    Dict[str, Testsuite]
 
@@ -431,6 +471,7 @@ class Build(Named["Project"]):
 			ex.add_note(f"Got type '{getFullyQualifiedName(project)}'.")
 			raise ex
 
+		self._includedFiles = []
 		self._vhdlLibraries = {}
 		if vhdlLibraries is None:
 			pass
@@ -468,7 +509,11 @@ class Build(Named["Project"]):
 		return self._parent
 
 	@readonly
-	def VHDLLibraries(self) -> Dict[str, Testsuite]:
+	def IncludedFiles(self) -> Generator[Path, None, None]:
+		return (file for file in self._includedFiles)
+
+	@readonly
+	def VHDLLibraries(self) -> Dict[str, VHDLLibrary]:
 		return self._vhdlLibraries
 
 	@readonly
@@ -528,6 +573,11 @@ class Project(Named[None]):
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
 
+	@readonly
+	def IncludedFiles(self) -> Generator[Path, None, None]:
+		for build in self._builds.values():
+			yield from build.IncludedFiles
+
 	def AddBuild(self, build: Build) -> None:
 		if not isinstance(build, Build):  # pragma: no cover
 			ex = TypeError(f"Parameter 'build' is not a Build.")
@@ -544,6 +594,7 @@ class Project(Named[None]):
 class Context(Base):
 	# _tcl:              TclEnvironment
 
+	_processor:        "OsvvmProFileProcessor"
 	_lastException:    Exception
 
 	_workingDirectory: Path
@@ -669,25 +720,37 @@ class Context(Base):
 	def Builds(self) -> Dict[str, Build]:
 		return self._builds
 
-	def BeginBuild(self, buildName: str):
+	def ToProject(self, projectName: str) -> Project:
+		project = Project(projectName, self._builds)
+
+		return project
+
+	def BeginBuild(self, buildName: str) -> Build:
 		if len(self._vhdlLibraries) > 0:
 			raise OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")
 		if len(self._testsuites) > 0:
 			raise OSVVMException(f"Testsuites have been created outside of an OSVVM build script.")
 
-		self._build = Build(buildName)
-		self._build._vhdlLibraries = self._vhdlLibraries
-		self._build._testsuites = self._testsuites
+		build = Build(buildName)
+		build._vhdlLibraries = self._vhdlLibraries
+		build._testsuites = self._testsuites
 
-		self._builds[buildName] = self._build
+		self._build = build
+		self._builds[buildName] = build
 
-	def EndBuild(self):
+		return build
+
+	def EndBuild(self) -> Build:
+		build = self._build
+
 		self._vhdlLibrary = None
 		self._vhdlLibraries = {}
 		self._testcase = None
 		self._testsuite = None
 		self._testsuites = {}
 		self._build = None
+
+		return build
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover

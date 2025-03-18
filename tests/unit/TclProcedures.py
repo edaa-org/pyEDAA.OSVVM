@@ -96,7 +96,7 @@ class BasicProcedures(TestCase):
 		self.assertEqual("project", buildName)
 		self.assertEqual("project", build.Name)
 		self.assertEqual(1, len(context.Builds))
-		self.assertEqual(4, len(context.IncludedFiles))
+		self.assertEqual(2, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
 		vhdlLibrary = firstValue(build.VHDLLibraries)
@@ -126,7 +126,7 @@ class BasicProcedures(TestCase):
 		self.assertEqual("build", buildName)
 		self.assertEqual("build", build.Name)
 		self.assertEqual(1, len(context.Builds))
-		self.assertEqual(4, len(context.IncludedFiles))
+		self.assertEqual(2, len(context.IncludedFiles))
 		self.assertEqual(path, firstElement(context.IncludedFiles))
 
 		vhdlLibrary = firstValue(build.VHDLLibraries)

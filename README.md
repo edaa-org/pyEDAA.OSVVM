@@ -48,18 +48,22 @@ one parser that's aligned with OSVVM's data formats.
 **Quick Example**
 
 ```python
+from pathlib import Path
 from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
 
 processor = OsvvmProFileProcessor()
-processor.LoadProFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
+processor.LoadBuildFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
+processor.LoadBuildFile(Path("OSVVM/OSVVMLibraries/RunAllTests.pro"))
 
-for libraryName, lib in processor.Context.Libraries.items():
-  for file in lib.Files:
-    ...
+project = processor.Context.ToProject("OsvvmLibraries")
+for buildName, build in project.Builds.items():
+  for libraryName, lib in build.Libraries.items():
+    for file in lib.Files:
+      ...
 
-for testsuiteName, ts in processor.Context.Testsuites.items():
-  for tc in ts.Testcases.values():
-    ...
+  for testsuiteName, ts in build.Testsuites.items():
+    for tc in ts.Testcases.values():
+      ...
 ```
 
 ## Testsuite Summary Reports

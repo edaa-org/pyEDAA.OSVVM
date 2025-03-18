@@ -55,6 +55,7 @@ class Instantiate(TestCase):
 		self.assertIsNone(vhdlFile.VHDLLibrary)
 		self.assertEqual(path, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
+		self.assertIsNone(vhdlFile.NoNullRangeWarning)
 
 	def test_VHDLSourceFile_Library(self) -> None:
 		library = VHDLLibrary("library")
@@ -66,7 +67,7 @@ class Instantiate(TestCase):
 		self.assertIs(library, vhdlFile.VHDLLibrary)
 		self.assertEqual(path, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
-		self.assertEqual(f"VHDLSourceFile: source.vhdl", repr(vhdlFile))
+		self.assertEqual(f"VHDLSourceFile: source.vhdl (VHDL'08)", repr(vhdlFile))
 
 	def test_Library(self) -> None:
 		library = VHDLLibrary("library")

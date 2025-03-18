@@ -37,8 +37,8 @@ from pyTooling.Decorators     import readonly, export
 from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import Context, osvvmContext
-from pyEDAA.OSVVM.Procedures  import noop
+from pyEDAA.OSVVM.Environment import Context, osvvmContext, Build, Project
+from pyEDAA.OSVVM.Procedures  import noop, NoNullRangeWarning
 from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
 from pyEDAA.OSVVM.Procedures  import build, BuildName, include, library, analyze, simulate, generic
 from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest
@@ -79,10 +79,14 @@ class TclEnvironment:
 		self._tcl.createcommand(tclProcedureName, pythonFunction)
 		self._procedures[tclProcedureName] = pythonFunction
 
-	def LoadProFile(self, path: Path) -> None:
-		includeFile = self._context.IncludeFile(path)
-
-		self.EvaluateProFile(includeFile)
+	def EvaluateTclCode(self, tclCode: str) -> None:
+		try:
+			self._tcl.eval(tclCode)
+		except TclError as e:
+			e = getException(e, self._context)
+			ex = OSVVMException(f"Caught TclError while evaluating TCL code.")
+			ex.add_note(tclCode)
+			raise ex from e
 
 	def EvaluateProFile(self, path: Path) -> None:
 		try:
@@ -192,12 +196,14 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 	def RegisterTclProcedures(self) -> None:
 		self.RegisterPythonFunctionAsTclProcedure(build)
-		self.RegisterPythonFunctionAsTclProcedure(BuildName)
 		self.RegisterPythonFunctionAsTclProcedure(include)
 		self.RegisterPythonFunctionAsTclProcedure(library)
 		self.RegisterPythonFunctionAsTclProcedure(analyze)
 		self.RegisterPythonFunctionAsTclProcedure(simulate)
 		self.RegisterPythonFunctionAsTclProcedure(generic)
+
+		self.RegisterPythonFunctionAsTclProcedure(BuildName)
+		self.RegisterPythonFunctionAsTclProcedure(NoNullRangeWarning)
 
 		self.RegisterPythonFunctionAsTclProcedure(TestSuite)
 		self.RegisterPythonFunctionAsTclProcedure(TestName)
@@ -214,6 +220,29 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.RegisterPythonFunctionAsTclProcedure(FindOsvvmSettingsDirectory)
 		self.RegisterPythonFunctionAsTclProcedure(CreateOsvvmScriptSettingsPkg)
+
+	def LoadIncludeFile(self, path: Path) -> None:
+		includeFile = self._context.IncludeFile(path)
+
+		self.EvaluateProFile(includeFile)
+
+	def LoadBuildFile(self, buildFile: Path, buildName: Nullable[str] = None) -> Build:
+		if buildName is None:
+			buildName = buildFile.stem
+
+		self._context.BeginBuild(buildName)
+		includeFile = self._context.IncludeFile(buildFile)
+		self.EvaluateProFile(includeFile)
+
+		return self._context.EndBuild()
+
+	def LoadRegressionFile(self, regressionFile: Path, projectName: Nullable[str] = None) -> Project:
+		if projectName is None:
+			projectName = regressionFile.stem
+
+		self.EvaluateProFile(regressionFile)
+
+		return self._context.ToProject(projectName)
 
 
 @export

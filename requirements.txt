@@ -1,2 +1,2 @@
-pyTooling ~= 8.2
+pyTooling ~= 8.3
 pyVHDLModel ~= 0.31

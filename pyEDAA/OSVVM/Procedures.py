@@ -42,7 +42,8 @@ from pyTooling.Decorators     import export
 from pyVHDLModel              import VHDLVersion
 
 from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue, BuildName as OSVVM_BuildName
+from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
+from pyEDAA.OSVVM.Environment import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
 @export
@@ -57,7 +58,7 @@ def BuildName(name: str) -> int:
 	return optionID
 
 @export
-def build(file: str, *options: Tuple[int]) -> None:
+def build(file: str, *options: int) -> None:
 	"""
 	This function implements the behavior of OSVVM's ``build`` procedure.
 
@@ -202,10 +203,40 @@ def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 
 
 @export
-def analyze(file: str) -> None:
+def NoNullRangeWarning() -> int:
+	try:
+		option = OSVVM_NoNullRangeWarning()
+		optionID = osvvmContext.AddOption(option)
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+	return optionID
+
+
+@export
+def analyze(file: str, *options: int) -> None:
 	try:
 		file = Path(file)
 		fullPath = (osvvmContext._currentDirectory / file).resolve()
+
+		noNullRangeWarning = None
+		for optionID in options:
+			try:
+				option = osvvmContext._options[int(optionID)]
+			except KeyError as e:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+				ex.__cause__ = e
+				osvvmContext.LastException = ex
+				raise ex
+
+			if isinstance(option, OSVVM_NoNullRangeWarning):
+				noNullRangeWarning = True
+			else:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} is not a NoNullRangeWarning.")
+				ex.__cause__ = TypeError()
+				osvvmContext.LastException = ex
+				raise ex
 
 		if not fullPath.exists():  # pragma: no cover
 			ex = OSVVMException(f"Path '{fullPath}' can't be analyzed.")
@@ -214,7 +245,10 @@ def analyze(file: str) -> None:
 			raise ex
 
 		if fullPath.suffix in (".vhd", ".vhdl"):
-			vhdlFile = VHDLSourceFile(fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True))
+			vhdlFile = VHDLSourceFile(
+				fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True),
+				noNullRangeWarning=noNullRangeWarning
+			)
 			osvvmContext.AddVHDLFile(vhdlFile)
 		else:  # pragma: no cover
 			ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
@@ -227,7 +261,7 @@ def analyze(file: str) -> None:
 
 
 @export
-def simulate(toplevelName: str, *options: Tuple[int]) -> None:
+def simulate(toplevelName: str, *options: int) -> None:
 	try:
 		testcase = osvvmContext.SetTestcaseToplevel(toplevelName)
 		for optionID in options:
@@ -284,7 +318,7 @@ def TestName(name: str) -> None:
 
 
 @export
-def RunTest(file: str, *options: Tuple[int]) -> None:
+def RunTest(file: str, *options: int) -> None:
 	try:
 		file = Path(file)
 		testName = file.stem
