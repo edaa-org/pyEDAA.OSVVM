@@ -32,12 +32,12 @@
 from pathlib  import Path
 from unittest import TestCase as TestCase
 
-from pyTooling.Common import firstPair
-from pyVHDLModel      import VHDLVersion
+from pyTooling.Common     import firstPair
+from pyVHDLModel          import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import VHDLSourceFile, VHDLLibrary
-from pyEDAA.OSVVM.Environment import GenericValue, Testcase, Testsuite
-from pyEDAA.OSVVM.Environment import Context, Project, Build
+from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary
+from pyEDAA.OSVVM.Project import GenericValue, Testcase, Testsuite
+from pyEDAA.OSVVM.Project import Context, Project, Build
 
 
 if __name__ == "__main__": # pragma: no cover

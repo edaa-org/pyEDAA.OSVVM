@@ -36,14 +36,14 @@ calls within TCL code get "redirected" to these Python functions. Each function 
 :data:`~pyEDAA.OSVVM.Environment.osvvmContext` to preserve its state or modify the context.
 """
 from pathlib import Path
-from typing  import Optional as Nullable, Tuple
+from typing  import Optional as Nullable
 
-from pyTooling.Decorators     import export
-from pyVHDLModel              import VHDLVersion
+from pyTooling.Decorators  import export
+from pyVHDLModel           import VHDLVersion
 
-from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import osvvmContext, VHDLSourceFile, GenericValue
-from pyEDAA.OSVVM.Environment import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
+from pyEDAA.OSVVM          import OSVVMException
+from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue
+from pyEDAA.OSVVM.Project  import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
 @export

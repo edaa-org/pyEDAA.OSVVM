@@ -66,11 +66,11 @@ OSVVM Project
    .. grid-item::
       :columns: 5
 
-      OSVVM describes its projects using imperative TCL code in so called ``*.pro`` files. These contain lots of
-      information like VHDL library names, used VHDL standard, or compile order. Besides compilation information, these
-      files also contain information about grouping testcases into testsuites as well as variants of a test by applying
-      top-level generics to a simulation. In addition various tool options can be enabled and disabled, e.g. code
-      coverage collection. These options can be set globally, locally or per item.
+      OSVVM describes its :ref:`projects <PRJ>`__ using imperative TCL code in so called ``*.pro`` files. These contain
+      lots of information like VHDL library names, used VHDL standard, or compile order. Besides compilation
+      information, these files also contain information about grouping testcases into testsuites as well as variants of
+      a test by applying top-level generics to a simulation. In addition various tool options can be enabled and
+      disabled, e.g. code coverage collection. These options can be set globally, locally or per item.
 
       pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ:Procedure>`, so OSVVM's ``*.pro`` files can be
       executed and contained information is collected in a data model representing :ref:`builds <PRJ:DataModel:Build>`,

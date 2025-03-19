@@ -37,8 +37,8 @@ from unittest import TestCase as TestCase
 from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
 from pyVHDLModel      import VHDLVersion
 
-from pyEDAA.OSVVM.Environment import Context, osvvmContext
-from pyEDAA.OSVVM.TCL         import OsvvmProFileProcessor, getException
+from pyEDAA.OSVVM.Project     import Context, osvvmContext
+from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor, getException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -70,7 +70,7 @@ def throw():
 
 class BasicProcedures(TestCase):
 	def setUp(self):
-		from pyEDAA.OSVVM.Environment import osvvmContext
+		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
 
@@ -568,7 +568,7 @@ class BasicProcedures(TestCase):
 
 class SetterGatter(TestCase):
 	def setUp(self):
-		from pyEDAA.OSVVM.Environment import osvvmContext
+		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
 
@@ -639,7 +639,7 @@ class SetterGatter(TestCase):
 
 class Helper(TestCase):
 	def setUp(self):
-		from pyEDAA.OSVVM.Environment import osvvmContext
+		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
 
@@ -689,7 +689,7 @@ class Helper(TestCase):
 
 class NoOperation(TestCase):
 	def setUp(self):
-		from pyEDAA.OSVVM.Environment import osvvmContext
+		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
 

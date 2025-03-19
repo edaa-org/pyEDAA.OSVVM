@@ -36,15 +36,15 @@ from typing   import Any, Dict, Callable, Optional as Nullable
 from pyTooling.Decorators     import readonly, export
 from pyVHDLModel              import VHDLVersion
 
-from pyEDAA.OSVVM             import OSVVMException
-from pyEDAA.OSVVM.Environment import Context, osvvmContext, Build, Project
-from pyEDAA.OSVVM.Procedures  import noop, NoNullRangeWarning
-from pyEDAA.OSVVM.Procedures  import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
-from pyEDAA.OSVVM.Procedures  import build, BuildName, include, library, analyze, simulate, generic
-from pyEDAA.OSVVM.Procedures  import TestSuite, TestName, RunTest
-from pyEDAA.OSVVM.Procedures  import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
-from pyEDAA.OSVVM.Procedures  import SetVHDLVersion, GetVHDLVersion
-from pyEDAA.OSVVM.Procedures  import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
+from pyEDAA.OSVVM                    import OSVVMException
+from pyEDAA.OSVVM.Project            import Context, osvvmContext, Build, Project
+from pyEDAA.OSVVM.Project.Procedures import noop, NoNullRangeWarning
+from pyEDAA.OSVVM.Project.Procedures import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
+from pyEDAA.OSVVM.Project.Procedures import build, BuildName, include, library, analyze, simulate, generic
+from pyEDAA.OSVVM.Project.Procedures import TestSuite, TestName, RunTest
+from pyEDAA.OSVVM.Project.Procedures import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
+from pyEDAA.OSVVM.Project.Procedures import SetVHDLVersion, GetVHDLVersion
+from pyEDAA.OSVVM.Project.Procedures import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
 
 
 @export
@@ -220,6 +220,12 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.RegisterPythonFunctionAsTclProcedure(FindOsvvmSettingsDirectory)
 		self.RegisterPythonFunctionAsTclProcedure(CreateOsvvmScriptSettingsPkg)
+
+		self.RegisterPythonFunctionAsTclProcedure(noop, "OpenBuildHtml")
+		self.RegisterPythonFunctionAsTclProcedure(noop, "SetTranscriptType")
+		self.RegisterPythonFunctionAsTclProcedure(noop, "GetTranscriptType")
+		self.RegisterPythonFunctionAsTclProcedure(noop, "SetSimulatorResolution")
+		self.RegisterPythonFunctionAsTclProcedure(noop, "GetSimulatorResolution")
 
 	def LoadIncludeFile(self, path: Path) -> None:
 		includeFile = self._context.IncludeFile(path)
