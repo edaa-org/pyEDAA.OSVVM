@@ -28,9 +28,9 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Instantiation tests for the project model."""
-from pathlib  import Path
-from unittest import TestCase as TestCase
+"""Tests for the OSVVM's project descriptions in ``*.pro`` files."""
+from pathlib              import Path
+from unittest             import TestCase as TestCase
 
 from pyTooling.Common     import firstPair
 from pyVHDLModel          import VHDLVersion
@@ -46,7 +46,7 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiate(TestCase):
+class Instantiation(TestCase):
 	def test_VHDLSourceFile(self) -> None:
 		path = Path("source.vhdl")
 		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008)
