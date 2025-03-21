@@ -1,0 +1,81 @@
+.. # Template modified by Patrick Lehmann
+     * removed automodule on top, because private members are activated for autodoc (no doubled documentation).
+     * Made sections like 'submodules' bold text, but no headlines to reduce number of ToC levels.
+
+================
+pyEDAA.OSVVM.TCL
+================
+
+.. automodule:: pyEDAA.OSVVM.TCL
+
+
+.. currentmodule:: pyEDAA.OSVVM.TCL
+
+
+**Functions**
+
+- :py:func:`getException`:
+  Undocumented.
+
+
+
+**Classes**
+
+- :py:class:`TclEnvironment`:
+  Undocumented.
+
+- :py:class:`OsvvmVariables`:
+  Undocumented.
+
+- :py:class:`OsvvmProFileProcessor`:
+  Undocumented.
+
+
+
+---------------------
+
+**Functions**
+
+
+.. autofunction:: getException
+
+
+---------------------
+
+**Classes**
+
+
+
+
+.. autoclass:: TclEnvironment
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: TclEnvironment
+      :parts: 1
+
+.. autoclass:: OsvvmVariables
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: OsvvmVariables
+      :parts: 1
+
+.. autoclass:: OsvvmProFileProcessor
+   :members:
+   :private-members:
+   :special-members:
+   :inherited-members:
+   :exclude-members: __weakref__
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: OsvvmProFileProcessor
+      :parts: 1

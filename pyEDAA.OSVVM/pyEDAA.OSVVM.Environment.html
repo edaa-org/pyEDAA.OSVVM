@@ -1,0 +1,998 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyEDAA.OSVVM.Environment &mdash; pyEDAA.OSVVM 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=55b73dce" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-reports.e44b1595f1e09d5e109d001839ba3f42.css?v=0b41afa8" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/override.css?v=e6c450a4" />
+
+  
+    <link rel="shortcut icon" href="../_static/favicon.svg"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=6c02275b"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyEDAA.OSVVM.Procedures" href="pyEDAA.OSVVM.Procedures.html" />
+    <link rel="prev" title="pyEDAA.OSVVM" href="pyEDAA.OSVVM.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference external" href="https://edaa-org.github.io/">Used as a layer of EDA² ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Installation.html">Installation/Updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Dependency.html">Dependencies</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Main Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Project/index.html">OSVVM Project Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Testsuite/index.html">Testsuite Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Testcase/index.html">Testcase Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../AlertLog/index.html">Alert and Log Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Scoreboard/index.html">Scoreboard Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FunctionalCoverage/index.html">Functional Coverage Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Requirements/index.html">Requirements Report 🚧</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References and Reports</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="pyEDAA.OSVVM.html">Python Class Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyEDAA.OSVVM.Environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.osvvmContext"><code class="docutils literal notranslate"><span class="pre">osvvmContext</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base"><code class="docutils literal notranslate"><span class="pre">Base</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base.__init__"><code class="docutils literal notranslate"><span class="pre">Base.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Base.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Base.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named"><code class="docutils literal notranslate"><span class="pre">Named</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named.__init__"><code class="docutils literal notranslate"><span class="pre">Named.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named.__repr__"><code class="docutils literal notranslate"><span class="pre">Named.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Named.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Named.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Option"><code class="docutils literal notranslate"><span class="pre">Option</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning"><code class="docutils literal notranslate"><span class="pre">NoNullRangeWarning</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning.__init__"><code class="docutils literal notranslate"><span class="pre">NoNullRangeWarning.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning.__repr__"><code class="docutils literal notranslate"><span class="pre">NoNullRangeWarning.__repr__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile"><code class="docutils literal notranslate"><span class="pre">SourceFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile.__init__"><code class="docutils literal notranslate"><span class="pre">SourceFile.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile.__repr__"><code class="docutils literal notranslate"><span class="pre">SourceFile.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">SourceFile.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">SourceFile.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile"><code class="docutils literal notranslate"><span class="pre">VHDLSourceFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__init__"><code class="docutils literal notranslate"><span class="pre">VHDLSourceFile.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__repr__"><code class="docutils literal notranslate"><span class="pre">VHDLSourceFile.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">VHDLSourceFile.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">VHDLSourceFile.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary"><code class="docutils literal notranslate"><span class="pre">VHDLLibrary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__init__"><code class="docutils literal notranslate"><span class="pre">VHDLLibrary.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__repr__"><code class="docutils literal notranslate"><span class="pre">VHDLLibrary.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">VHDLLibrary.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">VHDLLibrary.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue"><code class="docutils literal notranslate"><span class="pre">GenericValue</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue.__init__"><code class="docutils literal notranslate"><span class="pre">GenericValue.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue.__repr__"><code class="docutils literal notranslate"><span class="pre">GenericValue.__repr__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase"><code class="docutils literal notranslate"><span class="pre">Testcase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase.__init__"><code class="docutils literal notranslate"><span class="pre">Testcase.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase.__repr__"><code class="docutils literal notranslate"><span class="pre">Testcase.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Testcase.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Testcase.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite"><code class="docutils literal notranslate"><span class="pre">Testsuite</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite.__init__"><code class="docutils literal notranslate"><span class="pre">Testsuite.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite.__repr__"><code class="docutils literal notranslate"><span class="pre">Testsuite.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Testsuite.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Testsuite.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.BuildName"><code class="docutils literal notranslate"><span class="pre">BuildName</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.BuildName.__init__"><code class="docutils literal notranslate"><span class="pre">BuildName.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.BuildName.__repr__"><code class="docutils literal notranslate"><span class="pre">BuildName.__repr__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build"><code class="docutils literal notranslate"><span class="pre">Build</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build.__init__"><code class="docutils literal notranslate"><span class="pre">Build.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build.__repr__"><code class="docutils literal notranslate"><span class="pre">Build.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Build.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Build.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project.__init__"><code class="docutils literal notranslate"><span class="pre">Project.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project.__repr__"><code class="docutils literal notranslate"><span class="pre">Project.__repr__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Project.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Project.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context"><code class="docutils literal notranslate"><span class="pre">Context</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context.__init__"><code class="docutils literal notranslate"><span class="pre">Context.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">Context.__class_getitem__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Context.__init_subclass__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.Procedures.html">pyEDAA.OSVVM.Procedures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.TCL.html">pyEDAA.OSVVM.TCL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException"><code class="docutils literal notranslate"><span class="pre">OSVVMException</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../unittests/index.html">Unittest Summary Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../coverage/index.html">Code Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DocCoverage.html">Doc. Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing/index.html">Static Type Check Report ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendix</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../License.html">Apache License 2.0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Doc-License.html">Creative Commons Attribution 4.0 International</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../py-modindex.html">Python Module Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../TODO.html">TODOs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyEDAA.OSVVM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="pyEDAA.OSVVM.html">pyEDAA.OSVVM</a></li>
+      <li class="breadcrumb-item active">pyEDAA.OSVVM.Environment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/pyEDAA.OSVVM/pyEDAA.OSVVM.Environment.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <style type="text/css">
+  span.bolditalic {font-weight: bold; font-style: italic; }
+  span.underline {text-decoration: underline; }
+  span.strike {text-decoration: line-through; }
+  span.xlarge {font-size: x-large; }
+  span.colorred {color: #CC0000; }
+  span.colorgreen {color: #009933; }
+  span.colorblue {color: #0066FF; }
+  span.colorpurple {color: #9900CC; }
+</style><section id="module-pyEDAA.OSVVM.Environment">
+<span id="pyedaa-osvvm-environment"></span><h1>pyEDAA.OSVVM.Environment<a class="headerlink" href="#module-pyEDAA.OSVVM.Environment" title="Link to this heading"></a></h1>
+<p><strong>Variables</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.osvvmContext" title="pyEDAA.OSVVM.Environment.osvvmContext"><code class="xref py py-data docutils literal notranslate"><span class="pre">osvvmContext</span></code></a></p></li>
+</ul>
+<p><strong>Classes</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base" title="pyEDAA.OSVVM.Environment.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Named" title="pyEDAA.OSVVM.Environment.Named"><code class="xref py py-class docutils literal notranslate"><span class="pre">Named</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Option" title="pyEDAA.OSVVM.Environment.Option"><code class="xref py py-class docutils literal notranslate"><span class="pre">Option</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning" title="pyEDAA.OSVVM.Environment.NoNullRangeWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">NoNullRangeWarning</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.SourceFile" title="pyEDAA.OSVVM.Environment.SourceFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceFile</span></code></a>:
+A base-class describing any source file (VHDL, Verilog, …) supported by OSVVM Scripts.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile" title="pyEDAA.OSVVM.Environment.VHDLSourceFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">VHDLSourceFile</span></code></a>:
+A base-class describing any source file (VHDL, Verilog, …) supported by OSVVM Scripts.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><code class="xref py py-class docutils literal notranslate"><span class="pre">VHDLLibrary</span></code></a>:
+A VHDL library collecting multiple VHDL files containing VHDL design units.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue" title="pyEDAA.OSVVM.Environment.GenericValue"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericValue</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase" title="pyEDAA.OSVVM.Environment.Testcase"><code class="xref py py-class docutils literal notranslate"><span class="pre">Testcase</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><code class="xref py py-class docutils literal notranslate"><span class="pre">Testsuite</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.BuildName" title="pyEDAA.OSVVM.Environment.BuildName"><code class="xref py py-class docutils literal notranslate"><span class="pre">BuildName</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><code class="xref py py-class docutils literal notranslate"><span class="pre">Build</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Project" title="pyEDAA.OSVVM.Environment.Project"><code class="xref py py-class docutils literal notranslate"><span class="pre">Project</span></code></a>:
+Abstract base class for generic types.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context" title="pyEDAA.OSVVM.Environment.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">Context</span></code></a>:
+Abstract base class for generic types.</p></li>
+</ul>
+<hr class="docutils" />
+<p><strong>Variables</strong></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.osvvmContext">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">osvvmContext</span></span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.osvvmContext" title="Link to this definition"></a></dt>
+<dd><p>Global OSVVM processing context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Context" title="pyEDAA.OSVVM.Environment.Context">Context</a></p>
+</dd>
+</dl>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;pyEDAA.OSVVM.Environment.Context object at 0x7f02585cdee0&gt;
+</pre></div>
+</div>
+</dd></dl>
+
+<hr class="docutils" />
+<p><strong>Classes</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Base">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Base" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-ba1b784f59140d609a8039aa971506a71f742b05.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Base</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<em>_ParentType</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Base.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Base.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Base.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<em>_ParentType</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Base.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Base.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Base.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Base.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Named">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Named</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Named"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Named" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-7a41de5ab28eed6ff4fdcfd5e32d908ebaa9ada1.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Named</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>parent</strong> (<em>_ParentType</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Named.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Named.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Named.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>parent</strong> (<em>_ParentType</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Named.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Named.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Named.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Named.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Named.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Named.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Named.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Option">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Option</span></span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Option"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Option" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-158c172e7859030ab9c5a4a36adf7c60b45a6182.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Option</p></object></div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.NoNullRangeWarning">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">NoNullRangeWarning</span></span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#NoNullRangeWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-981a27cfae313af2d8ac5ded8040593a92eb39f8.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of NoNullRangeWarning</p></object></div>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.NoNullRangeWarning.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#NoNullRangeWarning.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.NoNullRangeWarning.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#NoNullRangeWarning.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.NoNullRangeWarning.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.SourceFile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">SourceFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#SourceFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.SourceFile" title="Link to this definition"></a></dt>
+<dd><p>A base-class describing any source file (VHDL, Verilog, …) supported by OSVVM Scripts.</p>
+<p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-8b02c8e53b4e7979142fc41eb57d1065e2ffd092.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of SourceFile</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>)</p></li>
+<li><p><strong>parent</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base" title="pyEDAA.OSVVM.Environment.Base"><em>Base</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.SourceFile.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#SourceFile.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.SourceFile.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>)</p></li>
+<li><p><strong>parent</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base" title="pyEDAA.OSVVM.Environment.Base"><em>Base</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.SourceFile.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#SourceFile.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.SourceFile.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.SourceFile.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.SourceFile.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.SourceFile.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.SourceFile.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLSourceFile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">VHDLSourceFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlVersion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2008</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlLibrary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noNullRangeWarning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLSourceFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-2af377e5ba0925266461c741b23873a0d86ad987.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of VHDLSourceFile</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>)</p></li>
+<li><p><strong>vhdlVersion</strong> (<em>VHDLVersion</em>)</p></li>
+<li><p><strong>vhdlLibrary</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>noNullRangeWarning</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLSourceFile.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlVersion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2008</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlLibrary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noNullRangeWarning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLSourceFile.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><em>Path</em></a>)</p></li>
+<li><p><strong>vhdlVersion</strong> (<em>VHDLVersion</em>)</p></li>
+<li><p><strong>vhdlLibrary</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>noNullRangeWarning</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLSourceFile.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLSourceFile.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLSourceFile.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLSourceFile.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLLibrary">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">VHDLLibrary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlFiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLLibrary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="Link to this definition"></a></dt>
+<dd><p>A VHDL library collecting multiple VHDL files containing VHDL design units.</p>
+<p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-dfb61f1afcf9bc5bbe9d93cc006a803f26d98a5f.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of VHDLLibrary</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>vhdlFiles</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile" title="pyEDAA.OSVVM.Environment.VHDLSourceFile"><em>VHDLSourceFile</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>build</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLLibrary.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlFiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLLibrary.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>vhdlFiles</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLSourceFile" title="pyEDAA.OSVVM.Environment.VHDLSourceFile"><em>VHDLSourceFile</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>build</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLLibrary.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#VHDLLibrary.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLLibrary.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.VHDLLibrary.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.VHDLLibrary.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.GenericValue">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">GenericValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#GenericValue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.GenericValue" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-c1029082e31496329f4c7f33bd514acd245fb9e5.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of GenericValue</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.GenericValue.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#GenericValue.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.GenericValue.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.GenericValue.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#GenericValue.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.GenericValue.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testcase">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Testcase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toplevelName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testsuite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testcase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testcase" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-fefc280177c772633109d4fed691e87d5bca4978.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Testcase</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>toplevelName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>generics</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue" title="pyEDAA.OSVVM.Environment.GenericValue"><em>GenericValue</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>testsuite</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testcase.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toplevelName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testsuite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testcase.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testcase.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>toplevelName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>generics</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.GenericValue" title="pyEDAA.OSVVM.Environment.GenericValue"><em>GenericValue</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>testsuite</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testcase.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testcase.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testcase.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testcase.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testcase.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testcase.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testcase.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testsuite">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Testsuite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testcases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testsuite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testsuite" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-ef8b7052fc2c47aeb71dc0f4f47a2ae83a403a21.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Testsuite</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>testcases</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase" title="pyEDAA.OSVVM.Environment.Testcase"><em>Testcase</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase" title="pyEDAA.OSVVM.Environment.Testcase"><em>Testcase</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>build</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testsuite.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testcases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testsuite.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testsuite.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>testcases</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase" title="pyEDAA.OSVVM.Environment.Testcase"><em>Testcase</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testcase" title="pyEDAA.OSVVM.Environment.Testcase"><em>Testcase</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>build</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testsuite.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Testsuite.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testsuite.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testsuite.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testsuite.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Testsuite.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Testsuite.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.BuildName">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">BuildName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#BuildName"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.BuildName" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-5e13ce491cf3573e34ebdab169eed3557642cc55.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of BuildName</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.BuildName.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#BuildName.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.BuildName.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.BuildName.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#BuildName.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.BuildName.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Build">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlLibraries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testsuites</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Build" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-a71ea7a63bd565f7e9422f0a4f88654f6165366e.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Build</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>vhdlLibraries</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>testsuites</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>project</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base" title="pyEDAA.OSVVM.Environment.Base"><em>Base</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Build.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vhdlLibraries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testsuites</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Build.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Build.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>vhdlLibraries</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.VHDLLibrary" title="pyEDAA.OSVVM.Environment.VHDLLibrary"><em>VHDLLibrary</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>testsuites</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Testsuite" title="pyEDAA.OSVVM.Environment.Testsuite"><em>Testsuite</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>project</strong> (<a class="reference internal" href="#pyEDAA.OSVVM.Environment.Base" title="pyEDAA.OSVVM.Environment.Base"><em>Base</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Build.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Build.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Build.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Build.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Build.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Build.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Build.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Project">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">builds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Project" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-a1036a5fd1adad6ec6db11e8a491917858bc5bf1.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Project</p></object></div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>builds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Project.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">builds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Project.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Project.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>builds</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.13)"><em>Mapping</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference internal" href="#pyEDAA.OSVVM.Environment.Build" title="pyEDAA.OSVVM.Environment.Build"><em>Build</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Project.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Project.__repr__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Project.__repr__" title="Link to this definition"></a></dt>
+<dd><p>Return repr(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Project.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Project.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Project.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Project.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Context">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Environment.</span></span><span class="sig-name descname"><span class="pre">Context</span></span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Context" title="Link to this definition"></a></dt>
+<dd><p class="rubric">Inheritance</p>
+<div class="graphviz"><object data="../_images/inheritance-e5d6b8ee67f36e3d1a68bad8a29485c7e8cfff53.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Context</p></object></div>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Context.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Environment.html#Context.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Context.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Context.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Context.__class_getitem__" title="Link to this definition"></a></dt>
+<dd><p>Parameterizes a generic class.</p>
+<p>At least, parameterizing a generic class is the <em>main</em> thing this
+method does. For example, for some generic class <cite>Foo</cite>, this is called
+when we do <cite>Foo[int]</cite> - there, with <cite>cls=Foo</cite> and <cite>params=int</cite>.</p>
+<p>However, note that this method is also called when defining generic
+classes in the first place with <cite>class Foo[T]: …</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Environment.Context.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyEDAA.OSVVM.Environment.Context.__init_subclass__" title="Link to this definition"></a></dt>
+<dd><p>Function to initialize subclasses.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pyEDAA.OSVVM.html" class="btn btn-neutral float-left" title="pyEDAA.OSVVM" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pyEDAA.OSVVM.Procedures.html" class="btn btn-neutral float-right" title="pyEDAA.OSVVM.Procedures" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2025, Patrick Lehmann.
+      <span class="lastupdated">Last updated on 21.03.2025.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

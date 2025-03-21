@@ -1,0 +1,43 @@
+.. # Template modified by Patrick Lehmann
+     * removed automodule on top, because private members are activated for autodoc (no doubled documentation).
+     * Made sections like 'submodules' bold text, but no headlines to reduce number of ToC levels.
+
+============
+pyEDAA.OSVVM
+============
+
+.. automodule:: pyEDAA.OSVVM
+
+
+
+**Submodules**
+
+.. toctree::
+   :maxdepth: 1
+
+   pyEDAA.OSVVM.Environment
+   pyEDAA.OSVVM.Procedures
+   pyEDAA.OSVVM.TCL
+
+.. currentmodule:: pyEDAA.OSVVM
+
+
+**Exceptions**
+
+- :py:exc:`OSVVMException`:
+  Base-class for all pyEDAA.OSVVM specific exceptions.
+
+
+
+---------------------
+
+**Exceptions**
+
+
+
+
+.. autoexception:: OSVVMException
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: OSVVMException
+      :parts: 1

@@ -1,0 +1,137 @@
+.. # Template modified by Patrick Lehmann
+     * removed automodule on top, because private members are activated for autodoc (no doubled documentation).
+     * Made sections like 'submodules' bold text, but no headlines to reduce number of ToC levels.
+
+=======================
+pyEDAA.OSVVM.Procedures
+=======================
+
+.. automodule:: pyEDAA.OSVVM.Procedures
+
+
+.. currentmodule:: pyEDAA.OSVVM.Procedures
+
+
+**Functions**
+
+- :py:func:`BuildName`:
+  Undocumented.
+
+- :py:func:`build`:
+  This function implements the behavior of OSVVM's ``build`` procedure.
+
+- :py:func:`include`:
+  This function implements the behavior of OSVVM's ``include`` procedure.
+
+- :py:func:`library`:
+  This function implements the behavior of OSVVM's ``library`` procedure.
+
+- :py:func:`NoNullRangeWarning`:
+  Undocumented.
+
+- :py:func:`analyze`:
+  Undocumented.
+
+- :py:func:`simulate`:
+  Undocumented.
+
+- :py:func:`generic`:
+  Undocumented.
+
+- :py:func:`TestSuite`:
+  Undocumented.
+
+- :py:func:`TestName`:
+  Undocumented.
+
+- :py:func:`RunTest`:
+  Undocumented.
+
+- :py:func:`LinkLibrary`:
+  Undocumented.
+
+- :py:func:`LinkLibraryDirectory`:
+  Undocumented.
+
+- :py:func:`SetVHDLVersion`:
+  Undocumented.
+
+- :py:func:`GetVHDLVersion`:
+  Undocumented.
+
+- :py:func:`SetCoverageAnalyzeEnable`:
+  Undocumented.
+
+- :py:func:`SetCoverageSimulateEnable`:
+  Undocumented.
+
+- :py:func:`FileExists`:
+  Undocumented.
+
+- :py:func:`DirectoryExists`:
+  Undocumented.
+
+- :py:func:`ChangeWorkingDirectory`:
+  Undocumented.
+
+- :py:func:`FindOsvvmSettingsDirectory`:
+  Undocumented.
+
+- :py:func:`CreateOsvvmScriptSettingsPkg`:
+  Undocumented.
+
+- :py:func:`noop`:
+  Undocumented.
+
+
+
+---------------------
+
+**Functions**
+
+
+.. autofunction:: BuildName
+
+.. autofunction:: build
+
+.. autofunction:: include
+
+.. autofunction:: library
+
+.. autofunction:: NoNullRangeWarning
+
+.. autofunction:: analyze
+
+.. autofunction:: simulate
+
+.. autofunction:: generic
+
+.. autofunction:: TestSuite
+
+.. autofunction:: TestName
+
+.. autofunction:: RunTest
+
+.. autofunction:: LinkLibrary
+
+.. autofunction:: LinkLibraryDirectory
+
+.. autofunction:: SetVHDLVersion
+
+.. autofunction:: GetVHDLVersion
+
+.. autofunction:: SetCoverageAnalyzeEnable
+
+.. autofunction:: SetCoverageSimulateEnable
+
+.. autofunction:: FileExists
+
+.. autofunction:: DirectoryExists
+
+.. autofunction:: ChangeWorkingDirectory
+
+.. autofunction:: FindOsvvmSettingsDirectory
+
+.. autofunction:: CreateOsvvmScriptSettingsPkg
+
+.. autofunction:: noop

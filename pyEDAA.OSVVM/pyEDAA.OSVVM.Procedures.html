@@ -1,0 +1,600 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyEDAA.OSVVM.Procedures &mdash; pyEDAA.OSVVM 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=55b73dce" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-reports.e44b1595f1e09d5e109d001839ba3f42.css?v=0b41afa8" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/override.css?v=e6c450a4" />
+
+  
+    <link rel="shortcut icon" href="../_static/favicon.svg"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=6c02275b"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyEDAA.OSVVM.TCL" href="pyEDAA.OSVVM.TCL.html" />
+    <link rel="prev" title="pyEDAA.OSVVM.Environment" href="pyEDAA.OSVVM.Environment.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference external" href="https://edaa-org.github.io/">Used as a layer of EDA² ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Installation.html">Installation/Updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Dependency.html">Dependencies</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Main Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Project/index.html">OSVVM Project Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Testsuite/index.html">Testsuite Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Testcase/index.html">Testcase Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../AlertLog/index.html">Alert and Log Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Scoreboard/index.html">Scoreboard Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../FunctionalCoverage/index.html">Functional Coverage Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Requirements/index.html">Requirements Report 🚧</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References and Reports</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="pyEDAA.OSVVM.html">Python Class Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.Environment.html">pyEDAA.OSVVM.Environment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyEDAA.OSVVM.Procedures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.BuildName"><code class="docutils literal notranslate"><span class="pre">BuildName()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.include"><code class="docutils literal notranslate"><span class="pre">include()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.library"><code class="docutils literal notranslate"><span class="pre">library()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.NoNullRangeWarning"><code class="docutils literal notranslate"><span class="pre">NoNullRangeWarning()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.analyze"><code class="docutils literal notranslate"><span class="pre">analyze()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.simulate"><code class="docutils literal notranslate"><span class="pre">simulate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.generic"><code class="docutils literal notranslate"><span class="pre">generic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.TestSuite"><code class="docutils literal notranslate"><span class="pre">TestSuite()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.TestName"><code class="docutils literal notranslate"><span class="pre">TestName()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.RunTest"><code class="docutils literal notranslate"><span class="pre">RunTest()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibrary"><code class="docutils literal notranslate"><span class="pre">LinkLibrary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibraryDirectory"><code class="docutils literal notranslate"><span class="pre">LinkLibraryDirectory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetVHDLVersion"><code class="docutils literal notranslate"><span class="pre">SetVHDLVersion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.GetVHDLVersion"><code class="docutils literal notranslate"><span class="pre">GetVHDLVersion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable"><code class="docutils literal notranslate"><span class="pre">SetCoverageAnalyzeEnable()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable"><code class="docutils literal notranslate"><span class="pre">SetCoverageSimulateEnable()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.FileExists"><code class="docutils literal notranslate"><span class="pre">FileExists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.DirectoryExists"><code class="docutils literal notranslate"><span class="pre">DirectoryExists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory"><code class="docutils literal notranslate"><span class="pre">ChangeWorkingDirectory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory"><code class="docutils literal notranslate"><span class="pre">FindOsvvmSettingsDirectory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg"><code class="docutils literal notranslate"><span class="pre">CreateOsvvmScriptSettingsPkg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.noop"><code class="docutils literal notranslate"><span class="pre">noop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.TCL.html">pyEDAA.OSVVM.TCL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException"><code class="docutils literal notranslate"><span class="pre">OSVVMException</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../unittests/index.html">Unittest Summary Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../coverage/index.html">Code Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DocCoverage.html">Doc. Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing/index.html">Static Type Check Report ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendix</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../License.html">Apache License 2.0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Doc-License.html">Creative Commons Attribution 4.0 International</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../py-modindex.html">Python Module Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../TODO.html">TODOs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyEDAA.OSVVM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="pyEDAA.OSVVM.html">pyEDAA.OSVVM</a></li>
+      <li class="breadcrumb-item active">pyEDAA.OSVVM.Procedures</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <style type="text/css">
+  span.bolditalic {font-weight: bold; font-style: italic; }
+  span.underline {text-decoration: underline; }
+  span.strike {text-decoration: line-through; }
+  span.xlarge {font-size: x-large; }
+  span.colorred {color: #CC0000; }
+  span.colorgreen {color: #009933; }
+  span.colorblue {color: #0066FF; }
+  span.colorpurple {color: #9900CC; }
+</style><section id="module-pyEDAA.OSVVM.Procedures">
+<span id="pyedaa-osvvm-procedures"></span><h1>pyEDAA.OSVVM.Procedures<a class="headerlink" href="#module-pyEDAA.OSVVM.Procedures" title="Link to this heading"></a></h1>
+<p>This module implements OSVVM’s TCL procedures (used in OSVVM’s <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> files) as Python functions.</p>
+<p>These functions are then registered at the <a class="reference internal" href="pyEDAA.OSVVM.TCL.html#pyEDAA.OSVVM.TCL.OsvvmProFileProcessor" title="pyEDAA.OSVVM.TCL.OsvvmProFileProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">TCL</span> <span class="pre">processor</span></code></a>, so procedure
+calls within TCL code get “redirected” to these Python functions. Each function has access to a global variable
+<a class="reference internal" href="pyEDAA.OSVVM.Environment.html#pyEDAA.OSVVM.Environment.osvvmContext" title="pyEDAA.OSVVM.Environment.osvvmContext"><code class="xref py py-data docutils literal notranslate"><span class="pre">osvvmContext</span></code></a> to preserve its state or modify the context.</p>
+<p><strong>Functions</strong></p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.BuildName" title="pyEDAA.OSVVM.Procedures.BuildName"><code class="xref py py-func docutils literal notranslate"><span class="pre">BuildName()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.build" title="pyEDAA.OSVVM.Procedures.build"><code class="xref py py-func docutils literal notranslate"><span class="pre">build()</span></code></a>:
+This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">build</span></code> procedure.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.include" title="pyEDAA.OSVVM.Procedures.include"><code class="xref py py-func docutils literal notranslate"><span class="pre">include()</span></code></a>:
+This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">include</span></code> procedure.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.library" title="pyEDAA.OSVVM.Procedures.library"><code class="xref py py-func docutils literal notranslate"><span class="pre">library()</span></code></a>:
+This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">library</span></code> procedure.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.NoNullRangeWarning" title="pyEDAA.OSVVM.Procedures.NoNullRangeWarning"><code class="xref py py-func docutils literal notranslate"><span class="pre">NoNullRangeWarning()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.analyze" title="pyEDAA.OSVVM.Procedures.analyze"><code class="xref py py-func docutils literal notranslate"><span class="pre">analyze()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.simulate" title="pyEDAA.OSVVM.Procedures.simulate"><code class="xref py py-func docutils literal notranslate"><span class="pre">simulate()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.generic" title="pyEDAA.OSVVM.Procedures.generic"><code class="xref py py-func docutils literal notranslate"><span class="pre">generic()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.TestSuite" title="pyEDAA.OSVVM.Procedures.TestSuite"><code class="xref py py-func docutils literal notranslate"><span class="pre">TestSuite()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.TestName" title="pyEDAA.OSVVM.Procedures.TestName"><code class="xref py py-func docutils literal notranslate"><span class="pre">TestName()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.RunTest" title="pyEDAA.OSVVM.Procedures.RunTest"><code class="xref py py-func docutils literal notranslate"><span class="pre">RunTest()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibrary" title="pyEDAA.OSVVM.Procedures.LinkLibrary"><code class="xref py py-func docutils literal notranslate"><span class="pre">LinkLibrary()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibraryDirectory" title="pyEDAA.OSVVM.Procedures.LinkLibraryDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">LinkLibraryDirectory()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetVHDLVersion" title="pyEDAA.OSVVM.Procedures.SetVHDLVersion"><code class="xref py py-func docutils literal notranslate"><span class="pre">SetVHDLVersion()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.GetVHDLVersion" title="pyEDAA.OSVVM.Procedures.GetVHDLVersion"><code class="xref py py-func docutils literal notranslate"><span class="pre">GetVHDLVersion()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable" title="pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable"><code class="xref py py-func docutils literal notranslate"><span class="pre">SetCoverageAnalyzeEnable()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable" title="pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable"><code class="xref py py-func docutils literal notranslate"><span class="pre">SetCoverageSimulateEnable()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.FileExists" title="pyEDAA.OSVVM.Procedures.FileExists"><code class="xref py py-func docutils literal notranslate"><span class="pre">FileExists()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.DirectoryExists" title="pyEDAA.OSVVM.Procedures.DirectoryExists"><code class="xref py py-func docutils literal notranslate"><span class="pre">DirectoryExists()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory" title="pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">ChangeWorkingDirectory()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory" title="pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">FindOsvvmSettingsDirectory()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg" title="pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg"><code class="xref py py-func docutils literal notranslate"><span class="pre">CreateOsvvmScriptSettingsPkg()</span></code></a>:
+Undocumented.</p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.noop" title="pyEDAA.OSVVM.Procedures.noop"><code class="xref py py-func docutils literal notranslate"><span class="pre">noop()</span></code></a>:
+Undocumented.</p></li>
+</ul>
+<hr class="docutils" />
+<p><strong>Functions</strong></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.BuildName">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">BuildName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#BuildName"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.BuildName" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.build">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.build" title="Link to this definition"></a></dt>
+<dd><p>This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">build</span></code> procedure.</p>
+<p>The current directory of the currently active context is preserved      while the referenced <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file is processed.
+After processing that file, the context’s current directory is restored.</p>
+<p>The referenced file gets appended to a list of included files maintained by the context.</p>
+<p><span class="underline">pro-file discovery algorithm:</span></p>
+<ol class="arabic simple">
+<li><p>If the path explicitly references a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file, this file is used.</p></li>
+<li><p>If the path references a directory, it checks implicitly for a <code class="docutils literal notranslate"><span class="pre">build.pro</span></code> file, otherwise</p></li>
+<li><p>it checks implicitly for a <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;.pro</span></code> file, named like the directories name.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Explicit path to a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file or a directory containing an implicitly searched <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file.</p></li>
+<li><p><strong>options</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – Optional list of option IDs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.13)"><strong>TypeError</strong></a> – If parameter proFileOrBuildDirectory is not a Path.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If parameter proFileOrBuildDirectory is an absolute path.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If parameter proFileOrBuildDirectory is not a <a href="#id1"><span class="problematic" id="id2">*</span></a>.pro file or build directory.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If a TclError was caught while processing a <a href="#id3"><span class="problematic" id="id4">*</span></a>.pro file.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.BuildName" title="pyEDAA.OSVVM.Procedures.BuildName"><code class="xref py py-func docutils literal notranslate"><span class="pre">BuildName()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.include" title="pyEDAA.OSVVM.Procedures.include"><code class="xref py py-func docutils literal notranslate"><span class="pre">include()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory" title="pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">ChangeWorkingDirectory()</span></code></a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.include">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#include"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.include" title="Link to this definition"></a></dt>
+<dd><p>This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">include</span></code> procedure.</p>
+<p>The current directory of the currently active context is preserved      while the referenced <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file is processed.
+After processing that file, the context’s current directory is restored.</p>
+<p>The referenced file gets appended to a list of included files maintained by the context.</p>
+<p><span class="underline">pro-file discovery algorithm:</span></p>
+<ol class="arabic simple">
+<li><p>If the path explicitly references a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file, this file is used.</p></li>
+<li><p>If the path references a directory, it checks implicitly for a <code class="docutils literal notranslate"><span class="pre">build.pro</span></code> file, otherwise</p></li>
+<li><p>it checks implicitly for a <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;.pro</span></code> file, named like the directories name.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Explicit path to a <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file or a directory containing an implicitly searched <code class="docutils literal notranslate"><span class="pre">*.pro</span></code> file.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.13)"><strong>TypeError</strong></a> – If parameter proFileOrBuildDirectory is not a Path.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If parameter proFileOrBuildDirectory is an absolute path.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If parameter proFileOrBuildDirectory is not a <a href="#id5"><span class="problematic" id="id6">*</span></a>.pro file or build directory.</p></li>
+<li><p><a class="reference internal" href="pyEDAA.OSVVM.html#pyEDAA.OSVVM.OSVVMException" title="pyEDAA.OSVVM.OSVVMException"><strong>OSVVMException</strong></a> – If a TclError was caught while processing a <a href="#id7"><span class="problematic" id="id8">*</span></a>.pro file.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.build" title="pyEDAA.OSVVM.Procedures.build"><code class="xref py py-func docutils literal notranslate"><span class="pre">build()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory" title="pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">ChangeWorkingDirectory()</span></code></a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.library">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">library</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">libraryName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">libraryPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#library"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.library" title="Link to this definition"></a></dt>
+<dd><p>This function implements the behavior of OSVVM’s <code class="docutils literal notranslate"><span class="pre">library</span></code> procedure.</p>
+<p>It sets the currently active VHDL library to the specified VHDL library. If no VHDL library with that name exist, a
+new VHDL library is created and set as active VHDL library.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>All following <code class="docutils literal notranslate"><span class="pre">analyze</span></code> calls will use this library as the VHDL file’s VHDL library.</p>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Parameter <cite>libraryPath</cite> is not yet implemented.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>libraryName</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Name of the VHDL library.</p></li>
+<li><p><strong>libraryPath</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – Optional: Path where to create that VHDL library.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibrary" title="pyEDAA.OSVVM.Procedures.LinkLibrary"><code class="xref py py-func docutils literal notranslate"><span class="pre">LinkLibrary()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#pyEDAA.OSVVM.Procedures.LinkLibraryDirectory" title="pyEDAA.OSVVM.Procedures.LinkLibraryDirectory"><code class="xref py py-func docutils literal notranslate"><span class="pre">LinkLibraryDirectory()</span></code></a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.NoNullRangeWarning">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">NoNullRangeWarning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#NoNullRangeWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.NoNullRangeWarning" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.analyze">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#analyze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.analyze" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.simulate">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">toplevelName</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.simulate" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>toplevelName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.generic">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">generic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#generic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.generic" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.TestSuite">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">TestSuite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#TestSuite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.TestSuite" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.TestName">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">TestName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#TestName"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.TestName" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.RunTest">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">RunTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">options</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#RunTest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.RunTest" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.LinkLibrary">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">LinkLibrary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">libraryName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">libraryPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#LinkLibrary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.LinkLibrary" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>libraryName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p></li>
+<li><p><strong>libraryPath</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.LinkLibraryDirectory">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">LinkLibraryDirectory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">libraryDirectory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#LinkLibraryDirectory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.LinkLibraryDirectory" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>libraryDirectory</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.SetVHDLVersion">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">SetVHDLVersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#SetVHDLVersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.SetVHDLVersion" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.GetVHDLVersion">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">GetVHDLVersion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#GetVHDLVersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.GetVHDLVersion" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">SetCoverageAnalyzeEnable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#SetCoverageAnalyzeEnable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">SetCoverageSimulateEnable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#SetCoverageSimulateEnable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.FileExists">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">FileExists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#FileExists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.FileExists" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.DirectoryExists">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">DirectoryExists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#DirectoryExists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.DirectoryExists" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>directory</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">ChangeWorkingDirectory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#ChangeWorkingDirectory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>directory</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">FindOsvvmSettingsDirectory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#FindOsvvmSettingsDirectory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">CreateOsvvmScriptSettingsPkg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#CreateOsvvmScriptSettingsPkg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyEDAA.OSVVM.Procedures.noop">
+<span class="sig-prename descclassname"><span class="pre">pyEDAA.OSVVM.Procedures.</span></span><span class="sig-name descname"><span class="pre">noop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyEDAA/OSVVM/Procedures.html#noop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyEDAA.OSVVM.Procedures.noop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pyEDAA.OSVVM.Environment.html" class="btn btn-neutral float-left" title="pyEDAA.OSVVM.Environment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pyEDAA.OSVVM.TCL.html" class="btn btn-neutral float-right" title="pyEDAA.OSVVM.TCL" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2025, Patrick Lehmann.
+      <span class="lastupdated">Last updated on 21.03.2025.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

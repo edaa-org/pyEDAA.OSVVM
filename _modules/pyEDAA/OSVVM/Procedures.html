@@ -1,0 +1,705 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyEDAA.OSVVM.Procedures &mdash; pyEDAA.OSVVM 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=55b73dce" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-reports.e44b1595f1e09d5e109d001839ba3f42.css?v=0b41afa8" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/override.css?v=e6c450a4" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.svg"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=6c02275b"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+      <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+      <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+      <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+      <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference external" href="https://edaa-org.github.io/">Used as a layer of EDA² ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Installation.html">Installation/Updates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Dependency.html">Dependencies</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Main Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Project/index.html">OSVVM Project Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Testsuite/index.html">Testsuite Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Testcase/index.html">Testcase Summary Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../AlertLog/index.html">Alert and Log Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Scoreboard/index.html">Scoreboard Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FunctionalCoverage/index.html">Functional Coverage Report 🚧</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Requirements/index.html">Requirements Report 🚧</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References and Reports</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.html">Python Class Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../unittests/index.html">Unittest Summary Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../coverage/index.html">Code Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DocCoverage.html">Doc. Coverage Report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../typing/index.html">Static Type Check Report ➚</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendix</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../License.html">Apache License 2.0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Doc-License.html">Creative Commons Attribution 4.0 International</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../py-modindex.html">Python Module Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../TODO.html">TODOs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pyEDAA.OSVVM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../OSVVM.html">pyEDAA.OSVVM</a></li>
+      <li class="breadcrumb-item active">pyEDAA.OSVVM.Procedures</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyEDAA.OSVVM.Procedures</h1><div class="highlight"><pre>
+<span></span><span class="c1"># ==================================================================================================================== #</span>
+<span class="c1">#              _____ ____    _        _      ___  ______     ____     ____  __                                         #</span>
+<span class="c1">#  _ __  _   _| ____|  _ \  / \      / \    / _ \/ ___\ \   / /\ \   / /  \/  |                                        #</span>
+<span class="c1"># | &#39;_ \| | | |  _| | | | |/ _ \    / _ \  | | | \___ \\ \ / /  \ \ / /| |\/| |                                        #</span>
+<span class="c1"># | |_) | |_| | |___| |_| / ___ \  / ___ \ | |_| |___) |\ V /    \ V / | |  | |                                        #</span>
+<span class="c1"># | .__/ \__, |_____|____/_/   \_\/_/   \_(_)___/|____/  \_/      \_/  |_|  |_|                                        #</span>
+<span class="c1"># |_|    |___/                                                                                                         #</span>
+<span class="c1"># ==================================================================================================================== #</span>
+<span class="c1"># Authors:                                                                                                             #</span>
+<span class="c1">#   Patrick Lehmann                                                                                                    #</span>
+<span class="c1">#                                                                                                                      #</span>
+<span class="c1"># License:                                                                                                             #</span>
+<span class="c1"># ==================================================================================================================== #</span>
+<span class="c1"># Copyright 2025-2025 Patrick Lehmann - Boetzingen, Germany                                                            #</span>
+<span class="c1">#                                                                                                                      #</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);                                                      #</span>
+<span class="c1"># you may not use this file except in compliance with the License.                                                     #</span>
+<span class="c1"># You may obtain a copy of the License at                                                                              #</span>
+<span class="c1">#                                                                                                                      #</span>
+<span class="c1">#   http://www.apache.org/licenses/LICENSE-2.0                                                                         #</span>
+<span class="c1">#                                                                                                                      #</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software                                                  #</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,                                                    #</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                                             #</span>
+<span class="c1"># See the License for the specific language governing permissions and                                                  #</span>
+<span class="c1"># limitations under the License.                                                                                       #</span>
+<span class="c1">#                                                                                                                      #</span>
+<span class="c1"># SPDX-License-Identifier: Apache-2.0                                                                                  #</span>
+<span class="c1"># ==================================================================================================================== #</span>
+<span class="c1">#</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module implements OSVVM&#39;s TCL procedures (used in OSVVM&#39;s ``*.pro`` files) as Python functions.</span>
+
+<span class="sd">These functions are then registered at the :class:`TCL processor &lt;pyEDAA.OSVVM.TCL.OsvvmProFileProcessor&gt;`, so procedure</span>
+<span class="sd">calls within TCL code get &quot;redirected&quot; to these Python functions. Each function has access to a global variable</span>
+<span class="sd">:data:`~pyEDAA.OSVVM.Environment.osvvmContext` to preserve its state or modify the context.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w">  </span><span class="kn">import</span> <span class="n">Optional</span> <span class="k">as</span> <span class="n">Nullable</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyTooling.Decorators</span><span class="w">     </span><span class="kn">import</span> <span class="n">export</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyVHDLModel</span><span class="w">              </span><span class="kn">import</span> <span class="n">VHDLVersion</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyEDAA.OSVVM</span><span class="w">             </span><span class="kn">import</span> <span class="n">OSVVMException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyEDAA.OSVVM.Environment</span><span class="w"> </span><span class="kn">import</span> <span class="n">osvvmContext</span><span class="p">,</span> <span class="n">VHDLSourceFile</span><span class="p">,</span> <span class="n">GenericValue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyEDAA.OSVVM.Environment</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildName</span> <span class="k">as</span> <span class="n">OSVVM_BuildName</span><span class="p">,</span> <span class="n">NoNullRangeWarning</span> <span class="k">as</span> <span class="n">OSVVM_NoNullRangeWarning</span>
+
+
+<div class="viewcode-block" id="BuildName">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.BuildName">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">BuildName</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">buildName</span> <span class="o">=</span> <span class="n">OSVVM_BuildName</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+		<span class="n">optionID</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddOption</span><span class="p">(</span><span class="n">buildName</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">return</span> <span class="n">optionID</span></div>
+
+
+<div class="viewcode-block" id="build">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.build">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	This function implements the behavior of OSVVM&#39;s ``build`` procedure.</span>
+
+<span class="sd">	The current directory of the currently active context is preserved	while the referenced ``*.pro`` file is processed.</span>
+<span class="sd">	After processing that file, the context&#39;s current directory is restored.</span>
+
+<span class="sd">	The referenced file gets appended to a list of included files maintained by the context.</span>
+
+<span class="sd">	:underline:`pro-file discovery algorithm:`</span>
+
+<span class="sd">	1. If the path explicitly references a ``*.pro`` file, this file is used.</span>
+<span class="sd">	2. If the path references a directory, it checks implicitly for a ``build.pro`` file, otherwise</span>
+<span class="sd">	3. it checks implicitly for a ``&lt;path&gt;.pro`` file, named like the directories name.</span>
+
+<span class="sd">	:param file:            Explicit path to a ``*.pro`` file or a directory containing an implicitly searched ``*.pro`` file.</span>
+<span class="sd">	:param options:         Optional list of option IDs.</span>
+<span class="sd">	:raises TypeError:      If parameter proFileOrBuildDirectory is not a Path.</span>
+<span class="sd">	:raises OSVVMException: If parameter proFileOrBuildDirectory is an absolute path.</span>
+<span class="sd">	:raises OSVVMException: If parameter proFileOrBuildDirectory is not a *.pro file or build directory.</span>
+<span class="sd">	:raises OSVVMException: If a TclError was caught while processing a *.pro file.</span>
+
+<span class="sd">	.. seealso::</span>
+
+<span class="sd">	   * :func:`BuildName`</span>
+<span class="sd">	   * :func:`include`</span>
+<span class="sd">	   * :func:`ChangeWorkingDirectory`</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+		<span class="n">buildName</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="c1"># Preserve current directory</span>
+		<span class="n">currentDirectory</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span>
+
+		<span class="k">for</span> <span class="n">optionID</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">option</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">optionID</span><span class="p">)]</span>
+			<span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> not found in option dictionary.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">e</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">OSVVM_BuildName</span><span class="p">):</span>
+				<span class="n">buildName</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="n">Name</span>
+			<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> is not a BuildName.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">TypeError</span><span class="p">()</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="c1"># If no build name was specified, derive a name from *.pro file.</span>
+		<span class="k">if</span> <span class="n">buildName</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">buildName</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">stem</span>
+
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">BeginBuild</span><span class="p">(</span><span class="n">buildName</span><span class="p">)</span>
+		<span class="n">includeFile</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">IncludeFile</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">EvaluateFile</span><span class="p">(</span><span class="n">includeFile</span><span class="p">)</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">EndBuild</span><span class="p">()</span>
+
+		<span class="c1"># Restore current directory after recursively evaluating *.pro files.</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">=</span> <span class="n">currentDirectory</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="include">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.include">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">include</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	This function implements the behavior of OSVVM&#39;s ``include`` procedure.</span>
+
+<span class="sd">	The current directory of the currently active context is preserved	while the referenced ``*.pro`` file is processed.</span>
+<span class="sd">	After processing that file, the context&#39;s current directory is restored.</span>
+
+<span class="sd">	The referenced file gets appended to a list of included files maintained by the context.</span>
+
+<span class="sd">	:underline:`pro-file discovery algorithm:`</span>
+
+<span class="sd">	1. If the path explicitly references a ``*.pro`` file, this file is used.</span>
+<span class="sd">	2. If the path references a directory, it checks implicitly for a ``build.pro`` file, otherwise</span>
+<span class="sd">	3. it checks implicitly for a ``&lt;path&gt;.pro`` file, named like the directories name.</span>
+
+<span class="sd">	:param file:            Explicit path to a ``*.pro`` file or a directory containing an implicitly searched ``*.pro`` file.</span>
+<span class="sd">	:raises TypeError:      If parameter proFileOrBuildDirectory is not a Path.</span>
+<span class="sd">	:raises OSVVMException: If parameter proFileOrBuildDirectory is an absolute path.</span>
+<span class="sd">	:raises OSVVMException: If parameter proFileOrBuildDirectory is not a *.pro file or build directory.</span>
+<span class="sd">	:raises OSVVMException: If a TclError was caught while processing a *.pro file.</span>
+
+<span class="sd">	.. seealso::</span>
+
+<span class="sd">	   * :func:`build`</span>
+<span class="sd">	   * :func:`ChangeWorkingDirectory`</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="c1"># Preserve current directory</span>
+		<span class="n">currentDirectory</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span>
+
+		<span class="n">includeFile</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">IncludeFile</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">EvaluateFile</span><span class="p">(</span><span class="n">includeFile</span><span class="p">)</span>
+
+		<span class="c1"># Restore current directory after recursively evaluating *.pro files.</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">=</span> <span class="n">currentDirectory</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="library">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.library">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">library</span><span class="p">(</span><span class="n">libraryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">libraryPath</span><span class="p">:</span> <span class="n">Nullable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	This function implements the behavior of OSVVM&#39;s ``library`` procedure.</span>
+
+<span class="sd">	It sets the currently active VHDL library to the specified VHDL library. If no VHDL library with that name exist, a</span>
+<span class="sd">	new VHDL library is created and set as active VHDL library.</span>
+
+<span class="sd">	.. hint:: All following ``analyze`` calls will use this library as the VHDL file&#39;s VHDL library.</span>
+
+<span class="sd">	.. caution:: Parameter `libraryPath` is not yet implemented.</span>
+
+<span class="sd">	:param libraryName: Name of the VHDL library.</span>
+<span class="sd">	:param libraryPath: Optional: Path where to create that VHDL library.</span>
+
+<span class="sd">	.. seealso::</span>
+
+<span class="sd">	   * :func:`LinkLibrary`</span>
+<span class="sd">	   * :func:`LinkLibraryDirectory`</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">libraryPath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optional parameter &#39;libraryPath&#39; not yet supported.&quot;</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">SetLibrary</span><span class="p">(</span><span class="n">libraryName</span><span class="p">)</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="NoNullRangeWarning">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.NoNullRangeWarning">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">NoNullRangeWarning</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">option</span> <span class="o">=</span> <span class="n">OSVVM_NoNullRangeWarning</span><span class="p">()</span>
+		<span class="n">optionID</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddOption</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">return</span> <span class="n">optionID</span></div>
+
+
+
+<div class="viewcode-block" id="analyze">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.analyze">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+		<span class="n">fullPath</span> <span class="o">=</span> <span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">/</span> <span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+		<span class="n">noNullRangeWarning</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">for</span> <span class="n">optionID</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">option</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">optionID</span><span class="p">)]</span>
+			<span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> not found in option dictionary.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">e</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">OSVVM_NoNullRangeWarning</span><span class="p">):</span>
+				<span class="n">noNullRangeWarning</span> <span class="o">=</span> <span class="kc">True</span>
+			<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> is not a NoNullRangeWarning.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">TypeError</span><span class="p">()</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">fullPath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path &#39;</span><span class="si">{</span><span class="n">fullPath</span><span class="si">}</span><span class="s2">&#39; can&#39;t be analyzed.&quot;</span><span class="p">)</span>
+			<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">fullPath</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="k">if</span> <span class="n">fullPath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.vhd&quot;</span><span class="p">,</span> <span class="s2">&quot;.vhdl&quot;</span><span class="p">):</span>
+			<span class="n">vhdlFile</span> <span class="o">=</span> <span class="n">VHDLSourceFile</span><span class="p">(</span>
+				<span class="n">fullPath</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_workingDirectory</span><span class="p">,</span> <span class="n">walk_up</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+				<span class="n">noNullRangeWarning</span><span class="o">=</span><span class="n">noNullRangeWarning</span>
+			<span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddVHDLFile</span><span class="p">(</span><span class="n">vhdlFile</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path &#39;</span><span class="si">{</span><span class="n">fullPath</span><span class="si">}</span><span class="s2">&#39; is no VHDL file.&quot;</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="simulate">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.simulate">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span><span class="n">toplevelName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">testcase</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">SetTestcaseToplevel</span><span class="p">(</span><span class="n">toplevelName</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">optionID</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">option</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">optionID</span><span class="p">)]</span>
+			<span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> not found in option dictionary.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">e</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">GenericValue</span><span class="p">):</span>
+				<span class="n">testcase</span><span class="o">.</span><span class="n">AddGeneric</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> is not a GenericValue.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">TypeError</span><span class="p">()</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+	<span class="c1"># osvvmContext._testcase = None</span>
+
+
+<div class="viewcode-block" id="generic">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.generic">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generic</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">genericValue</span> <span class="o">=</span> <span class="n">GenericValue</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+		<span class="n">optionID</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddOption</span><span class="p">(</span><span class="n">genericValue</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">return</span> <span class="n">optionID</span></div>
+
+
+
+<div class="viewcode-block" id="TestSuite">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.TestSuite">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">TestSuite</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">SetTestsuite</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="TestName">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.TestName">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">TestName</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddTestcase</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="RunTest">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.RunTest">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">RunTest</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">options</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+		<span class="n">testName</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">stem</span>
+
+		<span class="c1"># Analyze file</span>
+		<span class="n">fullPath</span> <span class="o">=</span> <span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">/</span> <span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">fullPath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path &#39;</span><span class="si">{</span><span class="n">fullPath</span><span class="si">}</span><span class="s2">&#39; can&#39;t be analyzed.&quot;</span><span class="p">)</span>
+			<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">fullPath</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="k">if</span> <span class="n">fullPath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.vhd&quot;</span><span class="p">,</span> <span class="s2">&quot;.vhdl&quot;</span><span class="p">):</span>
+			<span class="n">vhdlFile</span> <span class="o">=</span> <span class="n">VHDLSourceFile</span><span class="p">(</span><span class="n">fullPath</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_workingDirectory</span><span class="p">,</span> <span class="n">walk_up</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddVHDLFile</span><span class="p">(</span><span class="n">vhdlFile</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path &#39;</span><span class="si">{</span><span class="n">fullPath</span><span class="si">}</span><span class="s2">&#39; is no VHDL file.&quot;</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="c1"># Add testcase</span>
+		<span class="n">testcase</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">AddTestcase</span><span class="p">(</span><span class="n">testName</span><span class="p">)</span>
+		<span class="n">testcase</span><span class="o">.</span><span class="n">SetToplevel</span><span class="p">(</span><span class="n">testName</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">optionID</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">option</span> <span class="o">=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">optionID</span><span class="p">)]</span>
+			<span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> not found in option dictionary.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">e</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="n">GenericValue</span><span class="p">):</span>
+				<span class="n">testcase</span><span class="o">.</span><span class="n">AddGeneric</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Option </span><span class="si">{</span><span class="n">optionID</span><span class="si">}</span><span class="s2"> is not a GenericValue.&quot;</span><span class="p">)</span>
+				<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">TypeError</span><span class="p">()</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+	<span class="c1"># osvvmContext._testcase = None</span>
+
+
+<div class="viewcode-block" id="LinkLibrary">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.LinkLibrary">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">LinkLibrary</span><span class="p">(</span><span class="n">libraryName</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">libraryPath</span><span class="p">:</span> <span class="n">Nullable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[LinkLibrary] </span><span class="si">{</span><span class="n">libraryPath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LinkLibraryDirectory">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.LinkLibraryDirectory">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">LinkLibraryDirectory</span><span class="p">(</span><span class="n">libraryDirectory</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+	<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[LinkLibraryDirectory] </span><span class="si">{</span><span class="n">libraryDirectory</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SetVHDLVersion">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.SetVHDLVersion">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">SetVHDLVersion</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+		<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported VHDL version &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+			<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">e</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+
+		<span class="k">match</span> <span class="n">value</span><span class="p">:</span>
+			<span class="k">case</span> <span class="mi">1987</span><span class="p">:</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="o">=</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL87</span>
+			<span class="k">case</span> <span class="mi">1993</span><span class="p">:</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="o">=</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL93</span>
+			<span class="k">case</span> <span class="mi">2002</span><span class="p">:</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="o">=</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2002</span>
+			<span class="k">case</span> <span class="mi">2008</span><span class="p">:</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="o">=</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2008</span>
+			<span class="k">case</span> <span class="mi">2019</span><span class="p">:</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="o">=</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2019</span>
+			<span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+				<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported VHDL version &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+				<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+				<span class="k">raise</span> <span class="n">ex</span>
+
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+<div class="viewcode-block" id="GetVHDLVersion">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.GetVHDLVersion">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">GetVHDLVersion</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="ow">is</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL87</span><span class="p">:</span>
+			<span class="k">return</span> <span class="mi">1987</span>
+		<span class="k">elif</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="ow">is</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL93</span><span class="p">:</span>
+			<span class="k">return</span> <span class="mi">1993</span>
+		<span class="k">elif</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="ow">is</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2002</span><span class="p">:</span>
+			<span class="k">return</span> <span class="mi">2002</span>
+		<span class="k">elif</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="ow">is</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2008</span><span class="p">:</span>
+			<span class="k">return</span> <span class="mi">2008</span>
+		<span class="k">elif</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span> <span class="ow">is</span> <span class="n">VHDLVersion</span><span class="o">.</span><span class="n">VHDL2019</span><span class="p">:</span>
+			<span class="k">return</span> <span class="mi">2019</span>
+		<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported VHDL version &#39;</span><span class="si">{</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">VHDLVersion</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="SetCoverageAnalyzeEnable">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.SetCoverageAnalyzeEnable">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">SetCoverageAnalyzeEnable</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[SetCoverageAnalyzeEnable] </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SetCoverageSimulateEnable">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.SetCoverageSimulateEnable">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">SetCoverageSimulateEnable</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[SetCoverageSimulateEnable] </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FileExists">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.FileExists">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">FileExists</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">return</span> <span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">/</span> <span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+<div class="viewcode-block" id="DirectoryExists">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.DirectoryExists">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">DirectoryExists</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">return</span> <span class="p">(</span><span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">/</span> <span class="n">directory</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+<div class="viewcode-block" id="ChangeWorkingDirectory">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.ChangeWorkingDirectory">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ChangeWorkingDirectory</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">=</span> <span class="p">(</span><span class="n">newDirectory</span> <span class="o">:=</span> <span class="n">osvvmContext</span><span class="o">.</span><span class="n">_currentDirectory</span> <span class="o">/</span> <span class="n">directory</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">newDirectory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>  <span class="c1"># pragma: no cover</span>
+			<span class="n">ex</span> <span class="o">=</span> <span class="n">OSVVMException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory &#39;</span><span class="si">{</span><span class="n">newDirectory</span><span class="si">}</span><span class="s2">&#39; doesn&#39;t exist.&quot;</span><span class="p">)</span>
+			<span class="n">ex</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="ne">NotADirectoryError</span><span class="p">(</span><span class="n">newDirectory</span><span class="p">)</span>
+			<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+			<span class="k">raise</span> <span class="n">ex</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+		<span class="n">osvvmContext</span><span class="o">.</span><span class="n">LastException</span> <span class="o">=</span> <span class="n">ex</span>
+		<span class="k">raise</span> <span class="n">ex</span></div>
+
+
+
+<div class="viewcode-block" id="FindOsvvmSettingsDirectory">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.FindOsvvmSettingsDirectory">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">FindOsvvmSettingsDirectory</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="CreateOsvvmScriptSettingsPkg">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.CreateOsvvmScriptSettingsPkg">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">CreateOsvvmScriptSettingsPkg</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="noop">
+<a class="viewcode-back" href="../../../pyEDAA.OSVVM/pyEDAA.OSVVM.Procedures.html#pyEDAA.OSVVM.Procedures.noop">[docs]</a>
+<span class="nd">@export</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">noop</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+	<span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2025, Patrick Lehmann.
+      <span class="lastupdated">Last updated on 21.03.2025.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
