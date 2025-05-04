@@ -242,6 +242,7 @@ License
    Python Class Reference <pyEDAA.OSVVM/pyEDAA.OSVVM>
    unittests/index
    coverage/index
+   CodeCoverage
    Doc. Coverage Report <DocCoverage>
    Static Type Check Report ➚ <typing/index>
 

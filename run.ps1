@@ -33,7 +33,7 @@ Param(
 )
 
 $PackageName = "pyEDAA.OSVVM"
-$WheelName = $PackageName.Replace(".", "_").ToLower()
+$PackageVersion = "0.4.1"
 
 # set default values
 $EnableDebug =        [bool]$PSCmdlet.MyInvocation.BoundParameters["Debug"]
@@ -105,7 +105,7 @@ if ($install)
   { Write-Host -ForegroundColor Cyan        "[ADMIN][UNINSTALL] Uninstalling $PackageName ..."
     py -3.13 -m pip uninstall -y $PackageName
     Write-Host -ForegroundColor Cyan        "[ADMIN][INSTALL]   Installing $PackageName from wheel ..."
-    py -3.13 -m pip install .\dist\$WheelName-0.4.0-py3-none-any.whl
+    py -3.13 -m pip install .\dist\$PackageName-$PackageVersion-py3-none-any.whl
 
     Write-Host -ForegroundColor Cyan        "[ADMIN][INSTALL]   Closing window in 5 seconds ..."
     Start-Sleep -Seconds 5
@@ -145,7 +145,7 @@ if ($liveunit)
   $env:ENVIRONMENT_NAME = "Windows (x86-64)"
   pytest -raP --color=yes --junitxml=report/unit/unittest.xml --template=html1/index.html --report=report/unit/html/index.html --split-report tests/unit
 
-  pyedaa-reports -v unittest "--merge=pyTest-JUnit:report/unit/unittest.xml" "--pytest=rewrite-dunder-init;reduce-depth:pytest.tests.unit" "--output=pyTest-JUnit:report/unit/TestReportSummary.xml"
+  pyedaa-reports -v unittest "--name=$PackageName" "--merge=pyTest-JUnit:report/unit/TestReportSummary.xml" "--pytest=rewrite-dunder-init;reduce-depth:pytest.tests.unit" "--output=pyTest-JUnit:report/unit/unittest.xml"
 
   if ($copyunit)
   { cp -Recurse -Force .\report\unit\html\* .\doc\_build\html\unittests
@@ -163,7 +163,7 @@ elseif ($unit)
     $env:ENVIRONMENT_NAME = "Windows (x86-64)"
     pytest -raP --color=yes --junitxml=report/unit/unittest.xml --template=html1/index.html --report=report/unit/html/index.html --split-report tests/unit
 
-    pyedaa-reports -v unittest "--merge=pyTest-JUnit:report/unit/unittest.xml" "--pytest=rewrite-dunder-init;reduce-depth:pytest.tests.unit" "--output=pyTest-JUnit:report/unit/TestReportSummary.xml"
+    pyedaa-reports -v unittest "--name=$PackageName" "--merge=pyTest-JUnit:report/unit/TestReportSummary.xml" "--pytest=rewrite-dunder-init;reduce-depth:pytest.tests.unit" "--output=pyTest-JUnit:report/unit/unittest.xml"
   }
   $unitJob = Start-Job -Name "UnitTests" -ScriptBlock $runUnitFunc
   $jobs += $unitJob
