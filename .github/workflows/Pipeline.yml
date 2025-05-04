@@ -14,6 +14,10 @@ jobs:
       package_namespace: pyEDAA
       package_name: OSVVM
       unittest_python_version_list: '3.12 3.13'
+      codecov:       true
+      codacy:        true
+      dorny:         true
     secrets:
-      PYPI_TOKEN:           ${{ secrets.PYPI_TOKEN }}
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      PYPI_TOKEN:    ${{ secrets.PYPI_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CODACY_TOKEN:  ${{ secrets.CODACY_TOKEN }}
