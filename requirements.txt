@@ -1,3 +1,4 @@
 ruamel.yaml ~= 0.18
 pyTooling ~= 8.4
 pyVHDLModel ~= 0.31
+pyEDAA.Reports ~= 0.16
