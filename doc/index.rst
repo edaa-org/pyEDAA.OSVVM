@@ -56,7 +56,7 @@ using one parser that's aligned with OSVVM's data formats.
 Use Cases
 *********
 
-.. _USECASE:Project:
+.. _USECASE/Project:
 
 OSVVM Project
 =============
@@ -74,7 +74,7 @@ OSVVM Project
 
       pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ/Procedure>`, so OSVVM's ``*.pro`` files can be
       executed and contained information is collected in a data model representing :ref:`builds <PRJ/DataModel/Build>`,
-      :ref:`VHDL libraries <PRJ/DataModel/VHDLLibrary>`, :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>`,
+      :ref:`VHDL libraries <PRJ/DataModel/VHDLLibrary>`, :ref:`VHDL source files <PRJ/DataModel/VHDLSourceFile>`,
       :ref:`testsuites <PRJ/DataModel/Testsuite>`, and :ref:`testcases <PRJ/DataModel/Testcase>`.
 
       Afterwards, the :ref:`OSVVM project model <PRJ>` can be used as-is, or it can be converted to other data or file
@@ -141,7 +141,7 @@ OSVVM Project
                  classDef clsTS   fill:#8080ff
                  classDef clsTC   fill:#80ff80
 
-.. _USECASE:Reports:
+.. _USECASE/Reports:
 
 OSVVM Reports
 =============

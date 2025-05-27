@@ -32,7 +32,7 @@
 from datetime              import timedelta, datetime
 from pathlib               import Path
 from time                  import perf_counter_ns
-from typing                import Optional as Nullable
+from typing                import Optional as Nullable, Iterator
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 from pyTooling.Decorators  import export, InheritDocString, notimplemented
@@ -319,7 +319,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 	def __contains__(self, key: str) -> bool:
 		return key in self._testsuites
 
-	def __iter__(self):
+	def __iter__(self) -> Iterator[Testsuite]:
 		return iter(self._testsuites.values())
 
 	def __getitem__(self, key: str) -> Testsuite:

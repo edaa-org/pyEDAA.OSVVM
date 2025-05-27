@@ -119,6 +119,11 @@ class SourceFile(Base[_ParentType], Generic[_ParentType]):
 
 	@readonly
 	def Path(self) -> Path:
+		"""
+		Read-only property to access the path to the sourcefile.
+
+		:returns: The sourcefile's path.
+		"""
 		return self._path
 
 	def __repr__(self) -> str:

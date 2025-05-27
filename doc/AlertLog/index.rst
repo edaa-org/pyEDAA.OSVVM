@@ -9,6 +9,10 @@ Alert and Log Report
 * The OSVVM AlertLog model instance can be constructed top-down and bottom-up.
 * Child objects shall have a reference to their parent.
 
+.. rubric:: Features
+
+* Convert AlertLog hierarchy into a :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>`
+
 
 
 .. _ALERT/QuickStart:
@@ -21,26 +25,54 @@ Quick Start
    .. grid-item::
       :columns: 6
 
-      The following example code opens an OSVVM AlertLog report in YAML format and parses the content. Then the total
-      number of warnings, errors and fatal errors is printed. At next it iterates all top-level child items and prints
-      its warnings, errors and fatal errors, too. Finally, it prints a summary line.
+      The following example code opens an OSVVM AlertLog report in YAML format, analyzes the data structure and converts
+      the content to an AlertLog hierarchy. Then the total number of warnings, errors and failures is printed. At
+      next two nested loops iterate all second-level and third-level child items and prints its warnings, errors and
+      failures. Finally, it prints a summary line.
 
    .. grid-item::
       :columns: 6
 
-      .. code-block:: Python
+      .. tab-set::
 
-         from pathlib import Path
-         from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
+         .. tab-item:: Example Code
 
-         path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-         doc = AlertLogDocument(path, parse=True)
+            .. code-block:: Python
 
-         print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
-         for item in doc:
-            print(f"  {item.Name:<19}: {item.AlertCountWarnings}/{item.AlertCountErrors}/{item.AlertCountFailures}")
-         print("=" * 40)
-         print(f"Total errors: {doc.TotalErrors}")
+               from pathlib import Path
+               from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
+
+               path = Path("TbAxi4_BasicReadWrite_alerts.yml")
+               doc = AlertLogDocument(path, parse=True)
+
+               print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
+               for item in doc:
+                 print(f"  {item.Name:<19}: {item.AlertCountWarnings}/{item.AlertCountErrors}/{item.AlertCountFailures}")
+                 for innerItem in item:
+                   print(f"    {innerItem.Name:<17}: {innerItem.AlertCountWarnings}/{innerItem.AlertCountErrors}/{innerItem.AlertCountFailures}")
+               print("=" * 40)
+               print(f"Total errors: {doc.TotalErrors}")
+
+         .. tab-item:: Console Output
+
+            .. code-block::
+
+               TbAxi4_BasicReadWrite: 0/0/0
+                 Default            : 0/0/0
+                 OSVVM              : 0/0/0
+                 subordinate_1      : 0/0/0
+                   Protocol Error   : 0/0/0
+                   Data Check       : 0/0/0
+                   No response      : 0/0/0
+                 manager_1          : 0/0/0
+                   Protocol Error   : 0/0/0
+                   Data Check       : 0/0/0
+                   No response      : 0/0/0
+                   WriteResp SB     : 0/0/0
+                   ReadResp SB      : 0/0/0
+               ========================================
+               Total errors: 0
+
 
 
 .. _ALERT/DataModel:
@@ -50,8 +82,9 @@ Data Model
 
 An OSVVM AlertLog report can be summarized as follows:
 
-1. An *AlertLog* report is a tree of :ref:`ALERT:DataModel:AlertLogGroup` instances.
-2. The tree's root element is a :ref:`ALERT:DataModel:Document` instance derived from :ref:`ALERT:DataModel:AlertLogGroup`.
+1. An *AlertLog* report is a tree (or hierarchy) of :ref:`ALERT/DataModel/AlertLogItem` instances.
+2. The tree's root element is a :ref:`ALERT/DataModel/Document` instance derived from :ref:`ALERT/DataModel/AlertLogItem`.
+
 
 
 .. _ALERT/DataModel/Document:
@@ -64,14 +97,19 @@ AlertLog Document
    .. grid-item::
       :columns: 6
 
-      An OSVVM AlertLog :class:`~pyEDAA.OSVVM.AlertLog.Document` class inherits all methods and properties of an
-      AlertLog Group (see below: :ref:`ALERT:DataModel:AlertLogItem`).
+      An Alertlog Document represents an OSVVM YAML file and its AlertLog data structure, which is a hierarchy of
+      AlertLog items. The OSVVM AlertLog :class:`~pyEDAA.OSVVM.AlertLog.Document` class inherits all methods and
+      properties of an :ref:`ALERT/DataModel/AlertLogItem`.
 
-      .. todo::
+      When a document is instantiated, a path to a YAML file is required. Optionally, the YAML file can be immediately
+      analyzed and converted to an AlertLog hierarchy. The given path can be accessed by the
+      :data:`~pyEDAA.OSVVM.AlertLog.Document.Path` property. The document class preserves an internal reference
+      (:attr:`~pyEDAA.OSVVM.AlertLog.Document._yamlDocument`) to the analyzed YAML document.
 
-         **Data model: OSVVM AlertLog Document**
-
-         To be documented.
+      If the document was not analyzed, the :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` and
+      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Parse` methods can be used to start these steps. The spent time is captured
+      and can be accessed via :data:`~pyEDAA.OSVVM.AlertLog.Document.AnalysisDuration` and
+      :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`.
 
    .. grid-item::
       :columns: 6
@@ -79,7 +117,7 @@ AlertLog Document
       .. code-block:: Python
 
          @export
-         class Document(AlertLogItem):
+         class Document(AlertLogItem, Settings):
             def __init__(self, filename: Path, parse: bool = False) -> None:
               ...
 
@@ -102,10 +140,31 @@ AlertLog Document
               ...
 
 
+.. _ALERT/DataModel/Settings:
+
+AlertLog Settings
+=================
+
+.. grid:: 2
+
+   .. grid-item::
+      :columns: 6
+
+      tbd
+
+   .. grid-item::
+      :columns: 6
+
+      .. code-block:: Python
+
+         @export
+         class Settings(metaclass=ExtendedType, mixin=True):
+
+
 .. _ALERT/DataModel/AlertLogItem:
 
-AlertLog Group
-==============
+AlertLog Item
+=============
 
 .. grid:: 2
 
@@ -116,7 +175,7 @@ AlertLog Group
 
       .. todo::
 
-         **Data model: OSVVM AlertLog Group**
+         **Data model: OSVVM AlertLog Item**
 
          To be documented.
 

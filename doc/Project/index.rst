@@ -21,12 +21,12 @@ Data Model
 
 An OSVVM project can be summarized as follows:
 
-1. An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
+1. An :ref:`PRJ/DataModel/Project` contains one or multiple :ref:`builds <PRJ/DataModel/Build>` (a ``*.pro`` file loaded
    via :ref:`PRJ/Procedure/build` command).
-2. Each build can contain multiple :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>` as well as multiple
-   :ref:`testsuites <PRJ:DataModel:Testsuite>`.
-3. Each VHDL library references multiple :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>` in compile order.
-4. Again, each testsuite contains multiple :ref:`testcases <PRJ:DataModel:Testcase>` in execution order.
+2. Each build can contain multiple :ref:`VHDL libraries <PRJ/DataModel/VHDLLibrary>` as well as multiple
+   :ref:`testsuites <PRJ/DataModel/Testsuite>`.
+3. Each VHDL library references multiple :ref:`VHDL source files <PRJ/DataModel/VHDLSourceFile>` in compile order.
+4. Again, each testsuite contains multiple :ref:`testcases <PRJ/DataModel/Testcase>` in execution order.
 
 .. mermaid::
 
@@ -363,7 +363,7 @@ Implemented TCL Procedures
 
 The following TCL procedures are implemented as :mod:`Python functions <pyEDAA.OSVVM.Procedures>` and registered to TCL,
 thus they can be called from TCL code. This allows pyEDAA.OSVVM to capture parameters handed over these procedures. The
-gathered parameters are then collected in a context object and assembled to a :ref:`PRJ:DataModel`.
+gathered parameters are then collected in a context object and assembled to a :ref:`PRJ/DataModel`.
 
 
 .. _PRJ/Procedure/build:

@@ -32,13 +32,13 @@
 from datetime import timedelta
 from enum     import Enum, auto
 from pathlib  import Path
-from time     import perf_counter_ns
-from typing   import Optional as Nullable, Dict, Iterator, Iterable
+from typing   import Optional as Nullable, Dict, Iterator, Iterable, Callable
 
 from ruamel.yaml           import YAML, CommentedSeq, CommentedMap
 from pyTooling.Decorators  import readonly, export
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Common      import getFullyQualifiedName
+from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
 
 from pyEDAA.OSVVM          import OSVVMException
@@ -46,19 +46,20 @@ from pyEDAA.OSVVM          import OSVVMException
 
 @export
 class AlertLogException(OSVVMException):
-	pass
+	"""Base-class for all pyEDAA.OSVVM.AlertLog specific exceptions."""
 
 
 @export
 class DuplicateItemException(AlertLogException):
-	pass
+	"""Raised if a duplicate item is detected in the AlertLog hierarchy."""
 
 
 @export
 class AlertLogStatus(Enum):
+	"""Status of an :class:`AlertLogItem`."""
 	Unknown = auto()
-	Passed = auto()
-	Failed = auto()
+	Passed =  auto()
+	Failed =  auto()
 
 	__MAPPINGS__ = {
 		"passed": Passed,
@@ -73,32 +74,51 @@ class AlertLogStatus(Enum):
 			raise AlertLogException(f"Unknown AlertLog status '{name}'.") from ex
 
 	def __bool__(self) -> bool:
+		"""
+		Convert an *AlertLogStatus* to a boolean.
+
+		:returns: Return true, if the status is ``Passed``.
+		"""
 		return self is self.Passed
 
 
 @export
 def _format(node: Node) -> str:
-	return f"{node._value}: {node["TotalErrors"]}={node["AlertCountFailures"]}/{node["AlertCountErrors"]}/{node["AlertCountWarnings"]} {node["PassedCount"]}/{node["AffirmCount"]}"
+	"""
+	User-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function for nodes referencing :class:`AlertLogItems <AlertLogItem>`.
+
+	:param node: Node to format.
+	:returns:    String representation (one-liner) describing an AlertLogItem.
+	"""
+	return f"{node["Name"]}: {node["TotalErrors"]}={node["AlertCountFailures"]}/{node["AlertCountErrors"]}/{node["AlertCountWarnings"]} {node["PassedCount"]}/{node["AffirmCount"]}"
 
 
 @export
 class AlertLogItem(metaclass=ExtendedType, slots=True):
-	_parent:                     "AlertLogItem"
-	_name:                       str
-	_children:                   Dict[str, "AlertLogItem"]
+	"""
+	An *AlertLogItem* represents an AlertLog hierarchy item.
 
-	_status:                     AlertLogStatus
-	_totalErrors:                int
-	_alertCountWarnings:         int
-	_alertCountErrors:           int
-	_alertCountFailures:         int
-	_passedCount:                int
-	_affirmCount:                int
-	_requirementsPassed:         int
-	_requirementsGoal:           int
-	_disabledAlertCountWarnings: int
-	_disabledAlertCountErrors:   int
-	_disabledAlertCountFailures: int
+	An item has a reference to its parent item in the AlertLog hierarchy. If the item is the top-most element (root
+	element), the parent reference is ``None``.
+
+	An item can contain further child items.
+	"""
+	_parent:                     "AlertLogItem"             #: Reference to the parent item.
+	_name:                       str                        #: Name of the AlertLog item.
+	_children:                   Dict[str, "AlertLogItem"]  #: Dictionary of child items.
+
+	_status:                     AlertLogStatus             #: AlertLog item's status
+	_totalErrors:                int                        #: Total number of warnings, errors and failures.
+	_alertCountWarnings:         int                        #: Warning count.
+	_alertCountErrors:           int                        #: Error count.
+	_alertCountFailures:         int                        #: Failure count.
+	_passedCount:                int                        #: Passed affirmation count.
+	_affirmCount:                int                        #: Overall affirmation count (incl. failed affirmations).
+	_requirementsPassed:         int                        #: Count of passed requirements.
+	_requirementsGoal:           int                        #: Overall expected requirements.
+	_disabledAlertCountWarnings: int                        #: Count of disabled warnings.
+	_disabledAlertCountErrors:   int                        #: Count of disabled errors.
+	_disabledAlertCountFailures: int                        #: Count of disabled failures.
 
 	def __init__(
 		self,
@@ -160,6 +180,11 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	@property
 	def Parent(self) -> Nullable["AlertLogItem"]:
+		"""
+		Property to access the parent item of this item (:attr:`_parent`).
+
+		:returns: The item's parent item. ``None``, if it's the top-most item (root).
+		"""
 		return self._parent
 
 	@Parent.setter
@@ -180,34 +205,74 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	@readonly
 	def Name(self) -> str:
+		"""
+		Read-only property to access the AlertLog item's name (:attr:`_name`).
+
+		:returns: AlertLog item's name.
+		"""
 		return self._name
 
 	@readonly
 	def Status(self) -> AlertLogStatus:
+		"""
+		Read-only property to access the AlertLog item's status (:attr:`_status`).
+
+		:returns: AlertLog item's status.
+		"""
 		return self._status
 
 	@readonly
 	def TotalErrors(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's total error count (:attr:`_totalErrors`).
+
+		:returns: AlertLog item's total errors.
+		"""
 		return self._totalErrors
 
 	@readonly
 	def AlertCountWarnings(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's warning count (:attr:`_alertCountWarnings`).
+
+		:returns: AlertLog item's warning count.
+		"""
 		return self._alertCountWarnings
 
 	@readonly
 	def AlertCountErrors(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's error count (:attr:`_alertCountErrors`).
+
+		:returns: AlertLog item's error count.
+		"""
 		return self._alertCountErrors
 
 	@readonly
 	def AlertCountFailures(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's failure count (:attr:`_alertCountFailures`).
+
+		:returns: AlertLog item's failure count.
+		"""
 		return self._alertCountFailures
 
 	@readonly
 	def PassedCount(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's passed affirmation count (:attr:`_alertCountFailures`).
+
+		:returns: AlertLog item's passed affirmations.
+		"""
 		return self._passedCount
 
 	@readonly
 	def AffirmCount(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's overall affirmation count (:attr:`_affirmCount`).
+
+		:returns: AlertLog item's overall affirmations.
+		"""
 		return self._affirmCount
 
 	@readonly
@@ -220,14 +285,29 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	@readonly
 	def DisabledAlertCountWarnings(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's count of disabled warnings (:attr:`_disabledAlertCountWarnings`).
+
+		:returns: AlertLog item's count of disabled warnings.
+		"""
 		return self._disabledAlertCountWarnings
 
 	@readonly
 	def DisabledAlertCountErrors(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's count of disabled errors (:attr:`_disabledAlertCountErrors`).
+
+		:returns: AlertLog item's count of disabled errors.
+		"""
 		return self._disabledAlertCountErrors
 
 	@readonly
 	def DisabledAlertCountFailures(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's count of disabled failures (:attr:`_disabledAlertCountFailures`).
+
+		:returns: AlertLog item's count of disabled failures.
+		"""
 		return self._disabledAlertCountFailures
 
 	@readonly
@@ -235,18 +315,41 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		return self._children
 
 	def __iter__(self) -> Iterator["AlertLogItem"]:
+		"""
+		Iterate all child AlertLog items.
+
+		:return: An iterator of child items.
+		"""
 		return iter(self._children.values())
 
 	def __len__(self) -> int:
+		"""
+		Returns number of child AlertLog items.
+
+		:returns: The number of nested AlertLog items.
+		"""
 		return len(self._children)
 
 	def __getitem__(self, name: str) -> "AlertLogItem":
+		"""Index access for returning child AlertLog items.
+
+		:param name:      The child's name.
+		:returns:         The referenced child.
+		:raises KeyError: When the child referenced by parameter 'name' doesn't exist.
+		"""
 		return self._children[name]
 
-	def ToTree(self) -> Node:
+	def ToTree(self, format: Callable[[Node], str] = _format) -> Node:
+		"""
+		Convert the AlertLog hierarchy starting from this AlertLog item to a :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>`.
+
+		:params format: A user-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function.
+		:returns:       A tree of nodes referencing an AlertLog item.
+		"""
 		node = Node(
-			value=self._name,
+			value=self,
 			keyValuePairs={
+				"Name": self._name,
 				"TotalErrors": self._totalErrors,
 				"AlertCountFailures":  self._alertCountFailures,
 				"AlertCountErrors": self._alertCountErrors,
@@ -255,42 +358,62 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 				"AffirmCount": self._affirmCount
 			},
 			children=(child.ToTree() for child in self._children.values()),
-			format=_format
+			format=format
 		)
 
 		return node
 
 
 @export
-class Document(AlertLogItem):
+class Settings(metaclass=ExtendedType, mixin=True):
+	_externalWarningCount:    int
+	_externalErrorCount:      int
+	_externalFailureCount:    int
+	_failOnDisabledErrors:    bool
+	_failOnRequirementErrors: bool
+	_failOnWarning:           bool
+
+	def __init__(self) -> None:
+		self._externalWarningCount =    0
+		self._externalErrorCount =      0
+		self._externalFailureCount =    0
+		self._failOnDisabledErrors =    False
+		self._failOnRequirementErrors = True
+		self._failOnWarning =           False
+
+
+@export
+class Document(AlertLogItem, Settings):
 	"""
 	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
 	The document inherits :class:`AlertLogItem` and represents the AlertLog hierarchy's root element.
 
-	When analyzing and parsing the document, the YAML analysis duration as well as the model conversion duration gets
+	When analyzing and converting the document, the YAML analysis duration as well as the model conversion duration gets
 	captured.
 	"""
 
-	_path:             Path            #: Path to the YAML file.
-	_yamlDocument:     Nullable[YAML]  #: Internal YAML document instance.
+	_path:             Path                 #: Path to the YAML file.
+	_yamlDocument:     Nullable[YAML]       #: Internal YAML document instance.
 
-	_analysisDuration: float  # TODO: replace by Stopwatch; should be timedelta? Nullable?
-	_modelConversion:  float  # TODO: replace by Stopwatch; should be timedelta? Nullable?
+	_analysisDuration: Nullable[timedelta]  #: YAML file analysis duration in seconds.
+	_modelConversionDuration:  Nullable[timedelta]  #: Data structure conversion duration in seconds.
 
 	def __init__(self, filename: Path, parse: bool = False) -> None:
 		"""
 		Initializes an AlertLog YAML document.
 
 		:param filename: Path to the YAML file.
-		:param parse:    If true, parse the YAML document and convert the content to an AlertLog data model instance.
+		:param parse:    If true, analyze the YAML document and convert the content to an AlertLog data model instance.
 		"""
 		super().__init__("", parent=None)
+		Settings.__init__(self)
+
 		self._path = filename
 		self._yamlDocument = None
 
-		self._analysisDuration = -1.0  # TODO: None?
-		self._modelConversion = -1.0   # TODO: None?
+		self._analysisDuration = None
+		self._modelConversionDuration =  None
 
 		if parse:
 			self.Analyze()
@@ -298,30 +421,75 @@ class Document(AlertLogItem):
 
 	@property
 	def Path(self) -> Path:
+		"""
+		Read-only property to access the path to the YAML file of this document (:attr:`_path`).
+
+		:returns: The document's path to the YAML file.
+		"""
 		return self._path
 
 	@readonly
 	def AnalysisDuration(self) -> timedelta:
-		return timedelta(seconds=self._analysisDuration)
+		"""
+		Read-only property to access the time spent for YAML file analysis (:attr:`_analysisDuration`).
+
+		:returns: The YAML file analysis duration.
+		"""
+		if self._analysisDuration is None:
+			raise AlertLogException(f"Document '{self._path}' was not analyzed.")
+
+		return self._analysisDuration
 
 	@readonly
 	def ModelConversionDuration(self) -> timedelta:
-		return timedelta(seconds=self._modelConversion)
+		"""
+		Read-only property to access the time spent for data structure to AlertLog hierarchy conversion (:attr:`_modelConversionDuration`).
+
+		:returns: The data structure conversion duration.
+		"""
+		if self._modelConversionDuration is None:
+			raise AlertLogException(f"Document '{self._path}' was not converted.")
+
+		return self._modelConversionDuration
 
 	def Analyze(self) -> None:
+		"""
+		Analyze the YAML file (specified by :attr:`_path`) and store the YAML document in :attr:`_yamlDocument`.
+
+		:raises AlertLogException: If YAML file doesn't exist.
+		:raises AlertLogException: If YAML file can't be opened.
+		"""
 		if not self._path.exists():
-			raise OSVVMException(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
+			raise AlertLogException(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
 				from FileNotFoundError(f"File '{self._path}' not found.")
 
-		startAnalysis = perf_counter_ns()
-		try:
-			yamlReader = YAML()
-			self._yamlDocument = yamlReader.load(self._path)
-		except Exception as ex:
-			raise OSVVMException(f"Couldn't open '{self._path}'.") from ex
+		with Stopwatch() as sw:
+			try:
+				yamlReader = YAML()
+				self._yamlDocument = yamlReader.load(self._path)
+			except Exception as ex:
+				raise AlertLogException(f"Couldn't open '{self._path}'.") from ex
 
-		endAnalysis = perf_counter_ns()
-		self._analysisDuration = (endAnalysis - startAnalysis) / 1e9
+		self._analysisDuration = timedelta(seconds=sw.Duration)
+
+	def Parse(self) -> None:
+		"""
+		Convert the YAML data structure to a hierarchy of :class:`AlertLogItem` instances.
+
+		:raises AlertLogException: If YAML file was not analyzed.
+		"""
+		if self._yamlDocument is None:
+			ex = AlertLogException(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
+			ex.add_note(f"Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
+			raise ex
+
+		with Stopwatch() as sw:
+			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
+			self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
+			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
+				_ = self._ParseAlertLogItem(child, self)
+
+		self._modelConversionDuration = timedelta(seconds=sw.Duration)
 
 	@staticmethod
 	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:
@@ -386,25 +554,7 @@ class Document(AlertLogItem):
 
 		return value
 
-	def Parse(self) -> None:
-		if self._yamlDocument is None:
-			ex = OSVVMException(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note(f"Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
-			raise ex
-
-		startConversion = perf_counter_ns()
-
-		self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
-		self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
-		for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
-			AlertLogItem = self._ParseAlertLogItem(child)
-			self._children[AlertLogItem._name] = AlertLogItem
-			AlertLogItem._parent = self
-
-		endConversation = perf_counter_ns()
-		self._modelConversion = (endConversation - startConversion) / 1e9
-
-	def _ParseAlertLogItem(self, child: CommentedMap) -> AlertLogItem:
+	def _ParseAlertLogItem(self, child: CommentedMap, parent: Nullable[AlertLogItem] = None) -> AlertLogItem:
 		results = self._ParseMapFromYAML(child, "Results")
 		yamlAlertCount = self._ParseMapFromYAML(results, "AlertCount")
 		yamlDisabledAlertCount = self._ParseMapFromYAML(results, "DisabledAlertCount")
@@ -422,7 +572,8 @@ class Document(AlertLogItem):
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning"),
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error"),
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure"),
-			children=(self._ParseAlertLogItem(ch) for ch in self._ParseSequenceFromYAML(child, "Children"))
+			children=(self._ParseAlertLogItem(ch) for ch in self._ParseSequenceFromYAML(child, "Children")),
+			parent=parent
 		)
 
 		return alertLogItem
