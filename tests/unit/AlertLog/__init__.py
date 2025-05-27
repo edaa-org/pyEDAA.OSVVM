@@ -33,7 +33,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest     import TestCase
 
-from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
+from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument
 
 
 if __name__ == "__main__": # pragma: no cover
@@ -43,4 +43,7 @@ if __name__ == "__main__": # pragma: no cover
 
 
 class Instantiation(TestCase):
-	pass
+	def test_AlertLogItem(self) -> None:
+		item = AlertLogItem("name")
+
+		self.assertEqual("name", item.Name)

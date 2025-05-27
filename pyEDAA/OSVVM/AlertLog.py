@@ -76,22 +76,22 @@ def _format(node: Node) -> str:
 
 
 @export
-class AlertLogGroup(metaclass=ExtendedType, slots=True):
-	_parent: "AlertLogGroup"
-	_name: str
-	_children: Dict[str, "AlertLogGroup"]
+class AlertLogItem(metaclass=ExtendedType, slots=True):
+	_parent:                     "AlertLogItem"
+	_name:                       str
+	_children:                   Dict[str, "AlertLogItem"]
 
-	_status: AlertLogStatus
-	_totalErrors: int
-	_alertCountWarnings: int
-	_alertCountErrors: int
-	_alertCountFailures: int
-	_passedCount: int
-	_affirmCount: int
-	_requirementsPassed: int
-	_requirementsGoal: int
+	_status:                     AlertLogStatus
+	_totalErrors:                int
+	_alertCountWarnings:         int
+	_alertCountErrors:           int
+	_alertCountFailures:         int
+	_passedCount:                int
+	_affirmCount:                int
+	_requirementsPassed:         int
+	_requirementsGoal:           int
 	_disabledAlertCountWarnings: int
-	_disabledAlertCountErrors: int
+	_disabledAlertCountErrors:   int
 	_disabledAlertCountFailures: int
 
 	def __init__(
@@ -109,8 +109,8 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 		disabledAlertCountWarnings: int = 0,
 		disabledAlertCountErrors: int = 0,
 		disabledAlertCountFailures: int = 0,
-		children: Iterable["AlertLogGroup"] = None,
-		parent: Nullable["AlertLogGroup"] = None
+		children: Iterable["AlertLogItem"] = None,
+		parent: Nullable["AlertLogItem"] = None
 	) -> None:
 		self._parent = parent
 		self._name = name
@@ -134,7 +134,7 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 		self._disabledAlertCountFailures = disabledAlertCountFailures
 
 	@readonly
-	def Parent(self) -> Nullable["AlertLogGroup"]:
+	def Parent(self) -> Nullable["AlertLogItem"]:
 		return self._parent
 
 	@readonly
@@ -189,10 +189,10 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 	def DisabledAlertCountFailures(self) -> int:
 		return self._disabledAlertCountFailures
 
-	def __iter__(self) -> Iterator["AlertLogGroup"]:
+	def __iter__(self) -> Iterator["AlertLogItem"]:
 		return iter(self._children.values())
 
-	def __getitem__(self, name: str) -> "AlertLogGroup":
+	def __getitem__(self, name: str) -> "AlertLogItem":
 		return self._children[name]
 
 	def ToTree(self) -> Node:
@@ -214,11 +214,11 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 
 
 @export
-class Document(AlertLogGroup):
+class Document(AlertLogItem):
 	"""
 	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
-	The document inherits :class:`AlertLogGroup` and represents the AlertLog hierarchy's root element.
+	The document inherits :class:`AlertLogItem` and represents the AlertLog hierarchy's root element.
 
 	When analyzing and parsing the document, the YAML analysis duration as well as the model conversion duration gets
 	captured.
@@ -349,18 +349,18 @@ class Document(AlertLogGroup):
 		self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
 		self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
 		for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
-			alertLogGroup = self._ParseAlertLogGroup(child)
-			self._children[alertLogGroup._name] = alertLogGroup
-			alertLogGroup._parent = self
+			AlertLogItem = self._ParseAlertLogItem(child)
+			self._children[AlertLogItem._name] = AlertLogItem
+			AlertLogItem._parent = self
 
 		endConversation = perf_counter_ns()
 		self._modelConversion = (endConversation - startConversion) / 1e9
 
-	def _ParseAlertLogGroup(self, child: CommentedMap) -> AlertLogGroup:
+	def _ParseAlertLogItem(self, child: CommentedMap) -> AlertLogItem:
 		results = self._ParseMapFromYAML(child, "Results")
 		yamlAlertCount = self._ParseMapFromYAML(results, "AlertCount")
 		yamlDisabledAlertCount = self._ParseMapFromYAML(results, "DisabledAlertCount")
-		alertLogGroup = AlertLogGroup(
+		alertLogItem = AlertLogItem(
 			self._ParseStrFieldFromYAML(child, "Name"),
 			AlertLogStatus.Parse(self._ParseStrFieldFromYAML(child, "Status")),
 			self._ParseIntFieldFromYAML(results, "TotalErrors"),
@@ -374,7 +374,7 @@ class Document(AlertLogGroup):
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning"),
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error"),
 			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure"),
-			children=(self._ParseAlertLogGroup(ch) for ch in self._ParseSequenceFromYAML(child, "Children"))
+			children=(self._ParseAlertLogItem(ch) for ch in self._ParseSequenceFromYAML(child, "Children"))
 		)
 
-		return alertLogGroup
+		return alertLogItem

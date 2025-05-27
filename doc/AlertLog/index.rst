@@ -65,7 +65,7 @@ AlertLog Document
       :columns: 6
 
       An OSVVM AlertLog :class:`~pyEDAA.OSVVM.AlertLog.Document` class inherits all methods and properties of an
-      AlertLog Group (see below: :ref:`ALERT:DataModel:AlertLogGroup`).
+      AlertLog Group (see below: :ref:`ALERT:DataModel:AlertLogItem`).
 
       .. todo::
 
@@ -79,7 +79,7 @@ AlertLog Document
       .. code-block:: Python
 
          @export
-         class Document(AlertLogGroup):
+         class Document(AlertLogItem):
             def __init__(self, filename: Path, parse: bool = False) -> None:
               ...
 
@@ -102,7 +102,7 @@ AlertLog Document
               ...
 
 
-.. _ALERT/DataModel/AlertLogGroup:
+.. _ALERT/DataModel/AlertLogItem:
 
 AlertLog Group
 ==============
@@ -126,7 +126,7 @@ AlertLog Group
       .. code-block:: Python
 
          @export
-         class AlertLogGroup(metaclass=ExtendedType, slots=True):
+         class AlertLogItem(metaclass=ExtendedType, slots=True):
             def __init__(
                self,
                name: str,
@@ -142,13 +142,13 @@ AlertLog Group
                disabledAlertCountWarnings: int = 0,
                disabledAlertCountErrors: int = 0,
                disabledAlertCountFailures: int = 0,
-               children: Iterable["AlertLogGroup"] = None,
-               parent: Nullable["AlertLogGroup"] = None
+               children: Iterable["AlertLogItem"] = None,
+               parent: Nullable["AlertLogItem"] = None
             ) -> None:
               ...
 
             @readonly
-            def Parent(self) -> Nullable["AlertLogGroup"]:
+            def Parent(self) -> Nullable["AlertLogItem"]:
               ...
 
             @readonly
@@ -203,10 +203,10 @@ AlertLog Group
             def DisabledAlertCountFailures(self) -> int:
               ...
 
-            def __iter__(self) -> Iterator["AlertLogGroup"]:
+            def __iter__(self) -> Iterator["AlertLogItem"]:
               ...
 
-            def __getitem__(self, name: str) -> "AlertLogGroup":
+            def __getitem__(self, name: str) -> "AlertLogItem":
               ...
 
             def ToTree(self) -> Node:
