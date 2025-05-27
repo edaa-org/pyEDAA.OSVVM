@@ -49,6 +49,11 @@ class AlertLogException(OSVVMException):
 
 
 @export
+class DuplicateItemException(AlertLogException):
+	pass
+
+
+@export
 class AlertLogStatus(Enum):
 	Unknown = auto()
 	Passed = auto()
@@ -112,11 +117,22 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		children: Iterable["AlertLogItem"] = None,
 		parent: Nullable["AlertLogItem"] = None
 	) -> None:
-		self._parent = parent
 		self._name = name
+		self._parent = parent
+		if parent is not None:
+			if name in parent._children:
+				raise DuplicateItemException(f"AlertLogItem '{name}' already exists in '{parent._name}'.")
+
+			parent._children[name] = self
+
 		self._children = {}
 		if children is not None:
 			for child in children:
+				if child._name in self._children:
+					raise DuplicateItemException(f"AlertLogItem '{child._name}' already exists in '{self._name}'.")
+				elif child._parent is not None:
+					raise AlertLogException(f"AlertLogItem '{child._name}' is already part of another AlertLog hierarchy ({child._parent._name}).")
+
 				self._children[child._name] = child
 				child._parent = self
 
@@ -133,9 +149,21 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		self._disabledAlertCountErrors = disabledAlertCountErrors
 		self._disabledAlertCountFailures = disabledAlertCountFailures
 
-	@readonly
+	@property
 	def Parent(self) -> Nullable["AlertLogItem"]:
 		return self._parent
+
+	@Parent.setter
+	def Parent(self, value: Nullable["AlertLogItem"]) -> None:
+		if value is None:
+			del self._parent._children[self._name]
+		else:
+			if self._name in value._children:
+				raise DuplicateItemException(f"AlertLogItem '{self._name}' already exists in '{value._name}'.")
+
+			value._children[self._name] = self
+
+		self._parent = value
 
 	@readonly
 	def Name(self) -> str:
@@ -189,8 +217,15 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 	def DisabledAlertCountFailures(self) -> int:
 		return self._disabledAlertCountFailures
 
+	@readonly
+	def Children(self) -> Dict[str, "AlertLogItem"]:
+		return self._children
+
 	def __iter__(self) -> Iterator["AlertLogItem"]:
 		return iter(self._children.values())
+
+	def __len__(self) -> int:
+		return len(self._children)
 
 	def __getitem__(self, name: str) -> "AlertLogItem":
 		return self._children[name]

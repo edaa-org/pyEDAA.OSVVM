@@ -33,8 +33,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest     import TestCase
 
-from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument
-
+from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument, AlertLogStatus
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -46,4 +45,61 @@ class Instantiation(TestCase):
 	def test_AlertLogItem(self) -> None:
 		item = AlertLogItem("name")
 
+		self.assertIsNone(item.Parent)
+		self.assertEqual(AlertLogStatus.Unknown, item.Status)
 		self.assertEqual("name", item.Name)
+		self.assertEqual(0, item.TotalErrors)
+		self.assertEqual(0, item.AlertCountWarnings)
+		self.assertEqual(0, item.AlertCountErrors)
+		self.assertEqual(0, item.AlertCountFailures)
+		self.assertEqual(0, item.AffirmCount)
+		self.assertEqual(0, item.PassedCount)
+		self.assertEqual(0, item.RequirementsGoal)
+		self.assertEqual(0, item.RequirementsPassed)
+		self.assertEqual(0, item.DisabledAlertCountWarnings)
+		self.assertEqual(0, item.DisabledAlertCountErrors)
+		self.assertEqual(0, item.DisabledAlertCountFailures)
+
+
+class Hierarchy(TestCase):
+	def test_TopDown(self) -> None:
+		root = AlertLogItem("root")
+		item = AlertLogItem("item1", parent=root)
+
+		self.assertIsNone(root.Parent)
+		self.assertIs(item.Parent, root)
+		self.assertEqual(1, len(root))
+		self.assertEqual(0, len(item))
+
+	def test_BottomUp1(self) -> None:
+		child1 = AlertLogItem("item1")
+		children = child1,
+		root = AlertLogItem("root", children=children)
+
+		self.assertIsNone(root.Parent)
+		self.assertEqual(1, len(root))
+		for child in children:
+			self.assertIs(child.Parent, root)
+			self.assertEqual(0, len(child))
+
+	def test_BottomUp2(self) -> None:
+		child1 = AlertLogItem("item1")
+		child2 = AlertLogItem("item2")
+		children = child1, child2
+		root = AlertLogItem("root", children=children)
+
+		self.assertIsNone(root.Parent)
+		self.assertEqual(2, len(root))
+		for child in children:
+			self.assertIs(child.Parent, root)
+			self.assertEqual(0, len(child))
+
+	def test_Parent(self) -> None:
+		root = AlertLogItem("root")
+		item = AlertLogItem("item1")
+		item.Parent = root
+
+		self.assertIsNone(root.Parent)
+		self.assertIs(item.Parent, root)
+		self.assertEqual(1, len(root))
+		self.assertEqual(0, len(item))
