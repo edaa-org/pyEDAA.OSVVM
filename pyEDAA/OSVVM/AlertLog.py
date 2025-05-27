@@ -190,10 +190,10 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 		return self._disabledAlertCountFailures
 
 	def __iter__(self) -> Iterator["AlertLogGroup"]:
-		return self._chilren.values()
+		return iter(self._children.values())
 
 	def __getitem__(self, name: str) -> "AlertLogGroup":
-		return self._chilren[name]
+		return self._children[name]
 
 	def ToTree(self) -> Node:
 		node = Node(
