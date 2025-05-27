@@ -38,6 +38,7 @@ from typing   import Optional as Nullable, Dict, Iterator, Iterable
 from ruamel.yaml           import YAML, CommentedSeq, CommentedMap
 from pyTooling.Decorators  import readonly, export
 from pyTooling.MetaClasses import ExtendedType
+from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Tree        import Node
 
 from pyEDAA.OSVVM          import OSVVMException
@@ -120,7 +121,11 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		self._name = name
 		self._parent = parent
 		if parent is not None:
-			if name in parent._children:
+			if not isinstance(parent, AlertLogItem):
+				ex = TypeError(f"Parameter 'parent' is not an AlertLogItem.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
+				raise ex
+			elif name in parent._children:
 				raise DuplicateItemException(f"AlertLogItem '{name}' already exists in '{parent._name}'.")
 
 			parent._children[name] = self
@@ -128,7 +133,11 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		self._children = {}
 		if children is not None:
 			for child in children:
-				if child._name in self._children:
+				if not isinstance(child, AlertLogItem):
+					ex = TypeError(f"Item in parameter 'children' is not an AlertLogItem.")
+					ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
+					raise ex
+				elif child._name in self._children:
 					raise DuplicateItemException(f"AlertLogItem '{child._name}' already exists in '{self._name}'.")
 				elif child._parent is not None:
 					raise AlertLogException(f"AlertLogItem '{child._name}' is already part of another AlertLog hierarchy ({child._parent._name}).")
@@ -158,7 +167,11 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		if value is None:
 			del self._parent._children[self._name]
 		else:
-			if self._name in value._children:
+			if not isinstance(value, AlertLogItem):
+				ex = TypeError(f"Parameter 'value' is not an AlertLogItem.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+				raise ex
+			elif self._name in value._children:
 				raise DuplicateItemException(f"AlertLogItem '{self._name}' already exists in '{value._name}'.")
 
 			value._children[self._name] = self

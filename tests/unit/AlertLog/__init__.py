@@ -33,7 +33,9 @@ from datetime import timedelta
 from pathlib import Path
 from unittest     import TestCase
 
-from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument, AlertLogStatus
+from pytest       import mark
+
+from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument, AlertLogStatus, AlertLogException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -42,12 +44,32 @@ if __name__ == "__main__": # pragma: no cover
 
 
 class Instantiation(TestCase):
+	def test_AlertLogStatus_dummy(self) -> None:
+		with self.assertRaises(AlertLogException):
+			_ = AlertLogStatus.Parse("dummy")
+
+	@mark.xfail(reason="Bug in AlertLogStatus. Enum value is still an integer")
+	def test_AlertLogStatus_passed(self) -> None:
+		passed = AlertLogStatus.Parse("passed")
+
+		self.assertIs(AlertLogStatus.Passed, passed)
+		self.assertTrue(passed)
+
+	@mark.xfail(reason="Bug in AlertLogStatus. Enum value is still an integer")
+	def test_AlertLogStatus_failed(self) -> None:
+		failed = AlertLogStatus.Parse("failed")
+
+		self.assertIs(AlertLogStatus.Failed, failed)
+		self.assertFalse(failed)
+
 	def test_AlertLogItem(self) -> None:
 		item = AlertLogItem("name")
 
 		self.assertIsNone(item.Parent)
 		self.assertEqual(AlertLogStatus.Unknown, item.Status)
 		self.assertEqual("name", item.Name)
+		self.assertEqual(0, len(item))
+		self.assertEqual(0, len(item.Children))
 		self.assertEqual(0, item.TotalErrors)
 		self.assertEqual(0, item.AlertCountWarnings)
 		self.assertEqual(0, item.AlertCountErrors)
@@ -70,6 +92,7 @@ class Hierarchy(TestCase):
 		self.assertIs(item.Parent, root)
 		self.assertEqual(1, len(root))
 		self.assertEqual(0, len(item))
+		self.assertIs(item, root["item1"])
 
 	def test_BottomUp1(self) -> None:
 		child1 = AlertLogItem("item1")
@@ -81,6 +104,7 @@ class Hierarchy(TestCase):
 		for child in children:
 			self.assertIs(child.Parent, root)
 			self.assertEqual(0, len(child))
+			self.assertIs(child, root[child.Name])
 
 	def test_BottomUp2(self) -> None:
 		child1 = AlertLogItem("item1")
@@ -93,6 +117,7 @@ class Hierarchy(TestCase):
 		for child in children:
 			self.assertIs(child.Parent, root)
 			self.assertEqual(0, len(child))
+			self.assertIs(child, root[child.Name])
 
 	def test_Parent(self) -> None:
 		root = AlertLogItem("root")
@@ -103,3 +128,14 @@ class Hierarchy(TestCase):
 		self.assertIs(item.Parent, root)
 		self.assertEqual(1, len(root))
 		self.assertEqual(0, len(item))
+
+
+class Iterate(TestCase):
+	def test_Iterate(self) -> None:
+		child1 = AlertLogItem("item1")
+		child2 = AlertLogItem("item2")
+		children = child1, child2
+		root = AlertLogItem("root", children=children)
+
+		self.assertTupleEqual(tuple(root), children)
+		self.assertDictEqual(root.Children, {c.Name: c for c in children})
