@@ -162,6 +162,19 @@ News
 
 .. only:: html
 
+   June 2025 - Reading AlertLog and Testsuites
+   ===========================================
+
+.. only:: latex
+
+   .. rubric:: Reading AlertLog and Testsuites
+
+* Reading OSVVM Testsuites in YAML format and XML format (Ant+JUnit format).
+* Reading OSVVM AlertLog hierarchies in YAML format.
+
+
+.. only:: html
+
    March 2025 - Reading ``*.pro`` Files
    ====================================
 

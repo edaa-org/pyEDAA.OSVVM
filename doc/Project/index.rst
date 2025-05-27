@@ -19,7 +19,7 @@ OSVVM Project Files
 Data Model
 **********
 
-A OSVVM project can be summarized as follows:
+An OSVVM project can be summarized as follows:
 
 1. An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
    via :ref:`PRJ:Procedure:build` command).

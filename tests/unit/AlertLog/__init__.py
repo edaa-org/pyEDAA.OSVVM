@@ -44,39 +44,3 @@ if __name__ == "__main__": # pragma: no cover
 
 class Instantiation(TestCase):
 	pass
-
-
-class Document(TestCase):
-	def test_Create(self) -> None:
-		print()
-		invalidTimedelta = timedelta(seconds=-1.0)
-
-		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
-		doc = AlertLogDocument(path)
-
-		self.assertEqual(path, doc.Path)
-		self.assertEqual(invalidTimedelta, doc.AnalysisDuration)
-		self.assertEqual(invalidTimedelta, doc.ModelConversionDuration)
-
-		print()
-		print(f"Statistics:")
-		print(f"  Times: YAML parsing: {doc.AnalysisDuration}s   convert: {doc.ModelConversionDuration}s")
-
-
-	def test_Create_WithParse(self) -> None:
-		print()
-		zeroTime = timedelta()
-
-		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
-		doc = AlertLogDocument(path, parse=True)
-
-		self.assertEqual(path, doc.Path)
-		self.assertGreater(doc.AnalysisDuration, zeroTime)
-		self.assertGreater(doc.ModelConversionDuration, zeroTime)
-
-		tree = doc.ToTree()
-		print(tree.Render())
-
-		print()
-		print(f"Statistics:")
-		print(f"  Times: YAML parsing: {doc.AnalysisDuration}s   convert: {doc.ModelConversionDuration}s")

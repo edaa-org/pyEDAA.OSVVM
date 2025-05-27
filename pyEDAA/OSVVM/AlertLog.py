@@ -215,19 +215,34 @@ class AlertLogGroup(metaclass=ExtendedType, slots=True):
 
 @export
 class Document(AlertLogGroup):
-	_path: Path
-	_yamlDocument: Nullable[YAML]
+	"""
+	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
-	_analysisDuration: float  #: TODO: replace by Timer; should be timedelta?
-	_modelConversion:  float  #: TODO: replace by Timer; should be timedelta?
+	The document inherits :class:`AlertLogGroup` and represents the AlertLog hierarchy's root element.
+
+	When analyzing and parsing the document, the YAML analysis duration as well as the model conversion duration gets
+	captured.
+	"""
+
+	_path:             Path            #: Path to the YAML file.
+	_yamlDocument:     Nullable[YAML]  #: Internal YAML document instance.
+
+	_analysisDuration: float  # TODO: replace by Stopwatch; should be timedelta? Nullable?
+	_modelConversion:  float  # TODO: replace by Stopwatch; should be timedelta? Nullable?
 
 	def __init__(self, filename: Path, parse: bool = False) -> None:
+		"""
+		Initializes an AlertLog YAML document.
+
+		:param filename: Path to the YAML file.
+		:param parse:    If true, parse the YAML document and convert the content to an AlertLog data model instance.
+		"""
 		super().__init__("", parent=None)
 		self._path = filename
 		self._yamlDocument = None
 
-		self._analysisDuration = -1.0
-		self._modelConversion = -1.0
+		self._analysisDuration = -1.0  # TODO: None?
+		self._modelConversion = -1.0   # TODO: None?
 
 		if parse:
 			self.Analyze()
