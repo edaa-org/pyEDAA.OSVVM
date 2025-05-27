@@ -11,7 +11,7 @@ Alert and Log Report
 
 
 
-.. _ALERT:QuickStart:
+.. _ALERT/QuickStart:
 
 Quick Start
 ***********
@@ -43,7 +43,7 @@ Quick Start
          print(f"Total errors: {doc.TotalErrors}")
 
 
-.. _ALERT:DataModel:
+.. _ALERT/DataModel:
 
 Data Model
 **********
@@ -54,7 +54,7 @@ An OSVVM AlertLog report can be summarized as follows:
 2. The tree's root element is a :ref:`ALERT:DataModel:Document` instance derived from :ref:`ALERT:DataModel:AlertLogGroup`.
 
 
-.. _ALERT:DataModel:Document:
+.. _ALERT/DataModel/Document:
 
 AlertLog Document
 =================
@@ -102,7 +102,7 @@ AlertLog Document
               ...
 
 
-.. _ALERT:DataModel:AlertLogGroup:
+.. _ALERT/DataModel/AlertLogGroup:
 
 AlertLog Group
 ==============
