@@ -399,12 +399,12 @@ class Document(AlertLogItem, Settings):
 	_analysisDuration: Nullable[timedelta]  #: YAML file analysis duration in seconds.
 	_modelConversionDuration:  Nullable[timedelta]  #: Data structure conversion duration in seconds.
 
-	def __init__(self, filename: Path, parse: bool = False) -> None:
+	def __init__(self, filename: Path, analyzeAndConvert: bool = False) -> None:
 		"""
 		Initializes an AlertLog YAML document.
 
-		:param filename: Path to the YAML file.
-		:param parse:    If true, analyze the YAML document and convert the content to an AlertLog data model instance.
+		:param filename:          Path to the YAML file.
+		:param analyzeAndConvert: If true, analyze the YAML document and convert the content to an AlertLog data model instance.
 		"""
 		super().__init__("", parent=None)
 		Settings.__init__(self)
@@ -415,7 +415,7 @@ class Document(AlertLogItem, Settings):
 		self._analysisDuration = None
 		self._modelConversionDuration =  None
 
-		if parse:
+		if analyzeAndConvert:
 			self.Analyze()
 			self.Parse()
 

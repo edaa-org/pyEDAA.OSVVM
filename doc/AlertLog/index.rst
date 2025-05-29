@@ -43,7 +43,7 @@ Quick Start
                from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
                path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-               doc = AlertLogDocument(path, parse=True)
+               doc = AlertLogDocument(path, analyzeAndConvert=True)
 
                print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
                for item in doc:
@@ -118,7 +118,7 @@ AlertLog Document
 
          @export
          class Document(AlertLogItem, Settings):
-            def __init__(self, filename: Path, parse: bool = False) -> None:
+            def __init__(self, filename: Path, analyzeAndConvert: bool = False) -> None:
               ...
 
             @property

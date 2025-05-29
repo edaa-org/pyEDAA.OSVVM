@@ -108,7 +108,7 @@ from pathlib import Path
 from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
 path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-doc = AlertLogDocument(path, parse=True)
+doc = AlertLogDocument(path, analyzeAndConvert=True)
 
 print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
 for item in doc:

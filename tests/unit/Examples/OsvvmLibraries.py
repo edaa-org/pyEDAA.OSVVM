@@ -184,7 +184,7 @@ class AlertLog(TestCase):
 		zeroTime = timedelta()
 
 		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
-		doc = AlertLogDocument(path, parse=True)
+		doc = AlertLogDocument(path, analyzeAndConvert=True)
 
 		self.assertEqual(path, doc.Path)
 		self.assertGreater(doc.AnalysisDuration, zeroTime)
