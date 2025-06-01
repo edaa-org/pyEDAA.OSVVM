@@ -39,20 +39,23 @@ packageName =            "pyEDAA.OSVVM"
 packageDirectory =       packageName.replace(".", "/")
 packageInformationFile = Path(f"{packageDirectory}/__init__.py")
 
-setup(**DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="Parser and converters for OSVVM-specific data models and report formats.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="beta",
-	pythonVersions=("3.12", "3.13"),
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	],
-	dataFiles={
-		packageName: ["py.typed"]
-	},
-	consoleScripts={
-		"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
-	}
-))
+setup(
+	**DescribePythonPackageHostedOnGitHub(
+		packageName=packageName,
+		description="Parser and converters for OSVVM-specific data models and report formats.",
+		gitHubNamespace=gitHubNamespace,
+		sourceFileWithVersion=packageInformationFile,
+		developmentStatus="beta",
+		pythonVersions=("3.12", "3.13"),
+		classifiers=list(DEFAULT_CLASSIFIERS) + [
+			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
+		],
+		dataFiles={
+			packageName: ["py.typed"]
+		},
+		consoleScripts={
+			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
+		},
+		debug=True
+	)
+)

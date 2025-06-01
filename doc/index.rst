@@ -244,6 +244,18 @@ License
    FunctionalCoverage/index
    Requirements/index
 
+
+.. raw:: latex
+
+   \part{OSVVM Report}
+
+.. toctree::
+   :caption: OSVVM Report
+   :hidden:
+
+   RunAllTests/index
+
+
 .. raw:: latex
 
    \part{References and Reports}
@@ -259,7 +271,6 @@ License
    Doc. Coverage Report <DocCoverage>
    Static Type Check Report ➚ <typing/index>
 
-.. Coverage Report ➚ <coverage/index>
 
 .. raw:: latex
 
