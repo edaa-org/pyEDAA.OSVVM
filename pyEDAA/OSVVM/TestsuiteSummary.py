@@ -32,12 +32,14 @@
 from datetime              import timedelta, datetime
 from pathlib               import Path
 from time                  import perf_counter_ns
-from typing                import Optional as Nullable, Iterator
+from typing                import Optional as Nullable, Iterator, Iterable, Mapping, Any, List
 
+from pyTooling.MetaClasses import ExtendedType
+from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 from pyTooling.Decorators  import export, InheritDocString, notimplemented
 
-from pyEDAA.Reports.Unittesting import UnittestException, Document, TestcaseStatus
+from pyEDAA.Reports.Unittesting import UnittestException, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, TestsuiteKind
 from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
 from pyEDAA.Reports.Unittesting import Testcase as ut_Testcase
 
@@ -66,9 +68,91 @@ class Testsuite(ut_Testsuite):
 
 
 @export
+class BuildInformation(metaclass=ExtendedType, slots=True):
+	_startTime:          datetime
+	_finishTime:         datetime
+	_elapsed:            timedelta
+	_simulator:          str
+	_simulatorVersion:   SemanticVersion
+	_osvvmVersion:       CalendarVersion
+	_buildErrorCode:     int
+	_analyzeErrorCount:  int
+	_simulateErrorCount: int
+
+	def __init__(self) -> None:
+		pass
+
+
+@export
+class Settings(metaclass=ExtendedType, slots=True):
+	_baseDirectory:            Path
+	_reportsSubdirectory:      Path
+	_simulationLogFile:        Path
+	_simulationHtmlLogFile:    Path
+	_requirementsSubdirectory: Path
+	_coverageSubdirectory:     Path
+	_report2CssFiles:          List[Path]
+	_report2PngFile:           List[Path]
+
+	def __init__(self) -> None:
+		pass
+
+
+@export
 @InheritDocString(ut_TestsuiteSummary)
 class TestsuiteSummary(ut_TestsuiteSummary):
 	"""@InheritDocString(ut_TestsuiteSummary)"""
+
+	_datetime: datetime
+
+	def __init__(
+		self,
+		name: str,
+		startTime: Nullable[datetime] = None,
+		setupDuration: Nullable[timedelta] = None,
+		testDuration: Nullable[timedelta] = None,
+		teardownDuration: Nullable[timedelta] = None,
+		totalDuration:  Nullable[timedelta] = None,
+		status: TestsuiteStatus = TestsuiteStatus.Unknown,
+		warningCount: int = 0,
+		errorCount: int = 0,
+		fatalCount: int = 0,
+		testsuites: Nullable[Iterable[TestsuiteType]] = None,
+		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		parent: Nullable[TestsuiteType] = None
+	) -> None:
+		"""
+		Initializes the fields of a test summary.
+
+		:param name:               Name of the test summary.
+		:param startTime:          Time when the test summary was started.
+		:param setupDuration:      Duration it took to set up the test summary.
+		:param testDuration:       Duration of all tests listed in the test summary.
+		:param teardownDuration:   Duration it took to tear down the test summary.
+		:param totalDuration:      Total duration of the entity's execution (setup + test + teardown)
+		:param status:             Overall status of the test summary.
+		:param warningCount:       Count of encountered warnings incl. warnings from sub-elements.
+		:param errorCount:         Count of encountered errors incl. errors from sub-elements.
+		:param fatalCount:         Count of encountered fatal errors incl. fatal errors from sub-elements.
+		:param testsuites:         List of test suites to initialize the test summary with.
+		:param keyValuePairs:      Mapping of key-value pairs to initialize the test summary with.
+		:param parent:             Reference to the parent test summary.
+		"""
+		super().__init__(
+			name,
+			startTime,
+			setupDuration,
+			testDuration,
+			teardownDuration,
+			totalDuration,
+			status,
+			warningCount,
+			errorCount,
+			fatalCount,
+			testsuites,
+			keyValuePairs,
+			parent
+		)
 
 
 @export
@@ -244,7 +328,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			raise ex
 
 		startConversion = perf_counter_ns()
-		# self._name = self._yamlDocument["name"]
+		self._name = self._yamlDocument["Name"]
 		buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
 		self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
 		self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "Elapsed")

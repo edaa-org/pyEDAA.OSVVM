@@ -295,7 +295,7 @@ report_doccov_packages = {
 }
 
 osvvm_build_summaries = {
-	"OsvvmLibraries": {
+	"osvvmlibraries": {
 		"name":        "OsvvmLibraries",
 		"yaml_report": "../tests/data/OSVVM/OSVVMLibraries_RunAllTests.yml",
 	}
