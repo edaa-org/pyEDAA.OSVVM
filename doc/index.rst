@@ -247,6 +247,18 @@ License
 
 .. raw:: latex
 
+   \part{OSVVM Sphinx Domain}
+
+.. toctree::
+   :caption: OSVVM Sphinx Domain
+   :hidden:
+
+   OSVVM/index
+   OSVVM/BuildSummary
+
+
+.. raw:: latex
+
    \part{OSVVM Report}
 
 .. toctree::
