@@ -142,10 +142,10 @@ class YAMLGeneratedByOSVVM(TestCase):
 		self.assertEqual(17, len(axi4lite.Testcases))
 
 		axi4 = doc["Axi4Full"]
-		self.assertEqual(68, len(axi4.Testcases))
+		self.assertEqual(74, len(axi4.Testcases))
 
 		axi4stream = doc["AxiStream"]
-		self.assertEqual(65, len(axi4stream.Testcases))
+		self.assertEqual(68, len(axi4stream.Testcases))
 
 		uart = doc["Uart"]
 		self.assertEqual(10, len(uart.Testcases))

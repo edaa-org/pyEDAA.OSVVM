@@ -31,13 +31,13 @@
 """Reader for OSVVM test report summary files in YAML format."""
 from datetime              import timedelta, datetime
 from pathlib               import Path
-from time                  import perf_counter_ns
 from typing                import Optional as Nullable, Iterator, Iterable, Mapping, Any, List
 
-from pyTooling.MetaClasses import ExtendedType
-from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 from pyTooling.Decorators  import export, InheritDocString, notimplemented
+from pyTooling.MetaClasses import ExtendedType
+from pyTooling.Stopwatch   import Stopwatch
+from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 
 from pyEDAA.Reports.Unittesting import UnittestException, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, TestsuiteKind
 from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
@@ -178,15 +178,14 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			raise UnittestException(f"OSVVM YAML file '{self._path}' does not exist.") \
 				from FileNotFoundError(f"File '{self._path}' not found.")
 
-		startAnalysis = perf_counter_ns()
-		try:
-			yamlReader = YAML()
-			self._yamlDocument = yamlReader.load(self._path)
-		except Exception as ex:
-			raise UnittestException(f"Couldn't open '{self._path}'.") from ex
+		with Stopwatch() as sw:
+			try:
+				yamlReader = YAML()
+				self._yamlDocument = yamlReader.load(self._path)
+			except Exception as ex:
+				raise UnittestException(f"Couldn't open '{self._path}'.") from ex
 
-		endAnalysis = perf_counter_ns()
-		self._analysisDuration = (endAnalysis - startAnalysis) / 1e9
+		self._analysisDuration = sw.Duration
 
 	@notimplemented
 	def Write(self, path: Nullable[Path] = None, overwrite: bool = False) -> None:
@@ -327,19 +326,19 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			ex.add_note(f"Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
 			raise ex
 
-		startConversion = perf_counter_ns()
-		self._name = self._yamlDocument["Name"]
-		buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
-		self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
-		self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "Elapsed")
+		with Stopwatch() as sw:
+			self._name = self._yamlDocument["Name"]
+			buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
+			self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
+			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "Elapsed")
 
-		if "TestSuites" in self._yamlDocument:
-			for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):
-				self._ConvertTestsuite(self, yamlTestsuite)
+			if "TestSuites" in self._yamlDocument:
+				for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):
+					self._ConvertTestsuite(self, yamlTestsuite)
 
-		self.Aggregate()
-		endConversation = perf_counter_ns()
-		self._modelConversion = (endConversation - startConversion) / 1e9
+			self.Aggregate()
+
+		self._modelConversion = sw.Duration
 
 	def _ConvertTestsuite(self, parentTestsuite: Testsuite, yamlTestsuite: CommentedMap) -> None:
 		testsuiteName = self._ParseStrFieldFromYAML(yamlTestsuite, "Name")
@@ -385,8 +384,8 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 				status |= TestcaseStatus.Errored
 			if fatalCount > 0:
 				status |= TestcaseStatus.Aborted
-		else:
-			status |= TestcaseStatus.Inconsistent
+		# else:
+		# 	status |= TestcaseStatus.Inconsistent
 
 		_ = Testcase(
 			testcaseName,

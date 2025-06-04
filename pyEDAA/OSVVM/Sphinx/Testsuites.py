@@ -44,7 +44,7 @@ from pyEDAA.Reports.Unittesting.JUnit  import Testsuite, TestsuiteSummary, Testc
 from sphinx.application                import Sphinx
 from sphinx.config                     import Config
 from sphinx_reports.Common             import ReportExtensionError
-from sphinx_reports.Sphinx             import strip, BaseDirective
+from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
 from pyEDAA.OSVVM.TestsuiteSummary     import BuildSummaryDocument
 
 
@@ -92,12 +92,11 @@ class BuildSummary(BaseDirective):
 	optional_arguments = 6
 
 	option_spec = {
-		"class":                  strip,
-		"reportid":               strip,
-		"build-name":             strip,
-		"show-testcases":         strip,
-		"no-assertions":          flag,
-		"hide-testsuite-summary": flag
+		"class":              strip,
+		"reportid":           stripAndNormalize,
+		"build-name":         strip,
+		"show-testcases":     stripAndNormalize,
+		"hide-build-summary": flag
 	}
 
 	directiveName: str = "build-summary"
@@ -106,16 +105,15 @@ class BuildSummary(BaseDirective):
 		f"{configPrefix}": ({}, "env", Dict)
 	}  #: A dictionary of all configuration values used by unittest directives.
 
-	_buildSummaries:        ClassVar[Dict[str, report_DictType]] = {}
+	_buildSummaries:       ClassVar[Dict[str, report_DictType]] = {}
 
 	_cssClasses:           List[str]
 	_reportID:             str
-	_noAssertions:         bool
 	_hideTestsuiteSummary: bool
-	_buildName: Nullable[str]
+	_buildName:            Nullable[str]
 	_showTestcases:        ShowTestcases
 	_yamlReport:           Path
-	_build:            TestsuiteSummary
+	_build:                TestsuiteSummary
 
 	def _CheckOptions(self) -> None:
 		"""
@@ -128,8 +126,7 @@ class BuildSummary(BaseDirective):
 		self._reportID = self._ParseStringOption("reportid")
 		self._buildName = self._ParseStringOption("build-name", "", r".+")
 		self._showTestcases = ShowTestcases[showTestcases.replace("-", "_")]
-		self._noAssertions = "no-assertions" in self.options
-		self._hideTestsuiteSummary = "hide-testsuite-summary" in self.options
+		self._hideTestsuiteSummary = "hide-build-summary" in self.options
 
 		try:
 			buildSummary = self._buildSummaries[self._reportID]
@@ -256,10 +253,6 @@ class BuildSummary(BaseDirective):
 			("Runtime (HH:MM:SS.sss)", None, 100),
 		]
 
-		# If assertions shouldn't be displayed, remove column from column's list
-		if self._noAssertions:
-			columns.pop(6)
-
 		cssClasses = ["osvvm-unittest-table", f"osvvm-unittest-{self._reportID}"]
 		cssClasses.extend(self._cssClasses)
 
@@ -291,8 +284,7 @@ class BuildSummary(BaseDirective):
 			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
 			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
 			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-			if not self._noAssertions:
-				tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
+			tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
 			tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuiteSummary._testsuites):
@@ -312,8 +304,7 @@ class BuildSummary(BaseDirective):
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Errored}"))
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Failed}"))
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Passed}"))
-		if not self._noAssertions:
-			tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
+		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuite.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuite._testsuites):
@@ -335,8 +326,7 @@ class BuildSummary(BaseDirective):
 		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
 		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
 		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		if not self._noAssertions:
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testcase.AssertionCount}"))
+		tableRow += nodes.entry("", nodes.paragraph(text=f"{testcase.AssertionCount}"))
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testcase.TotalDuration)}"))
 
 	def renderSummary(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary) -> None:
@@ -351,8 +341,7 @@ class BuildSummary(BaseDirective):
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-		if not self._noAssertions:
-			tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
+		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
 		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 	def run(self) -> List[nodes.Node]:
@@ -370,8 +359,6 @@ class BuildSummary(BaseDirective):
 		except Exception as ex:
 			message = f"Caught {ex.__class__.__name__} when reading and parsing '{self._yamlReport}'."
 			return self._internalError(container, __name__, message, ex)
-
-		self._build.Aggregate()
 
 		try:
 			container += self._GenerateBuildSummaryTable()
