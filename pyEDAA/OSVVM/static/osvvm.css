@@ -1,0 +1,46 @@
+/*
+ * Disable odd/even coloring for docutils tables if it's a coverage table.
+ * Otherwise, the 'nth-child' rule will always override row colors indicating the coverage level.
+ */
+.rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td {
+	background-color: unset;
+}
+
+table.osvvm-unittest-table > thead > tr {
+	background: #ebebeb;
+}
+table.osvvm-unittest-table > tbody > tr:hover {
+	background-color: rgba(0,187, 255, 0.5); /* #88d0ff; */
+}
+
+table.osvvm-unittest-table > tbody > tr.osvvm-summary {
+	font-weight: bold;
+}
+table.osvvm-unittest-table > tbody > tr.osvvm-summary {
+	background: #ebebeb;
+}
+table.osvvm-unittest-table > tbody > tr.testsuitesummary-unknown,
+table.osvvm-unittest-table > tbody > tr.testsuite-unknown,
+table.osvvm-unittest-table > tbody > tr.testcase-unknown {
+	background: hsl(0 75% 65%);
+}
+table.osvvm-unittest-table > tbody > tr.testsuitesummary-failed,
+table.osvvm-unittest-table > tbody > tr.testsuitesummary-skipped,
+table.osvvm-unittest-table > tbody > tr.testsuitesummary-excluded,
+table.osvvm-unittest-table > tbody > tr.testsuite-failed,
+table.osvvm-unittest-table > tbody > tr.testcase-failed {
+	background: hsl(0 75% 90%);
+}
+table.osvvm-unittest-table > tbody > tr.testsuite-excluded,
+table.osvvm-unittest-table > tbody > tr.testcase-excluded {
+	background: #ebebeb;
+}
+table.osvvm-unittest-table > tbody > tr.testsuite-skipped,
+table.osvvm-unittest-table > tbody > tr.testcase-skipped {
+	background: hsl(60 75% 77%);
+}
+table.osvvm-unittest-table > tbody > tr.osvvm-summary.testsuitesummary-passed /*,
+table.osvvm-unittest-table > tbody > tr.testsuite-passed,
+table.osvvm-unittest-table > tbody > tr.testcase-passed */ {
+	background: hsl(120 75% 90%);
+}

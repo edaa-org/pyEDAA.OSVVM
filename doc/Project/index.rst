@@ -14,19 +14,19 @@ OSVVM Project Files
 
 * OSVVM specific variables (``::osvvm::...``) can be configured before parsing to
 
-.. _PRJ:DataModel:
+.. _PRJ/DataModel:
 
 Data Model
 **********
 
-A OSVVM project can be summarized as follows:
+An OSVVM project can be summarized as follows:
 
-1. An :ref:`PRJ:DataModel:Project` contains one or multiple :ref:`builds <PRJ:DataModel:Build>` (a ``*.pro`` file loaded
-   via :ref:`PRJ:Procedure:build` command).
-2. Each build can contain multiple :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>` as well as multiple
-   :ref:`testsuites <PRJ:DataModel:Testsuite>`.
-3. Each VHDL library references multiple :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>` in compile order.
-4. Again, each testsuite contains multiple :ref:`testcases <PRJ:DataModel:Testcase>` in execution order.
+1. An :ref:`PRJ/DataModel/Project` contains one or multiple :ref:`builds <PRJ/DataModel/Build>` (a ``*.pro`` file loaded
+   via :ref:`PRJ/Procedure/build` command).
+2. Each build can contain multiple :ref:`VHDL libraries <PRJ/DataModel/VHDLLibrary>` as well as multiple
+   :ref:`testsuites <PRJ/DataModel/Testsuite>`.
+3. Each VHDL library references multiple :ref:`VHDL source files <PRJ/DataModel/VHDLSourceFile>` in compile order.
+4. Again, each testsuite contains multiple :ref:`testcases <PRJ/DataModel/Testcase>` in execution order.
 
 .. mermaid::
 
@@ -59,7 +59,7 @@ A OSVVM project can be summarized as follows:
      classDef clsTC   fill:#80ff80
 
 
-.. _PRJ:DataModel:Project:
+.. _PRJ/DataModel/Project:
 
 OSVVM Project
 =============
@@ -102,7 +102,7 @@ OSVVM Project
              ...
 
 
-.. _PRJ:DataModel:Build:
+.. _PRJ/DataModel/Build:
 
 Build
 =====
@@ -158,7 +158,7 @@ Build
              ...
 
 
-.. _PRJ:DataModel:VHDLLibrary:
+.. _PRJ/DataModel/VHDLLibrary:
 
 VHDLLibrary
 ===========
@@ -205,7 +205,7 @@ VHDLLibrary
              ...
 
 
-.. _PRJ:DataModel:VHDLSourceFile:
+.. _PRJ/DataModel/VHDLSourceFile:
 
 VHDLSourceFile
 ==============
@@ -253,7 +253,7 @@ VHDLSourceFile
              ...
 
 
-.. _PRJ:DataModel:Testsuite:
+.. _PRJ/DataModel/Testsuite:
 
 Testsuite
 =========
@@ -300,7 +300,7 @@ Testsuite
              ...
 
 
-.. _PRJ:DataModel:Testcase:
+.. _PRJ/DataModel/Testcase:
 
 Testcase
 ========
@@ -356,17 +356,17 @@ Testcase
              ...
 
 
-.. _PRJ:Procedure:
+.. _PRJ/Procedure:
 
 Implemented TCL Procedures
 **************************
 
 The following TCL procedures are implemented as :mod:`Python functions <pyEDAA.OSVVM.Procedures>` and registered to TCL,
 thus they can be called from TCL code. This allows pyEDAA.OSVVM to capture parameters handed over these procedures. The
-gathered parameters are then collected in a context object and assembled to a :ref:`PRJ:DataModel`.
+gathered parameters are then collected in a context object and assembled to a :ref:`PRJ/DataModel`.
 
 
-.. _PRJ:Procedure:build:
+.. _PRJ/Procedure/build:
 
 build
 =====
@@ -399,7 +399,7 @@ build
          build ref/ref.pro        ; # implicit <ref>.pro file
 
 
-.. _PRJ:Procedure:include:
+.. _PRJ/Procedure/include:
 
 include
 =======
@@ -432,7 +432,7 @@ include
          include ref/ref.pro        ; # implicit <ref>.pro file
 
 
-.. _PRJ:Procedure:library:
+.. _PRJ/Procedure/library:
 
 library
 =======
@@ -453,7 +453,7 @@ library
          library myDesign
 
 
-.. _PRJ:Procedure:analyze:
+.. _PRJ/Procedure/analyze:
 
 analyze
 =======
@@ -474,7 +474,7 @@ analyze
          analyze src/TopLevel.vhdl
 
 
-.. _PRJ:Procedure:simulate:
+.. _PRJ/Procedure/simulate:
 
 simulate
 ========
@@ -495,7 +495,7 @@ simulate
          simulate myTestbench
 
 
-.. _PRJ:Procedure:generic:
+.. _PRJ/Procedure/generic:
 
 generic
 =======
@@ -516,7 +516,7 @@ generic
          simulate myTestharness [generic param value]
 
 
-.. _PRJ:Procedure:TestSuite:
+.. _PRJ/Procedure/TestSuite:
 
 TestSuite
 =========
@@ -537,7 +537,7 @@ TestSuite
          TestSuite AllMyTests
 
 
-.. _PRJ:Procedure:TestName:
+.. _PRJ/Procedure/TestName:
 
 TestName
 ========
@@ -558,7 +558,7 @@ TestName
          TestName myTest
 
 
-.. _PRJ:Procedure:RunTest:
+.. _PRJ/Procedure/RunTest:
 
 RunTest
 =======
@@ -579,7 +579,7 @@ RunTest
          RunTest testharness.vhdl [generic param value]
 
 
-.. _PRJ:Procedure:LinkLibrary:
+.. _PRJ/Procedure/LinkLibrary:
 
 LinkLibrary
 ===========
@@ -600,7 +600,7 @@ LinkLibrary
          LinkLibrary vendorLib ../libs/vendorLib
 
 
-.. _PRJ:Procedure:LinkLibraryDirectory:
+.. _PRJ/Procedure/LinkLibraryDirectory:
 
 LinkLibraryDirectory
 ====================
@@ -621,8 +621,8 @@ LinkLibraryDirectory
          LinkLibraryDirectory ../lib
 
 
-.. _PRJ:Procedure:SetVHDLVersion:
-.. _PRJ:Procedure:GetVHDLVersion:
+.. _PRJ/Procedure/SetVHDLVersion:
+.. _PRJ/Procedure/GetVHDLVersion:
 
 SetVHDLVersion / SetVHDLVersion
 ===============================
@@ -644,26 +644,26 @@ SetVHDLVersion / SetVHDLVersion
          SetVHDLVersion 2019
 
 
-.. _PRJ:Procedure:FileExists:
+.. _PRJ/Procedure/FileExists:
 
 FileExists
 ==========
 
 
-.. _PRJ:Procedure:DirectoryExists:
+.. _PRJ/Procedure/DirectoryExists:
 
 DirectoryExists
 ===============
 
 
-.. _PRJ:Procedure:ChangeWorkingDirectory:
+.. _PRJ/Procedure/ChangeWorkingDirectory:
 
 ChangeWorkingDirectory
 ======================
 
 
 
-.. _PRJ:Context:
+.. _PRJ/Context:
 
 OSVVM Processing Context
 ************************
@@ -793,7 +793,7 @@ OSVVM Processing Context
              ...
 
 
-.. _PRJ:Processor:
+.. _PRJ/Processor:
 
 OSVVM ``pro``-File Processor
 ****************************

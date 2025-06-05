@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2021-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -28,89 +28,36 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from argparse import Namespace
-from pathlib  import Path
-from sys      import stdin
-from typing   import NoReturn
+"""Testcase for OSVVM specific file formats."""
+from pathlib      import Path
+from unittest     import TestCase
 
-from pyTooling.Decorators                     import readonly
-from pyTooling.MetaClasses                    import ExtendedType
-from pyTooling.Common                         import count
-from pyTooling.Attributes.ArgParse            import CommandHandler
-from pyTooling.Attributes.ArgParse.Flag       import LongFlag
-from pyTooling.Attributes.ArgParse.ValuedFlag import LongValuedFlag
-from pyTooling.Stopwatch                      import Stopwatch
+from pyEDAA.OSVVM.TestsuiteSummary import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
 
-from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
+if __name__ == "__main__": # pragma: no cover
+	print("ERROR: you called a testcase declaration file as an executable module.")
+	print("Use: 'python -m unitest <testcase module>'")
+	exit(1)
 
 
-class ProjectHandlers(metaclass=ExtendedType, mixin=True):
-	@CommandHandler("project", help="Parse OSVVM project description.", description="Merge and/or transform unit testing results.")
-	@LongFlag("--stdin", dest="stdin", help="OSVVM build file (PRO).")
-	@LongValuedFlag("--regressionTCL", dest="regressionTCL", metaName='TCL file', optional=True, help="Regression file (TCL).")
-	@LongValuedFlag("--buildPro", dest="buildPro", metaName='PRO file', optional=True, help="OSVVM build file (PRO).")
-	@LongValuedFlag("--render", dest="render", metaName='format', optional=True, help="Render unit testing results to <format>.")
-	def HandleUnittest(self, args: Namespace) -> None:
-		"""Handle program calls with command ``unittest``."""
-		self._PrintHeadline()
+class Instantiation(TestCase):
+	def test_Testcase(self) -> None:
+		tc = Testcase("tc")
 
-		returnCode = 0
-		if (args.stdin is None and args.regressionTCL is None and args.buildPro is None):
-			self.WriteError(f"Either option '--stdin' or '--regressionTCL=<TCL file>' or '--buildPro=<PRO file>' is missing.")
-			returnCode = 3
+		self.assertEqual("tc", tc.Name)
 
-		if returnCode != 0:
-			self.Exit(returnCode)
+	def test_Testsuite(self) -> None:
+		ts = Testsuite("ts")
 
-		sw = Stopwatch(preferPause=True)
-		processor = OsvvmProFileProcessor()
+		self.assertEqual("ts", ts.Name)
 
-		if args.stdin is True:
-			self.WriteNormal(f"Reading TCL code from STDIN ...")
-			tclCode = stdin.read()
+	def test_TestsuiteSummary(self) -> None:
+		tss = TestsuiteSummary("tss")
 
-			with sw:
-				processor.EvaluateTclCode(tclCode)
+		self.assertEqual("tss", tss.Name)
 
-			project = processor.Context.ToProject("unnamed")
+	def test_BuildSummaryDocument(self) -> None:
+		summaryFile = Path("summary.yaml")
+		doc = BuildSummaryDocument(summaryFile)
 
-		elif args.regressionTCL is not None:
-			self.WriteNormal(f"Reading regression TCL file ...")
-
-			with sw:
-				project = processor.LoadRegressionFile(Path(args.regressionTCL))
-
-		elif args.buildPro is not None:
-			for proFile in args.buildPro.split(":"):
-				file = Path(proFile)
-				self.WriteNormal(f"Reading OSVVM build file '{file}' ...")
-
-				with sw:
-					processor.LoadBuildFile(file)
-
-			project = processor.Context.ToProject("unnamed")
-
-		else:
-			self.Exit(1)
-
-		self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
-		self.WriteNormal(f"  Builds:           {len(project.Builds)}")
-		self.WriteNormal(f"  Processed files:  {count(project.IncludedFiles)}")
-
-		if args.render == "all":
-			for build in project.Builds.values():
-				print(f"Build: {build.Name}")
-				for libraryName, lib in build.VHDLLibraries.items():
-					print(f"  Library: {libraryName} ({len(lib.Files)})")
-					for file in lib.Files:
-						print(f"    {file}")
-
-				print("-" * 60)
-				for testsuiteName, ts in build.Testsuites.items():
-					print(f"  Testsuite: {testsuiteName} ({len(ts.Testcases)})")
-					for tc in ts.Testcases.values():
-						print(f"    {tc.Name}")
-
-				print("=" * 60)
-
-		self.ExitOnPreviousErrors()
+		self.assertEqual("Unprocessed OSVVM YAML file", doc.Name)

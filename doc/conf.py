@@ -180,6 +180,7 @@ extensions = [
 	"sphinx_autodoc_typehints",
 	"autoapi.sphinx",
 	"sphinx_reports",
+	"pyEDAA.OSVVM.Sphinx"
 # User defined extensions
 ]
 
@@ -273,7 +274,7 @@ report_dep_dependencies = {
 report_unittest_testsuites = {
 	"src": {
 		"name":        f"{project}",
-		"xml_report":  "../report/unit/TestReportSummary.xml",
+		"xml_report":  "../report/unit/unittest.xml",
 	}
 }
 report_codecov_packages = {
@@ -290,6 +291,13 @@ report_doccov_packages = {
 		"directory":  f"../{directoryName}",
 		"fail_below": 80,
 		"levels":     "default"
+	}
+}
+
+osvvm_build_summaries = {
+	"osvvmlibraries": {
+		"name":        "OsvvmLibraries",
+		"yaml_report": "../tests/data/OSVVM/OSVVMLibraries_RunAllTests.yml",
 	}
 }
 

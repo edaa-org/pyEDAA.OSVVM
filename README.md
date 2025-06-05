@@ -49,7 +49,7 @@ one parser that's aligned with OSVVM's data formats.
 
 ```python
 from pathlib import Path
-from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
+from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
 processor = OsvvmProFileProcessor()
 processor.LoadBuildFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
@@ -71,6 +71,28 @@ for buildName, build in project.Builds.items():
 > [!NOTE]  
 > *TBD*
 
+
+### YAML Report (more details)
+```python
+from pathlib import Path
+from pyEDAA.OSVVM.TestsuiteSummary import BuildSummaryDocument
+
+yamlPath = Path("OSVVMLibraries_RunAllTests.yml")
+doc = BuildSummaryDocument(yamlPath, analyzeAndConvert=True)
+
+```
+
+### XML Report (Ant+JUnit format - less details)
+
+```python
+from pathlib import Path
+from pyEDAA.Reports.Unittesting.JUnit import Document as JUnitDocument
+
+junitExampleFile = Path("OSVVMLibraries_RunAllTests.xml")
+doc = JUnitDocument(junitExampleFile, analyzeAndConvert=True)
+
+```
+
 ## Testcase Summary Reports
 
 > [!NOTE]  
@@ -80,6 +102,22 @@ for buildName, build in project.Builds.items():
 
 > [!NOTE]  
 > *TBD*
+
+```python
+from pathlib import Path
+from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
+
+path = Path("TbAxi4_BasicReadWrite_alerts.yml")
+doc = AlertLogDocument(path, analyzeAndConvert=True)
+
+print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
+for item in doc:
+	print(f"  {item.Name:<19}: {item.AlertCountWarnings}/{item.AlertCountErrors}/{item.AlertCountFailures}")
+print(f"Total errors: {doc.TotalErrors}")
+```
+
+
+
 
 ## Scoreboard Reports
 
@@ -111,7 +149,7 @@ for buildName, build in project.Builds.items():
 
 ```python
 from pathlib import Path
-from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
+from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
 def main() -> None:
   processor = OsvvmProFileProcessor()

@@ -56,7 +56,7 @@ using one parser that's aligned with OSVVM's data formats.
 Use Cases
 *********
 
-.. _USECASE:Project:
+.. _USECASE/Project:
 
 OSVVM Project
 =============
@@ -66,16 +66,16 @@ OSVVM Project
    .. grid-item::
       :columns: 5
 
-      OSVVM describes its projects using imperative TCL code in so called ``*.pro`` files. These contain lots of
-      information like VHDL library names, used VHDL standard, or compile order. Besides compilation information, these
-      files also contain information about grouping testcases into testsuites as well as variants of a test by applying
-      top-level generics to a simulation. In addition various tool options can be enabled and disabled, e.g. code
-      coverage collection. These options can be set globally, locally or per item.
+      OSVVM describes its :ref:`projects <PRJ>` using imperative TCL code in so called ``*.pro`` files. These contain
+      lots of information like VHDL library names, used VHDL standard, or compile order. Besides compilation
+      information, these files also contain information about grouping testcases into testsuites as well as variants of
+      a test by applying top-level generics to a simulation. In addition various tool options can be enabled and
+      disabled, e.g. code coverage collection. These options can be set globally, locally or per item.
 
-      pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ:Procedure>`, so OSVVM's ``*.pro`` files can be
-      executed and contained information is collected in a data model representing :ref:`builds <PRJ:DataModel:Build>`,
-      :ref:`VHDL libraries <PRJ:DataModel:VHDLLibrary>`, :ref:`VHDL source files <PRJ:DataModel:VHDLSourceFile>`,
-      :ref:`testsuites <PRJ:DataModel:Testsuite>`, and :ref:`testcases <PRJ:DataModel:Testcase>`.
+      pyEDAA.OSVVM provides an :ref:`artificial TCL environment <PRJ/Procedure>`, so OSVVM's ``*.pro`` files can be
+      executed and contained information is collected in a data model representing :ref:`builds <PRJ/DataModel/Build>`,
+      :ref:`VHDL libraries <PRJ/DataModel/VHDLLibrary>`, :ref:`VHDL source files <PRJ/DataModel/VHDLSourceFile>`,
+      :ref:`testsuites <PRJ/DataModel/Testsuite>`, and :ref:`testcases <PRJ/DataModel/Testcase>`.
 
       Afterwards, the :ref:`OSVVM project model <PRJ>` can be used as-is, or it can be converted to other data or file
       formats. One unified data model is `pyEDAA.ProjectModel <https://edaa-org.github.com/pyEDAA.ProjectModel>`__.
@@ -141,7 +141,7 @@ OSVVM Project
                  classDef clsTS   fill:#8080ff
                  classDef clsTC   fill:#80ff80
 
-.. _USECASE:Reports:
+.. _USECASE/Reports:
 
 OSVVM Reports
 =============
@@ -159,6 +159,19 @@ OSVVM provides multiple reports in YAML files.
 
 News
 ****
+
+.. only:: html
+
+   June 2025 - Reading AlertLog and Testsuites
+   ===========================================
+
+.. only:: latex
+
+   .. rubric:: Reading AlertLog and Testsuites
+
+* Reading OSVVM Testsuites in YAML format and XML format (Ant+JUnit format).
+* Reading OSVVM AlertLog hierarchies in YAML format.
+
 
 .. only:: html
 
@@ -231,6 +244,30 @@ License
    FunctionalCoverage/index
    Requirements/index
 
+
+.. raw:: latex
+
+   \part{OSVVM Sphinx Domain}
+
+.. toctree::
+   :caption: OSVVM Sphinx Domain
+   :hidden:
+
+   OSVVM/index
+   OSVVM/BuildSummary
+
+
+.. raw:: latex
+
+   \part{OSVVM Report}
+
+.. toctree::
+   :caption: OSVVM Report
+   :hidden:
+
+   RunAllTests/index
+
+
 .. raw:: latex
 
    \part{References and Reports}
@@ -242,10 +279,10 @@ License
    Python Class Reference <pyEDAA.OSVVM/pyEDAA.OSVVM>
    unittests/index
    coverage/index
+   CodeCoverage
    Doc. Coverage Report <DocCoverage>
    Static Type Check Report ➚ <typing/index>
 
-.. Coverage Report ➚ <coverage/index>
 
 .. raw:: latex
 
