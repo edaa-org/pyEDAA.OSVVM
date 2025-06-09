@@ -35,8 +35,8 @@ from unittest     import TestCase
 
 from pyEDAA.Reports.Unittesting.JUnit import Document as JUnitDocument
 
-from pyEDAA.OSVVM.TestsuiteSummary import BuildSummaryDocument
-from pyEDAA.OSVVM.AlertLog         import Document as AlertLogDocument, AlertLogException
+from pyEDAA.OSVVM.Build               import BuildSummaryDocument
+from pyEDAA.OSVVM.AlertLog            import Document as AlertLogDocument, AlertLogException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")

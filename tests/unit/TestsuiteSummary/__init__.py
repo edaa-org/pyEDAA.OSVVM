@@ -32,7 +32,7 @@
 from pathlib      import Path
 from unittest     import TestCase
 
-from pyEDAA.OSVVM.TestsuiteSummary import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
+from pyEDAA.OSVVM.Build import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")

@@ -45,7 +45,7 @@ from sphinx.application                import Sphinx
 from sphinx.config                     import Config
 from sphinx_reports.Common             import ReportExtensionError
 from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
-from pyEDAA.OSVVM.TestsuiteSummary     import BuildSummaryDocument
+from pyEDAA.OSVVM.Build                import BuildSummaryDocument
 
 
 class report_DictType(TypedDict):

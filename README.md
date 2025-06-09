@@ -73,9 +73,10 @@ for buildName, build in project.Builds.items():
 
 
 ### YAML Report (more details)
+
 ```python
 from pathlib import Path
-from pyEDAA.OSVVM.TestsuiteSummary import BuildSummaryDocument
+from pyEDAA.OSVVM.Build import BuildSummaryDocument
 
 yamlPath = Path("OSVVMLibraries_RunAllTests.yml")
 doc = BuildSummaryDocument(yamlPath, analyzeAndConvert=True)
