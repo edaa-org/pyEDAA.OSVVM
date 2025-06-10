@@ -647,7 +647,7 @@ TestSuites:
         SimulationTime: "110000000 fs"
         Name: "TbAxi4_AlertLogIDManager"
         Status: PASSED
-        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 1, Error: 1, Warning: 1}}
+        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 1, Error: 1, Warning: 0}}
         TestCaseFileName: "TbAxi4_AlertLogIDManager"
         Generics:           null
         ElapsedTime: 1.065
@@ -773,7 +773,7 @@ TestSuites:
         SimulationTime: "110000000 fs"
         Name: "TbAxi4_AlertLogIDSubordinate"
         Status: PASSED
-        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 1, Error: 1, Warning: 1}}
+        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 1, Warning: 1}}
         TestCaseFileName: "TbAxi4_AlertLogIDSubordinate"
         Generics:           null
         ElapsedTime: 1.046
@@ -854,7 +854,7 @@ TestSuites:
         SimulationTime: "110000000 fs"
         Name: "TbAxi4_AlertLogIDMemory"
         Status: PASSED
-        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 1, Error: 1, Warning: 1}}
+        Results: {TotalErrors: 0, AlertCount: {Failure: 1, Error: 1, Warning: 1}, PassedCount: 8, AffirmCount: 8, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 1, Error: 0, Warning: 1}}
         TestCaseFileName: "TbAxi4_AlertLogIDMemory"
         Generics:           null
         ElapsedTime: 1.072
