@@ -91,7 +91,7 @@ OSVVM Project
             .. code-block:: Python
 
                from pathlib import Path
-               from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
+               from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
                processor = OsvvmProFileProcessor()
                processor.LoadBuildFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))

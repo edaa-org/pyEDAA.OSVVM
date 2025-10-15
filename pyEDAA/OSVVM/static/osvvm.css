@@ -6,13 +6,45 @@
 	background-color: unset;
 }
 
-table.osvvm-buildsummary-table > thead > tr,
-table.osvvm-testsuite-subtable > thead > tr {
+table.osvvm-buildsummary-table > thead > tr {
 	background: #ebebeb;
 }
+
+table.osvvm-buildsummary-table > thead > tr > th.rotated {
+	height: 80px;
+	white-space: nowrap;
+}
+table.osvvm-buildsummary-table > thead > tr > th.rotated > div {
+	transform: translate(-20px, 5px) rotate(340deg);
+	width: 30px;
+}
+table.osvvm-buildsummary-table > thead > tr > th.rotated > div > span {
+	/*border-bottom: 1px solid #cccccc;*/
+	padding: 5px 10px;
+}
+
+table.osvvm-buildsummary-table > tbody > tr.osvvm-warning-mismatch {
+	background: hsl(45 85% 80% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-warning-mismatch {
+	background: hsl(45 75% 80%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-error-mismatch {
+	background: hsl(0 75% 85% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-error-mismatch {
+	background: hsl(0 75% 85%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-failure-mismatch {
+	background: hsl(240 75% 85% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-failure-mismatch {
+	background: hsl(240 75% 85%);
+}
+
 table.osvvm-buildsummary-table > tbody > tr.osvvm-buildsummary:hover,
 table.osvvm-buildsummary-table > tbody > tr.osvvm-testsuite:hover,
-table.osvvm-testsuite-subtable > tbody > tr.osvvm-testcase:hover {
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase:hover {
 	background-color: rgba(0,187, 255, 0.5); /* #88d0ff; */
 }
 table.osvvm-buildsummary-table > tbody > tr.osvvm-testcases > td,
@@ -50,23 +82,4 @@ table.osvvm-buildsummary-table > tbody > tr.osvvm-summary.testsuitesummary-passe
 table.osvvm-buildsummary-table > tbody > tr.testsuite-passed,
 table.osvvm-buildsummary-table > tbody > tr.testcase-passed */ {
 	background: hsl(120 75% 90%);
-}
-
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-warning-mismatch {
-	background: hsl(45 85% 80% / 65%);
-}
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-testcase > td.osvvm-warning-mismatch {
-	background: hsl(45 75% 80%);
-}
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-error-mismatch {
-	background: hsl(0 75% 85% / 65%);
-}
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-testcase > td.osvvm-error-mismatch {
-	background: hsl(0 75% 85%);
-}
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-failure-mismatch {
-	background: hsl(240 75% 85% / 65%);
-}
-table.osvvm-buildsummary-table table.osvvm-testsuite-subtable > tbody > tr.osvvm-testcase > td.osvvm-failure-mismatch {
-	background: hsl(240 75% 85%);
 }

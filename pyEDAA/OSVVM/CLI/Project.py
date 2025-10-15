@@ -44,7 +44,44 @@ from pyTooling.Stopwatch                      import Stopwatch
 from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
 
-class ProjectHandlers(metaclass=ExtendedType, mixin=True):
+class Proto(metaclass=ExtendedType, mixin=True):
+	@readonly
+	def Verbose(self) -> bool:
+		...
+
+	@readonly
+	def Width(self) -> int:
+		...
+
+	def _PrintHeadline(self):
+		...
+
+	def WriteDebug(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteVerbose(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteNormal(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteWarning(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteCritical(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteError(self, a: str, appendLinebreak: bool = True):
+		...
+
+	def WriteFatal(self, a: str, appendLinebreak: bool = True, immediateExit: bool = True):
+		...
+
+	def Exit(self, i: int = 0) -> NoReturn:
+		...
+
+
+class ProjectHandlers(Proto, metaclass=ExtendedType, mixin=True):
 	@CommandHandler("project", help="Parse OSVVM project description.", description="Merge and/or transform unit testing results.")
 	@LongFlag("--stdin", dest="stdin", help="OSVVM build file (PRO).")
 	@LongValuedFlag("--regressionTCL", dest="regressionTCL", metaName='TCL file', optional=True, help="Regression file (TCL).")
