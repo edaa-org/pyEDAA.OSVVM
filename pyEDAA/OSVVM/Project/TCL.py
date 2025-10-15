@@ -228,8 +228,8 @@ class OsvvmProFileProcessor(TclEnvironment):
 		self.RegisterPythonFunctionAsTclProcedure(noop, "GetSimulatorResolution")
 
 	def LoadIncludeFile(self, path: Path) -> None:
+		# TODO: should a context be used with _context to restore _currentDirectory?
 		includeFile = self._context.IncludeFile(path)
-
 		self.EvaluateProFile(includeFile)
 
 	def LoadBuildFile(self, buildFile: Path, buildName: Nullable[str] = None) -> Build:
@@ -240,6 +240,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 		includeFile = self._context.IncludeFile(buildFile)
 		self.EvaluateProFile(includeFile)
 
+		# TODO: should a context be used with _context to restore _currentDirectory?
 		return self._context.EndBuild()
 
 	def LoadRegressionFile(self, regressionFile: Path, projectName: Nullable[str] = None) -> Project:
