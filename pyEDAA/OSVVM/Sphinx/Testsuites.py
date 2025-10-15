@@ -241,22 +241,48 @@ class BuildSummary(BaseDirective):
 		return f"{hours:02}:{minutes % 60:02}:{seconds % 60:02}.{milliseconds % 1000:03}"
 
 	def _GenerateBuildSummaryTable(self) -> nodes.Element:
-		# Create a table and table header with 8 columns
 		columns = [
-			("Testsuite", 500),
-			("Testcases", 100),
-			("Skipped", 100),
-			("Errored", 100),
-			("Failed", 100),
-			("Passed", 100),
-			("Assertions", 100),
-			("Runtime (HH:MM:SS.sss)", 100),
+			("Testsuite", (
+				("  Testcase", 50),
+			), None),
+			("Testsuite Status", (
+				("Skipped", 50),
+				("Errored", 50),
+				("Failed", 50),
+				("Passed", 50),
+				("Testcases", 50),
+			), None),
+			("Warnings", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Errors", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Failures", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Assertions", (
+				("passed", 50),
+				("Total", 50),
+			), None),
+			("Requirements", (
+				("Passed", 50),
+				("Total", 50),
+			), None),
+			("Coverage", (
+				("Code", 50),
+				("Functional", 50),
+			), None),
+			("Runtime (HH:MM:SS.sss)", None, 100),
 		]
 
 		cssClasses = ["osvvm-buildsummary-table", f"osvvm-buildsummary-{self._reportID}"]
 		cssClasses.extend(self._cssClasses)
 
-		tableGroup = self._CreateSingleTableHeader(
+		tableGroup = self._CreateDoubleRowTableHeader(
 			identifier=self._reportID,
 			columns=columns,
 			classes=cssClasses
@@ -277,14 +303,15 @@ class BuildSummary(BaseDirective):
 			tableRow = nodes.row("", classes=["osvvm-buildsummary", f"buildsummary-{testsuiteSummary._status.name.lower()}"])
 			tableBody += tableRow
 
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{state}{testsuiteSummary.Name if testsuiteSummaryName == '' else testsuiteSummaryName}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.TestcaseCount}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Skipped}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
+			tableRow += nodes.entry("", nodes.Text(f"{state}{testsuiteSummary.Name if testsuiteSummaryName == '' else testsuiteSummaryName}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
+			for _ in range(12):
+				tableRow += nodes.entry()
+			tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuiteSummary._testsuites):
 			self.renderTestsuite(tableBody, ts, level)
@@ -295,67 +322,38 @@ class BuildSummary(BaseDirective):
 		state = self._convertTestsuiteStatusToSymbol(testsuite._status)
 
 		tableBody += (tableRow := nodes.row("", classes=["osvvm-testsuite", f"testsuite-{testsuite._status.name.lower()}"]))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{'  ' * level}{state}{testsuite.Name}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Skipped}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Errored}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Failed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Passed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuite.TotalDuration)}"))
+		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testsuite.Name}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.TestcaseCount}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Skipped}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Errored}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Failed}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Passed}"))
+		for _ in range(12):
+			tableRow += nodes.entry()
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuite.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuite._testsuites):
 			self.renderTestsuite(tableBody, ts, level + 1)
-
-		# Create a nested table per testsuite
-		subtable = self._GenerateTestsuiteSubtable(testsuite, "0", level + 1)
-		tableBody += (row := nodes.row("", classes=["osvvm-testcases"]))
-		row += nodes.entry("", subtable, morecols=7)
-		for i in range(6):
-			row += None
-
-	def _GenerateTestsuiteSubtable(self, testsuite: Testsuite, testsuiteID: str, level: int) -> nodes.Element:
-		# Create a table and table header with 8 columns
-		columns = [
-			(f"{'  ' * level}Testcase", 500),
-			("Warnings", 100),
-			("Errors", 100),
-			("Failures", 100),
-			("Assertions", 100),
-			("Requirements", 100),
-			("Func. Coverage", 100),
-			("Runtime (HH:MM:SS.sss)", 100),
-		]
-
-		cssClasses = ["osvvm-testsuite-subtable", f"osvvm-testsuite-{self._reportID}-{testsuiteID}"]
-		# cssClasses.extend(self._cssClasses)
-
-		tableGroup = self._CreateSingleTableHeader(
-			identifier=f"{self._reportID}-{testsuiteID}",
-			columns=columns,
-			classes=cssClasses
-		)
-		tableGroup += (tableBody := nodes.tbody())
 
 		for testcase in self._sortedValues(testsuite._testcases):
 			# if testcase._status == self._showTestcases:
 				self.renderTestcase(tableBody, testcase, level)
 
-		return tableGroup.parent
-
 	def renderTestcase(self, tableBody: nodes.tbody, testcase: Testcase, level: int) -> None:
 		state = self._convertTestcaseStatusToSymbol(testcase._status)
 
-		def countVsExpected(count: int, expectedCount: int, kind: str) -> nodes.entry:
+		def countVsExpected(count: int, expectedCount: int, kind: str) -> Tuple[nodes.entry, nodes.entry]:
 			classes = []
 			if count == expectedCount == 0:
 				text = f"⸻"
 			else:
-				text = f"{count} / {expectedCount}"
 				if count != expectedCount:
 					classes = [f"osvvm-{kind}-mismatch"]
 
-			return nodes.entry("", nodes.paragraph(text=text), classes=classes)
+			return (
+				nodes.entry("", nodes.paragraph(text=f"{count}"),         classes=classes),
+				nodes.entry("", nodes.paragraph(text=f"{expectedCount}"), classes=classes)
+			)
 
 		def functionalCoverage(percent: float, kind: str) -> nodes.entry:
 			classes = []
@@ -366,12 +364,12 @@ class BuildSummary(BaseDirective):
 
 			return nodes.entry("", nodes.paragraph(text=text), classes=classes)
 
-		warningCell =     countVsExpected(testcase.WarningCount, testcase.ExpectedWarningCount, "warning")
-		errorCell =       countVsExpected(testcase.ErrorCount, testcase.ExpectedErrorCount, "error")
-		failureCell =     countVsExpected(testcase.FatalCount, testcase.ExpectedFatalCount, "failure")
-		assertionCell =   countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
-		requirementCell = countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
-		coverageCell =    countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
+		warningCell,     expectedWarningCell =     countVsExpected(testcase.WarningCount, testcase.ExpectedWarningCount, "warning")
+		errorCell,       expectedErrorCell =       countVsExpected(testcase.ErrorCount, testcase.ExpectedErrorCount, "error")
+		failureCell,     expectedFailureCell =     countVsExpected(testcase.FatalCount, testcase.ExpectedFatalCount, "failure")
+		assertionCell,   expectedAssertionCell =   countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
+		requirementCell, expectedRequirementCell = countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "requirement")
+		coverageCell, _ =    countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
 		# tableRow += countVsExpected(testcase.PassedRequirementsCount, testcase.RequirementsCount, "requirement")
 		# tableRow += functionalCoverage(testcase.FunctionalCoverage)
 
@@ -386,14 +384,22 @@ class BuildSummary(BaseDirective):
 		tableRow =	nodes.row("", classes=classes)
 		tableBody += tableRow
 
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{'  ' * level}{state}{testcase.Name}"))
+		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testcase.Name}"))
+		for _ in range(5):
+			tableRow += nodes.entry()
 		tableRow += warningCell
+		tableRow += expectedWarningCell
 		tableRow += errorCell
+		tableRow += expectedErrorCell
 		tableRow += failureCell
+		tableRow += expectedFailureCell
 		tableRow += assertionCell
+		tableRow += expectedAssertionCell
 		tableRow += requirementCell
+		tableRow += expectedRequirementCell
 		tableRow += coverageCell
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testcase.TotalDuration)}"))
+		tableRow += coverageCell
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testcase.TotalDuration)}"))
 
 	def renderSummary(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary) -> None:
 		state = self._convertTestsuiteStatusToSymbol(testsuiteSummary._status)
@@ -401,14 +407,15 @@ class BuildSummary(BaseDirective):
 		tableRow = nodes.row("", classes=["osvvm-summary", f"testsuitesummary-{testsuiteSummary._status.name.lower()}"])
 		tableBody += tableRow
 
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{state} {testsuiteSummary.Status.name.upper()}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Skipped}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
+		tableRow += nodes.entry("", nodes.Text(f"{state} {testsuiteSummary.Status.name.upper()}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
+		for _ in range(12):
+			tableRow += nodes.entry()
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 	def run(self) -> List[nodes.Node]:
 		container = nodes.container()
