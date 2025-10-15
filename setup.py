@@ -51,7 +51,10 @@ setup(
 			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 		],
 		dataFiles={
-			packageName: ["py.typed"]
+			packageName: [
+				"py.typed",
+				"static/*.css"
+			]
 		},
 		consoleScripts={
 			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
