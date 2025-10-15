@@ -755,6 +755,9 @@ class Context(Base):
 		self._testsuites = {}
 		self._build = None
 
+		# TODO: should this be handled in LoadBuildFile ?
+		self._currentDirectory = self._workingDirectory
+
 		return build
 
 	def IncludeFile(self, proFileOrBuildDirectory: Path) -> Path:
