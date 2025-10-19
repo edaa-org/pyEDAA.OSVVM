@@ -41,6 +41,7 @@ from pyTooling.Attributes.ArgParse.Flag       import LongFlag
 from pyTooling.Attributes.ArgParse.ValuedFlag import LongValuedFlag
 from pyTooling.Stopwatch                      import Stopwatch
 
+from pyEDAA.OSVVM.Project     import VHDLSourceFile
 from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
 
@@ -72,13 +73,13 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			with sw:
 				processor.EvaluateTclCode(tclCode)
 
-			project = processor.Context.ToProject("unnamed")
+			osvvmProject = processor.Context.ToProject("unnamed")
 
 		elif args.regressionTCL is not None:
 			self.WriteNormal(f"Reading regression TCL file ...")
 
 			with sw:
-				project = processor.LoadRegressionFile(Path(args.regressionTCL))
+				osvvmProject = processor.LoadRegressionFile(Path(args.regressionTCL))
 
 		elif args.buildPro is not None:
 			for proFile in args.buildPro.split(":"):
@@ -88,22 +89,25 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 				with sw:
 					processor.LoadBuildFile(file)
 
-			project = processor.Context.ToProject("unnamed")
+			osvvmProject = processor.Context.ToProject("unnamed")
 
 		else:
 			self.Exit(1)
 
 		self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
-		self.WriteNormal(f"  Builds:           {len(project.Builds)}")
-		self.WriteNormal(f"  Processed files:  {count(project.IncludedFiles)}")
+		self.WriteNormal(f"  Builds:           {len(osvvmProject.Builds)}")
+		self.WriteNormal(f"  Processed files:  {count(osvvmProject.IncludedFiles)}")
 
 		if args.render == "all":
-			for build in project.Builds.values():
+			for build in osvvmProject.Builds.values():
 				print(f"Build: {build.Name}")
 				for libraryName, lib in build.VHDLLibraries.items():
 					print(f"  Library: {libraryName} ({len(lib.Files)})")
 					for file in lib.Files:
 						print(f"    {file}")
+						if isinstance(file, VHDLSourceFile):
+							for associatedFile in file.AssociatedFiles:
+								print(f"      {associatedFile}")
 
 				print("-" * 60)
 				for testsuiteName, ts in build.Testsuites.items():

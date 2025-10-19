@@ -45,6 +45,7 @@ from pyEDAA.OSVVM.Project.Procedures import TestSuite, TestName, RunTest
 from pyEDAA.OSVVM.Project.Procedures import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
 from pyEDAA.OSVVM.Project.Procedures import SetVHDLVersion, GetVHDLVersion
 from pyEDAA.OSVVM.Project.Procedures import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
+from pyEDAA.OSVVM.Project.Procedures import ConstraintFile, ScopeToRef, ScopeToCell
 
 
 @export
@@ -220,6 +221,10 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		self.RegisterPythonFunctionAsTclProcedure(FindOsvvmSettingsDirectory)
 		self.RegisterPythonFunctionAsTclProcedure(CreateOsvvmScriptSettingsPkg)
+
+		self.RegisterPythonFunctionAsTclProcedure(ConstraintFile)
+		self.RegisterPythonFunctionAsTclProcedure(ScopeToRef)
+		self.RegisterPythonFunctionAsTclProcedure(ScopeToCell)
 
 		self.RegisterPythonFunctionAsTclProcedure(noop, "OpenBuildHtml")
 		self.RegisterPythonFunctionAsTclProcedure(noop, "SetTranscriptType")
