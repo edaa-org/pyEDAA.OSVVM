@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 from pathlib import Path
-from typing import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator
+from typing  import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator
 
 from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Decorators  import readonly, export
@@ -49,7 +49,7 @@ _ParentType = TypeVar("_ParentType", bound="Base")
 class Base(Generic[_ParentType], metaclass=ExtendedType, slots=True):
 	_parent: Nullable[_ParentType]
 
-	def __init__(self, parent: Nullable[_ParentType] = None):
+	def __init__(self, parent: Nullable[_ParentType] = None) -> None:
 		self._parent = parent
 
 	@readonly
@@ -127,23 +127,59 @@ class SourceFile(Base[_ParentType], Generic[_ParentType]):
 		return self._path
 
 	def __repr__(self) -> str:
-		return f"SourceFile: {self._path}"
+		return f"{self.__class__.__name__}: {self._path}"
+
+
+@export
+class XDCConstraintFile(SourceFile):
+	_scopeToRef:  str
+	_scopeToCell: str
+
+	def __init__(self, path: Path, scopeToRef: Nullable[str], scopeToCell: Nullable[str]) -> None:
+		super().__init__(path)
+
+		if scopeToRef is not None and not isinstance(scopeToRef, str):
+			ex = TypeError(f"Parameter 'scopeToRef' is not a str.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(scopeToRef)}'.")
+			raise ex
+
+		self._scopeToRef =  scopeToRef
+
+		if scopeToCell is not None and not isinstance(scopeToCell, str):
+			ex = TypeError(f"Parameter 'scopeToCell' is not a str.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(scopeToCell)}'.")
+			raise ex
+
+		self._scopeToCell = scopeToCell
+
+	def __repr__(self) -> str:
+		properties = []
+		if self._scopeToRef is not None:
+			properties.append(f"ScopeToRef={self._scopeToRef}")
+		if self._scopeToCell is not None:
+			properties.append(f"ScopeToCell={self._scopeToCell}")
+
+		props = f" {{{', '.join(properties)}}}" if len(properties) > 0 else ""
+
+		return f"{super().__repr__()}{props}"
 
 
 @export
 class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	_vhdlVersion:        VHDLVersion
 	_noNullRangeWarning: Nullable[bool]
+	_associatedFiles:    List[XDCConstraintFile]
 
 	def __init__(
 		self,
 		path: Path,
 		vhdlVersion:        VHDLVersion = VHDLVersion.VHDL2008,
 		vhdlLibrary:        Nullable["VHDLLibrary"] = None,
-		noNullRangeWarning: Nullable[bool] = None
-	):
+		noNullRangeWarning: Nullable[bool] = None,
+		associatedFiles:    Nullable[Iterable[SourceFile]] = None
+	) -> None:
 		if vhdlLibrary is None:
-			super().__init__(path, None)
+			super().__init__(path)
 		elif isinstance(vhdlLibrary, VHDLLibrary):
 			super().__init__(path, vhdlLibrary)
 			vhdlLibrary._files.append(self)
@@ -165,6 +201,7 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 			raise ex
 
 		self._noNullRangeWarning = noNullRangeWarning
+		self._associatedFiles =    [] if associatedFiles is None else [f for f in associatedFiles]
 
 	@readonly
 	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
@@ -196,11 +233,16 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 		self._noNullRangeWarning = value
 
+	@property
+	def AssociatedFiles(self) -> List[SourceFile]:
+		return self._associatedFiles
+
 	def __repr__(self) -> str:
 		options = ""
 		if self._noNullRangeWarning is not None:
 			options += f", NoNullRangeWarning"
 		return f"VHDLSourceFile: {self._path} ({self._vhdlVersion}{options})"
+
 
 @export
 class VHDLLibrary(Named["Build"]):
@@ -293,6 +335,115 @@ class GenericValue(Option):
 
 	def __repr__(self) -> str:
 		return f"{self._name} = {self._value}"
+
+
+@export
+class ConstraintFile(Option):
+	_path:        Path
+	_scopeToRef:  Nullable[str]
+	_scopeToCell: Nullable[str]
+
+	def __init__(
+		self,
+		path:        Path,
+		scopeToRef:  Nullable[str] = None,
+		scopeToCell: Nullable[str] = None
+	) -> None:
+		super().__init__()
+
+		if not isinstance(path, Path):  # pragma: no cover
+			ex = TypeError(f"Parameter 'path' is not a Path.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
+			raise ex
+
+		self._path = path
+
+		if scopeToRef is not None and not isinstance(scopeToRef, str):
+			ex = TypeError(f"Parameter 'scopeToRef' is not a str.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
+			raise ex
+
+		self._scopeToRef = scopeToRef
+
+		if scopeToCell is not None and not isinstance(scopeToCell, str):
+			ex = TypeError(f"Parameter 'scopeToCell' is not a str.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
+			raise ex
+
+		self._scopeToCell = scopeToCell
+
+	@readonly
+	def Path(self) -> Path:
+		return self._path
+
+	@readonly
+	def ScopeToRef(self) -> Nullable[str]:
+		return self._scopeToRef
+
+	@readonly
+	def ScopeToCell(self) -> Nullable[str]:
+		return self._scopeToCell
+
+	def __repr__(self) -> str:
+		properties = []
+		if self._scopeToRef is not None:
+			properties.append(f"ScopeToRef={self._scopeToRef}")
+		if self._scopeToCell is not None:
+			properties.append(f"ScopeToCell={self._scopeToCell}")
+
+		props = f" {{{', '.join(properties)}}}" if len(properties) > 0 else ""
+
+		return f"{self._path}{props}"
+
+
+@export
+class ScopeToRef(Option):
+	_reference:  str
+
+	def __init__(
+		self,
+		reference: str
+	) -> None:
+		super().__init__()
+
+		if not isinstance(reference, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'reference' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(reference)}'.")
+			raise ex
+
+		self._reference = reference
+
+	@readonly
+	def Reference(self) -> str:
+		return self._reference
+
+	def __repr__(self) -> str:
+		return f"{self._reference}"
+
+
+@export
+class ScopeToCell(Option):
+	_cell:  str
+
+	def __init__(
+		self,
+		cell: str
+	) -> None:
+		super().__init__()
+
+		if not isinstance(cell, str):  # pragma: no cover
+			ex = TypeError(f"Parameter 'cell' is not a string.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(cell)}'.")
+			raise ex
+
+		self._cell = cell
+
+	@readonly
+	def Cell(self) -> str:
+		return self._cell
+
+	def __repr__(self) -> str:
+		return f"{self._cell}"
 
 
 @export
@@ -594,6 +745,7 @@ class Project(Named[None]):
 
 	def __repr__(self) -> str:
 		return f"Project: {self._name}"
+
 
 @export
 class Context(Base):

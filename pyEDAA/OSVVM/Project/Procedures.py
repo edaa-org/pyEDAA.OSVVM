@@ -42,7 +42,8 @@ from pyTooling.Decorators  import export
 from pyVHDLModel           import VHDLVersion
 
 from pyEDAA.OSVVM          import OSVVMException
-from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue
+from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue, ConstraintFile as OSVVM_ConstraintFile
+from pyEDAA.OSVVM.Project  import XDCConstraintFile, ScopeToRef as OSVVM_ScopeToRef, ScopeToCell as OSVVM_ScopeToCell
 from pyEDAA.OSVVM.Project  import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
@@ -221,6 +222,7 @@ def analyze(file: str, *options: int) -> None:
 		fullPath = (osvvmContext._currentDirectory / file).resolve()
 
 		noNullRangeWarning = None
+		associatedConstraintFiles = []
 		for optionID in options:
 			try:
 				option = osvvmContext._options[int(optionID)]
@@ -232,8 +234,14 @@ def analyze(file: str, *options: int) -> None:
 
 			if isinstance(option, OSVVM_NoNullRangeWarning):
 				noNullRangeWarning = True
+			elif isinstance(option, OSVVM_ConstraintFile):
+				associatedConstraintFiles.append(XDCConstraintFile(
+					option.Path,
+					option.ScopeToRef,
+					option.ScopeToCell
+				))
 			else:  # pragma: no cover
-				ex = OSVVMException(f"Option {optionID} is not a NoNullRangeWarning.")
+				ex = OSVVMException(f"Option {optionID} is not a NoNullRangeWarning or ConstraintFile.")
 				ex.__cause__ = TypeError()
 				osvvmContext.LastException = ex
 				raise ex
@@ -247,11 +255,12 @@ def analyze(file: str, *options: int) -> None:
 		if fullPath.suffix in (".vhd", ".vhdl"):
 			vhdlFile = VHDLSourceFile(
 				fullPath.relative_to(osvvmContext._workingDirectory, walk_up=True),
-				noNullRangeWarning=noNullRangeWarning
+				noNullRangeWarning=noNullRangeWarning,
+				associatedFiles=associatedConstraintFiles
 			)
 			osvvmContext.AddVHDLFile(vhdlFile)
 		else:  # pragma: no cover
-			ex = OSVVMException(f"Path '{fullPath}' is no VHDL file.")
+			ex = OSVVMException(f"Path '{fullPath}' is no VHDL file (*.vhd, *.vhdl).")
 			osvvmContext.LastException = ex
 			raise ex
 
@@ -482,3 +491,98 @@ def CreateOsvvmScriptSettingsPkg(*args):
 @export
 def noop(*args):
 	pass
+
+
+@export
+def ConstraintFile(file: str, *options: int) -> int:
+	try:
+		file = Path(file)
+		fullPath = (osvvmContext._currentDirectory / file).resolve()
+
+		properties = {}
+		for optionID in options:
+			try:
+				option = osvvmContext._options[int(optionID)]
+			except KeyError as e:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} not found in option dictionary.")
+				ex.__cause__ = e
+				osvvmContext.LastException = ex
+				raise ex
+
+			if isinstance(option, OSVVM_ScopeToRef):
+				properties["scopeToRef"] = option.Reference
+			elif isinstance(option, OSVVM_ScopeToCell):
+				properties["scopeToCell"] = option.Cell
+			else:  # pragma: no cover
+				ex = OSVVMException(f"Option {optionID} is not a ScopeToRef or ScopeToCell.")
+				ex.__cause__ = TypeError()
+				osvvmContext.LastException = ex
+				raise ex
+
+		if not fullPath.exists():  # pragma: no cover
+			ex = OSVVMException(f"Constraint file '{fullPath}' can't be found.")
+			ex.__cause__ = FileNotFoundError(fullPath)
+			osvvmContext.LastException = ex
+			raise ex
+
+		if fullPath.suffix in (".sdc", ".xdc"):
+			try:
+				constraint = OSVVM_ConstraintFile(Path(file), **properties)
+				optionID = osvvmContext.AddOption(constraint)
+			except Exception as ex:  # pragma: no cover
+				osvvmContext.LastException = ex
+				raise ex
+
+			return optionID
+		else:  # pragma: no cover
+			ex = OSVVMException(f"Path '{fullPath}' is no constraint file (*.sdc, *.xdc).")
+			osvvmContext.LastException = ex
+			raise ex
+
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+@export
+def ScopeToRef(refName: str) -> int:
+	try:
+		if refName == "":
+			ex = OSVVMException(f"Parameter 'refName' is empty.")
+			ex.__cause__ = ValueError("Parameter 'refName' is a empty string.")
+			osvvmContext.LastException = ex
+			raise ex
+
+		try:
+			ref = OSVVM_ScopeToRef(refName)
+			optionID = osvvmContext.AddOption(ref)
+		except Exception as ex:  # pragma: no cover
+			osvvmContext.LastException = ex
+			raise ex
+
+		return optionID
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
+
+
+@export
+def ScopeToCell(cellName: str) -> int:
+	try:
+		if cellName == "":
+			ex = OSVVMException(f"Parameter 'cellName' is empty.")
+			ex.__cause__ = ValueError("Parameter 'cellName' is a empty string.")
+			osvvmContext.LastException = ex
+			raise ex
+
+		try:
+			ref = OSVVM_ScopeToCell(cellName)
+			optionID = osvvmContext.AddOption(ref)
+		except Exception as ex:  # pragma: no cover
+			osvvmContext.LastException = ex
+			raise ex
+
+		return optionID
+	except Exception as ex:  # pragma: no cover
+		osvvmContext.LastException = ex
+		raise ex
