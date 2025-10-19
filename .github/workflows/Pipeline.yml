@@ -13,7 +13,11 @@ jobs:
     with:
       package_namespace: 'pyEDAA'
       package_name:      'OSVVM'
+      unittest_python_version:      '3.13'
       unittest_python_version_list: '3.12 3.13 3.14'
+      unittest_disable_list:        'windows-arm:* windows-arm:pypy-3.10 windows-arm:pypy-3.11'
+      bandit:            'true'
+      pylint:            'false'
       codecov:           'true'
       codacy:            'true'
       dorny:             'true'
