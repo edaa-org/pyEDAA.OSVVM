@@ -45,20 +45,19 @@ setup(
 		description="Parser and converters for OSVVM-specific data models and report formats.",
 		gitHubNamespace=gitHubNamespace,
 		sourceFileWithVersion=packageInformationFile,
-		developmentStatus="beta",
-		pythonVersions=("3.12", "3.13"),
 		classifiers=list(DEFAULT_CLASSIFIERS) + [
 			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 		],
+		developmentStatus="beta",
+		pythonVersions=("3.11", "3.12", "3.13", "3.14"),
+		consoleScripts={
+			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
+		},
 		dataFiles={
 			packageName: [
 				"py.typed",
 				"static/*.css"
 			]
-		},
-		consoleScripts={
-			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
-		},
-		debug=True
+		}
 	)
 )
