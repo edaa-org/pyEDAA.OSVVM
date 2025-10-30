@@ -90,7 +90,7 @@ def _format(node: Node) -> str:
 	:param node: Node to format.
 	:returns:    String representation (one-liner) describing an AlertLogItem.
 	"""
-	return f"{node["Name"]}: {node["TotalErrors"]}={node["AlertCountFailures"]}/{node["AlertCountErrors"]}/{node["AlertCountWarnings"]} {node["PassedCount"]}/{node["AffirmCount"]}"
+	return f"{node['Name']}: {node['TotalErrors']}={node['AlertCountFailures']}/{node['AlertCountErrors']}/{node['AlertCountWarnings']} {node['PassedCount']}/{node['AffirmCount']}"
 
 
 @export
