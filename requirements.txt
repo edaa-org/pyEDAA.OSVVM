@@ -1,5 +1,5 @@
 ruamel.yaml ~= 0.18
-pyTooling ~= 8.7
+pyTooling ~= 8.8
 pyVHDLModel ~= 0.31
 pyEDAA.Reports ~= 0.17
 sphinx-reports ~= 0.9
