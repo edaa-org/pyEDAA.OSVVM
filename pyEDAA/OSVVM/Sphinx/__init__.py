@@ -33,10 +33,10 @@
 
 Supported reports:
 
-* :ref:`UNITTEST`
-* :ref:`DOCCOV`
-* :ref:`CODECOV`
-* :ref:`DEP`
+* :ref:`BUILDS`
+* :ref:`ALERTLOG`
+* :ref:`COVERAGE`
+* :ref:`SCORE`
 
 """
 
@@ -63,7 +63,7 @@ from pyEDAA.OSVVM          import static as ResourcePackage
 @export
 class OSVVMDomain(Domain):
 	"""
-	A Sphinx extension providing a ``report`` domain to integrate reports and summaries into a Sphinx-based documentation.
+	A Sphinx extension providing a ``osvvm`` domain to integrate reports and summaries into a Sphinx-based documentation.
 
 	.. rubric:: New directives:
 
@@ -79,7 +79,7 @@ class OSVVMDomain(Domain):
 
 	.. rubric:: Configuration variables
 
-	All configuration variables in :file:`conf.py` are prefixed with ``report_*``:
+	All configuration variables in :file:`conf.py` are prefixed with ``osvvm_*``:
 
 	* ``osvvm_testsuites``
 
@@ -164,7 +164,7 @@ class OSVVMDomain(Domain):
 		:param sphinxApplication: The Sphinx application.
 		"""
 		# Create a new static path for this extension
-		staticDirectory = (Path(sphinxApplication.outdir) / "_report_static").resolve()
+		staticDirectory = (Path(sphinxApplication.outdir) / "_osvvm_static").resolve()
 		staticDirectory.mkdir(exist_ok=True)
 		sphinxApplication.config.html_static_path.append(str(staticDirectory))
 

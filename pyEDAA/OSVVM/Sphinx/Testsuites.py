@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 """
-**Report unit test results as Sphinx documentation page(s).**
+**Report build results as Sphinx documentation page(s).**
 """
 from datetime import timedelta
 from enum     import Flag
@@ -147,11 +147,11 @@ class BuildSummary(BaseDirective):
 	@classmethod
 	def ReadReports(cls, sphinxApplication: Sphinx) -> None:
 		"""
-		Read unittest report files.
+		Read build report files.
 
 		:param sphinxApplication:   Sphinx application instance.
 		"""
-		print(f"[REPORT] Reading unittest reports ...")
+		print(f"[REPORT] Reading build reports ...")
 
 	@classmethod
 	def _CheckConfiguration(cls, sphinxConfiguration: Config) -> None:
