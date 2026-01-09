@@ -318,7 +318,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		"""
 		Iterate all child AlertLog items.
 
-		:return: An iterator of child items.
+		:returns: An iterator of child items.
 		"""
 		return iter(self._children.values())
 

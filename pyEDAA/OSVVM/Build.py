@@ -216,7 +216,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of disabled warnings.
 
-		:return: Count of disabled warnings.
+		:returns: Count of disabled warnings.
 		"""
 		return self._disabledWarningCount
 
@@ -225,7 +225,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of disabled errors.
 
-		:return: Count of disabled errors.
+		:returns: Count of disabled errors.
 		"""
 		return self._disabledErrorCount
 
@@ -234,7 +234,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of disabled fatal errors.
 
-		:return: Count of disabled fatal errors.
+		:returns: Count of disabled fatal errors.
 		"""
 		return self._disabledFatalCount
 
@@ -243,7 +243,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of requirements.
 
-		:return: Count of requirements.
+		:returns: Count of requirements.
 		"""
 		return self._requirementsCount
 
@@ -252,7 +252,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of passed requirements.
 
-		:return: Count of passed rerquirements.
+		:returns: Count of passed rerquirements.
 		"""
 		return self._passedRequirementsCount
 
@@ -261,7 +261,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the number of failed requirements.
 
-		:return: Count of failed requirements.
+		:returns: Count of failed requirements.
 		"""
 		return self._failedRequirementsCount
 
@@ -270,7 +270,7 @@ class Testcase(ut_Testcase):
 		"""
 		Read-only property returning the functional coverage.
 
-		:return: Percentage of functional coverage.
+		:returns: Percentage of functional coverage.
 		"""
 		return self._functionalCoverage
 

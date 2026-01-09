@@ -243,7 +243,7 @@ def setup(sphinxApplication: Sphinx) -> "setup_ReturnType":
 	* register configuration variables for :file:`conf.py`
 
 	:param sphinxApplication: The Sphinx application.
-	:return:                  Dictionary containing the extension version and some properties.
+	:returns:                 Dictionary containing the extension version and some properties.
 	"""
 	sphinxApplication.add_domain(OSVVMDomain)
 
