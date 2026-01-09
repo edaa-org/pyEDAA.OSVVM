@@ -7,6 +7,9 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072)  
 [![GitHub Workflow - Build and Test Status](https://img.shields.io/github/actions/workflow/status/edaa-org/pyEDAA.OSVVM/Pipeline.yml?longCache=true&style=flat-square&label=Build%20and%20test&logo=GitHub%20Actions&logoColor=FFFFFF)](https://GitHub.com/edaa-org/pyEDAA.OSVVM/actions/workflows/Pipeline.yml)
 [![Libraries.io status for latest release](https://img.shields.io/librariesio/release/pypi/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff)](https://libraries.io/github/edaa-org/pyEDAA.OSVVM)
+[![Codacy - Quality](https://img.shields.io/codacy/grade/b57c7ddd73ef459aaa6a4a6251dd0ad4?longCache=true&style=flat-square&logo=Codacy)](https://www.codacy.com/gh/edaa-org/pyEDAA.OSVVM)
+[![Codacy - Coverage](https://img.shields.io/codacy/coverage/b57c7ddd73ef459aaa6a4a6251dd0ad4?longCache=true&style=flat-square&logo=Codacy)](https://www.codacy.com/gh/edaa-org/pyEDAA.OSVVM)
+[![Codecov - Branch Coverage](https://img.shields.io/codecov/c/github/edaa-org/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Codecov)](https://codecov.io/gh/edaa-org/pyEDAA.OSVVM)
 
 <!--
 [![Dependent repos (via libraries.io)](https://img.shields.io/librariesio/dependent-repos/pypi/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=GitHub)](https://github.com/edaa-org/pyEDAA.OSVVM/network/dependents)

@@ -193,6 +193,7 @@ intersphinx_mapping = {
 	"pyTool": ("https://pyTooling.github.io/pyTooling/", None),
 	# "osvvm":  ("https://OSVVM.github.io/OSVVM/", None),
 	# OSVVM-Scripts?
+	"prj":    ("https://edaa-org.github.io/pyEDAA.ProjectModel/", None),
 }
 
 
