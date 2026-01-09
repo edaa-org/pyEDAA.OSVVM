@@ -509,7 +509,7 @@ class Testcase(Named["Testsuite"]):
 
 		self._toplevelName = toplevelName
 
-	def AddGeneric(self, genericValue: GenericValue):
+	def AddGeneric(self, genericValue: GenericValue) -> None:
 		if not isinstance(genericValue, GenericValue):  # pragma: no cover
 			ex = TypeError(f"Parameter 'genericValue' is not a GenericValue.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(genericValue)}'.")
@@ -968,7 +968,7 @@ class Context(Base):
 		vhdlFile.VHDLVersion = self._vhdlversion
 		self._vhdlLibrary.AddFile(vhdlFile)
 
-	def SetTestsuite(self, testsuiteName: str):
+	def SetTestsuite(self, testsuiteName: str) -> None:
 		try:
 			self._testsuite = self._testsuites[testsuiteName]
 		except KeyError:

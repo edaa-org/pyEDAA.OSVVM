@@ -73,7 +73,7 @@ class TclEnvironment:
 	def Context(self) -> Context:
 		return self._context
 
-	def RegisterPythonFunctionAsTclProcedure(self, pythonFunction: Callable, tclProcedureName: Nullable[str] = None):
+	def RegisterPythonFunctionAsTclProcedure(self, pythonFunction: Callable, tclProcedureName: Nullable[str] = None) -> None:
 		if tclProcedureName is None:
 			tclProcedureName = pythonFunction.__name__
 

@@ -45,7 +45,7 @@ if __name__ == "__main__": # pragma: no cover
 
 
 class JUnitGeneratedByOSVVM(TestCase):
-	def test_OsvvmLibraries(self):
+	def test_OsvvmLibraries(self) -> None:
 		print()
 
 		junitExampleFile = Path("tests/data/JUnit/OSVVMLibraries_OsvvmLibraries.xml")
@@ -62,7 +62,7 @@ class JUnitGeneratedByOSVVM(TestCase):
 		print(f"Statistics:")
 		print(f"  Times: parsing by lxml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
-	def test_RunAllTests(self):
+	def test_RunAllTests(self) -> None:
 		print()
 
 		junitExampleFile = Path("tests/data/JUnit/OSVVMLibraries_RunAllTests.xml")
