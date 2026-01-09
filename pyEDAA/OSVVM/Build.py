@@ -97,7 +97,7 @@ class Testcase(ut_Testcase):
 		expectedFatalCount: int = 0,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
 		parent: Nullable["Testsuite"] = None
-	):
+	) -> None:
 		"""
 		Initializes the fields of a test case.
 
