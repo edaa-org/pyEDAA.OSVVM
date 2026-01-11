@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2021-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
+# Copyright 2021-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -32,7 +32,7 @@
 from pathlib      import Path
 from unittest     import TestCase
 
-from pyEDAA.OSVVM.TestsuiteSummary import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
+from pyEDAA.OSVVM.Build import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")

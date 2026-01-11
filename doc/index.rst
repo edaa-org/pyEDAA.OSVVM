@@ -44,8 +44,8 @@ Main Goals
 
 This package provides OSVVM-specific data models and parsers. The data models can be used as-is or converted to generic
 data models of the pyEDAA data model family. This includes parsing OSVVM's ``*.pro``-files and translating them to a
-`pyEDAA.ProjectModel <https://edaa-org.github.io/pyEDAA.ProjectModel>`__ instance as well as reading OSVVM's reports in
-YAML format like test results, alerts or functional coverage.
+:external+prj:doc:`pyEDAA.ProjectModel <index>` instance as well as reading OSVVM's reports in YAML format like test
+results, alerts or functional coverage.
 
 Frameworks consuming these data models can build higher level features and services on top of these models, while
 using one parser that's aligned with OSVVM's data formats.
@@ -78,7 +78,14 @@ OSVVM Project
       :ref:`testsuites <PRJ/DataModel/Testsuite>`, and :ref:`testcases <PRJ/DataModel/Testcase>`.
 
       Afterwards, the :ref:`OSVVM project model <PRJ>` can be used as-is, or it can be converted to other data or file
-      formats. One unified data model is `pyEDAA.ProjectModel <https://edaa-org.github.com/pyEDAA.ProjectModel>`__.
+      formats. One unified data model is :external+prj:doc:`pyEDAA.ProjectModel <index>`.
+
+      .. rubric:: EDA² Extensions
+
+      * Link XDC constraint files to VHDL source files. In addition, specify the association between the XDC file and
+        HDL entity as ``ScopeToRef`` or ``ScopeToCell``.
+
+
 
    .. grid-item::
       :columns: 7
@@ -91,7 +98,7 @@ OSVVM Project
             .. code-block:: Python
 
                from pathlib import Path
-               from pyEDAA.OSVVM.TCL import OsvvmProFileProcessor
+               from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor
 
                processor = OsvvmProFileProcessor()
                processor.LoadBuildFile(Path("OSVVM/OSVVMLibraries/OsvvmLibraries.pro"))
@@ -162,6 +169,18 @@ News
 
 .. only:: html
 
+   Jan 2026 - XDC Constraint file support
+   ======================================
+
+.. only:: latex
+
+   .. rubric:: XDC Constraint file support
+
+* Support EDA² specific annotations to HDL source files like XDC constraint files and ``ScopeToRef``/``ScopeToCell``
+  bindings.
+
+.. only:: html
+
    June 2025 - Reading AlertLog and Testsuites
    ===========================================
 
@@ -182,7 +201,7 @@ News
 
    .. rubric:: Reading ``*.pro`` Files
 
-* Previously, reading OSVVM's ``*.pro`` files was achieved via `pyEDAA.ProjectModel <https://GitHub.com/edaa-org/pyEDAA.ProjectModel>`__,
+* Previously, reading OSVVM's ``*.pro`` files was achieved via :external+prj:doc:`pyEDAA.ProjectModel <index>`,
   but OSVVM's file format became more complicated, so a new approach was needed. Moreover, OSVVM created more data
   formats, thus this package was outsourced from ``pyEDAA.ProjectModel``.
 * Thus, OSVVM became a new citizen of `EDA² <https://GitHub.com/edaa-org>`__ and got integrated into the ``pyEDAA``

@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2021-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
+# Copyright 2021-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -90,7 +90,7 @@ def _format(node: Node) -> str:
 	:param node: Node to format.
 	:returns:    String representation (one-liner) describing an AlertLogItem.
 	"""
-	return f"{node["Name"]}: {node["TotalErrors"]}={node["AlertCountFailures"]}/{node["AlertCountErrors"]}/{node["AlertCountWarnings"]} {node["PassedCount"]}/{node["AffirmCount"]}"
+	return f"{node['Name']}: {node['TotalErrors']}={node['AlertCountFailures']}/{node['AlertCountErrors']}/{node['AlertCountWarnings']} {node['PassedCount']}/{node['AffirmCount']}"
 
 
 @export
@@ -318,7 +318,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		"""
 		Iterate all child AlertLog items.
 
-		:return: An iterator of child items.
+		:returns: An iterator of child items.
 		"""
 		return iter(self._children.values())
 

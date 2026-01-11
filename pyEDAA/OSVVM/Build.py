@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2021-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
+# Copyright 2021-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -34,8 +34,9 @@ from pathlib               import Path
 from typing                import Optional as Nullable, Iterator, Iterable, Mapping, Any, List
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
-from pyTooling.Decorators  import export, InheritDocString, notimplemented
+from pyTooling.Decorators  import export, InheritDocString, notimplemented, readonly
 from pyTooling.MetaClasses import ExtendedType
+from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 
@@ -59,6 +60,219 @@ class UnittestException(UnittestException, OsvvmException):
 @InheritDocString(ut_Testcase)
 class Testcase(ut_Testcase):
 	"""@InheritDocString(ut_Testcase)"""
+
+	_disabledWarningCount: int
+	_disabledErrorCount:   int
+	_disabledFatalCount:   int
+
+	_requirementsCount:       Nullable[int]
+	_passedRequirementsCount: Nullable[int]
+	_failedRequirementsCount: Nullable[int]
+	_functionalCoverage:      Nullable[float]
+
+	def __init__(
+		self,
+		name: str,
+		startTime: Nullable[datetime] = None,
+		setupDuration: Nullable[timedelta] = None,
+		testDuration: Nullable[timedelta] = None,
+		teardownDuration: Nullable[timedelta] = None,
+		totalDuration:  Nullable[timedelta] = None,
+		status: TestcaseStatus = TestcaseStatus.Unknown,
+		assertionCount: Nullable[int] = None,
+		failedAssertionCount: Nullable[int] = None,
+		passedAssertionCount: Nullable[int] = None,
+		requirementsCount: Nullable[int] = None,
+		passedRequirementsCount: Nullable[int] = None,
+		failedRequirementsCount: Nullable[int] = None,
+		functionalCoverage: Nullable[float] = None,
+		warningCount: int = 0,
+		errorCount: int = 0,
+		fatalCount: int = 0,
+		disabledWarningCount: int = 0,
+		disabledErrorCount: int = 0,
+		disabledFatalCount: int = 0,
+		expectedWarningCount: int = 0,
+		expectedErrorCount: int = 0,
+		expectedFatalCount: int = 0,
+		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		parent: Nullable["Testsuite"] = None
+	) -> None:
+		"""
+		Initializes the fields of a test case.
+
+		:param name:                    Name of the test entity.
+		:param startTime:               Time when the test entity was started.
+		:param setupDuration:           Duration it took to set up the entity.
+		:param testDuration:            Duration of the entity's test run.
+		:param teardownDuration:        Duration it took to tear down the entity.
+		:param totalDuration:           Total duration of the entity's execution (setup + test + teardown)
+		:param status:                  Status of the test case.
+		:param assertionCount:          Number of assertions within the test.
+		:param failedAssertionCount:    Number of failed assertions within the test.
+		:param passedAssertionCount:    Number of passed assertions within the test.
+		:param requirementsCount:       Number of requirements within the test.
+		:param failedRequirementsCount: Number of failed requirements within the test.
+		:param passedRequirementsCount: Number of passed requirements within the test.
+		:param warningCount:            Count of encountered warnings.
+		:param errorCount:              Count of encountered errors.
+		:param fatalCount:              Count of encountered fatal errors.
+		:param disabledWarningCount:    Count of disabled warnings.
+		:param disabledErrorCount:      Count of disabled errors.
+		:param disabledFatalCount:      Count of disabled fatal errors.
+		:param expectedWarningCount:    Count of expected warnings.
+		:param expectedErrorCount:      Count of expected errors.
+		:param expectedFatalCount:      Count of expected fatal errors.
+		:param keyValuePairs:           Mapping of key-value pairs to initialize the test case.
+		:param parent:                  Reference to the parent test suite.
+		:raises TypeError:              If parameter 'parent' is not a Testsuite.
+		:raises ValueError:             If parameter 'assertionCount' is not consistent.
+		"""
+		super().__init__(
+			name,
+			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
+			status,
+			assertionCount, failedAssertionCount, passedAssertionCount,
+			warningCount, errorCount, fatalCount,
+			expectedWarningCount, expectedErrorCount, expectedFatalCount,
+			keyValuePairs,
+			parent
+		)
+
+		if not isinstance(disabledWarningCount, int):
+			ex = TypeError(f"Parameter 'disabledWarningCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(disabledWarningCount)}'.")
+			raise ex
+
+		if not isinstance(disabledErrorCount, int):
+			ex = TypeError(f"Parameter 'disabledErrorCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(disabledErrorCount)}'.")
+			raise ex
+
+		if not isinstance(disabledFatalCount, int):
+			ex = TypeError(f"Parameter 'disabledFatalCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(disabledFatalCount)}'.")
+			raise ex
+
+		self._disabledWarningCount = disabledWarningCount
+		self._disabledErrorCount =   disabledErrorCount
+		self._disabledFatalCount =   disabledFatalCount
+
+		if requirementsCount is not None and not isinstance(requirementsCount, int):
+			ex = TypeError(f"Parameter 'requirementsCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(requirementsCount)}'.")
+			raise ex
+
+		if passedRequirementsCount is not None and not isinstance(passedRequirementsCount, int):
+			ex = TypeError(f"Parameter 'passedRequirementsCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(passedRequirementsCount)}'.")
+			raise ex
+
+		if failedRequirementsCount is not None and not isinstance(failedRequirementsCount, int):
+			ex = TypeError(f"Parameter 'failedRequirementsCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(failedRequirementsCount)}'.")
+			raise ex
+
+		if requirementsCount is not None:
+			if passedRequirementsCount is not None:
+				if failedRequirementsCount is not None:
+					if passedRequirementsCount + failedRequirementsCount != requirementsCount:
+						raise ValueError(f"Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
+				else:
+					failedRequirementsCount = requirementsCount - passedRequirementsCount
+			elif failedRequirementsCount is not None:
+				passedRequirementsCount = requirementsCount - failedRequirementsCount
+			else:
+				passedRequirementsCount = requirementsCount
+				failedRequirementsCount = 0
+		else:
+			if passedRequirementsCount is not None:
+				if failedRequirementsCount is not None:
+					requirementsCount = passedRequirementsCount + failedRequirementsCount
+				else:
+					requirementsCount = passedRequirementsCount
+					failedRequirementsCount = 0
+			elif failedRequirementsCount is not None:
+				requirementsCount = failedRequirementsCount
+				passedRequirementsCount = 0
+
+		self._requirementsCount = requirementsCount
+		self._passedRequirementsCount = passedRequirementsCount
+		self._failedRequirementsCount = failedRequirementsCount
+
+		if functionalCoverage is not None:
+			if not isinstance(functionalCoverage, float):
+				ex = TypeError(f"Parameter 'functionalCoverage' is not of type 'float'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(functionalCoverage)}'.")
+				raise ex
+
+			if not (0.0 <= functionalCoverage <= 1.0):
+				raise ValueError(f"Parameter 'functionalCoverage' is not in range 0.0..1.0.")
+
+		self._functionalCoverage = functionalCoverage
+
+	@readonly
+	def DisabledWarningCount(self) -> int:
+		"""
+		Read-only property returning the number of disabled warnings.
+
+		:returns: Count of disabled warnings.
+		"""
+		return self._disabledWarningCount
+
+	@readonly
+	def DisabledErrorCount(self) -> int:
+		"""
+		Read-only property returning the number of disabled errors.
+
+		:returns: Count of disabled errors.
+		"""
+		return self._disabledErrorCount
+
+	@readonly
+	def DisabledFatalCount(self) -> int:
+		"""
+		Read-only property returning the number of disabled fatal errors.
+
+		:returns: Count of disabled fatal errors.
+		"""
+		return self._disabledFatalCount
+
+	@readonly
+	def RequirementsCount(self) -> int:
+		"""
+		Read-only property returning the number of requirements.
+
+		:returns: Count of requirements.
+		"""
+		return self._requirementsCount
+
+	@readonly
+	def PassedRequirementsCount(self) -> int:
+		"""
+		Read-only property returning the number of passed requirements.
+
+		:returns: Count of passed rerquirements.
+		"""
+		return self._passedRequirementsCount
+
+	@readonly
+	def FailedRequirementsCount(self) -> int:
+		"""
+		Read-only property returning the number of failed requirements.
+
+		:returns: Count of failed requirements.
+		"""
+		return self._failedRequirementsCount
+
+	@readonly
+	def FunctionalCoverage(self) -> float:
+		"""
+		Read-only property returning the functional coverage.
+
+		:returns: Percentage of functional coverage.
+		"""
+		return self._functionalCoverage
 
 
 @export
@@ -140,15 +354,9 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		"""
 		super().__init__(
 			name,
-			startTime,
-			setupDuration,
-			testDuration,
-			teardownDuration,
-			totalDuration,
+			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
 			status,
-			warningCount,
-			errorCount,
-			fatalCount,
+			warningCount, errorCount, fatalCount,
 			testsuites,
 			keyValuePairs,
 			parent
@@ -361,11 +569,23 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		yamlResults = self._ParseMapFromYAML(yamlTestcase, "Results")
 		assertionCount = self._ParseIntFieldFromYAML(yamlResults, "AffirmCount")
 		passedAssertionCount = self._ParseIntFieldFromYAML(yamlResults, "PassedCount")
+
 		totalErrors = self._ParseIntFieldFromYAML(yamlResults, "TotalErrors")
+
 		yamlAlertCount = self._ParseMapFromYAML(yamlResults, "AlertCount")
 		warningCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Warning")
 		errorCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Error")
-		fatalCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Failure")
+		failureCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Failure")
+
+		yamlDisabledAlertCount = self._ParseMapFromYAML(yamlResults, "DisabledAlertCount")
+		disabledWarningCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning")
+		disabledErrorCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error")
+		disabledFailureCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure")
+
+		yamlExpectedAlertCount = self._ParseMapFromYAML(yamlResults, "ExpectedCount")
+		expectedWarningCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Warning")
+		expectedErrorCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Error")
+		expectedFailureCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Failure")
 
 		# FIXME: write a Parse classmethod in enum
 		if yamlStatus == "passed":
@@ -377,25 +597,36 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		else:
 			status = TestcaseStatus.Unknown
 
-		if totalErrors == warningCount + errorCount + fatalCount:
-			if warningCount > 0:
+		if (
+			abs(warningDiff := warningCount - expectedWarningCount) +
+			abs(errorDiff := errorCount - expectedErrorCount) +
+			abs(failureDiff := failureCount - expectedFailureCount) -
+			totalErrors
+		) == 0:
+			if warningDiff > 0:
 				status |= TestcaseStatus.Warned
-			if errorCount > 0:
+			if errorDiff > 0:
 				status |= TestcaseStatus.Errored
-			if fatalCount > 0:
+			if failureDiff > 0:
 				status |= TestcaseStatus.Aborted
-		# else:
-		# 	status |= TestcaseStatus.Inconsistent
+		else:
+			status |= TestcaseStatus.Inconsistent
 
 		_ = Testcase(
 			testcaseName,
 			totalDuration=totalDuration,
+			status=status,
 			assertionCount=assertionCount,
 			passedAssertionCount=passedAssertionCount,
 			warningCount=warningCount,
-			status=status,
 			errorCount=errorCount,
-			fatalCount=fatalCount,
+			fatalCount=failureCount,
+			disabledWarningCount=disabledWarningCount,
+			disabledErrorCount=disabledErrorCount,
+			disabledFatalCount=disabledFailureCount,
+			expectedWarningCount=expectedWarningCount,
+			expectedErrorCount=expectedErrorCount,
+			expectedFatalCount=expectedFailureCount,
 			parent=parentTestsuite
 		)
 

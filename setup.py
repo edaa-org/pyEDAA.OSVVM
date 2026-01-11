@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -45,17 +45,19 @@ setup(
 		description="Parser and converters for OSVVM-specific data models and report formats.",
 		gitHubNamespace=gitHubNamespace,
 		sourceFileWithVersion=packageInformationFile,
-		developmentStatus="beta",
-		pythonVersions=("3.12", "3.13"),
 		classifiers=list(DEFAULT_CLASSIFIERS) + [
 			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 		],
-		dataFiles={
-			packageName: ["py.typed"]
-		},
+		developmentStatus="beta",
+		pythonVersions=("3.12", "3.13", "3.14"),
 		consoleScripts={
 			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
 		},
-		debug=True
+		dataFiles={
+			packageName: [
+				"py.typed",
+				"static/*.css"
+			]
+		}
 	)
 )

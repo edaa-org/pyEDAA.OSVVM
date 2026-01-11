@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -31,9 +31,9 @@
 """Parser and converters for OSVVM-specific data models and report formats."""
 __author__ =    "Patrick Lehmann"
 __email__ =     "Paebbels@gmail.com"
-__copyright__ = "2025-2025, Patrick Lehmann"
+__copyright__ = "2025-2026, Patrick Lehmann"
 __license__ =   "Apache License, Version 2.0"
-__version__ =   "0.5.0"
+__version__ =   "0.6.0"
 __keywords__ =  ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
 
 from pyTooling.Decorators import export

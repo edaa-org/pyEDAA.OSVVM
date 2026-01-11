@@ -6,41 +6,80 @@
 	background-color: unset;
 }
 
-table.osvvm-unittest-table > thead > tr {
+table.osvvm-buildsummary-table > thead > tr {
 	background: #ebebeb;
-}
-table.osvvm-unittest-table > tbody > tr:hover {
-	background-color: rgba(0,187, 255, 0.5); /* #88d0ff; */
 }
 
-table.osvvm-unittest-table > tbody > tr.osvvm-summary {
+table.osvvm-buildsummary-table > thead > tr > th.rotated {
+	height: 80px;
+	white-space: nowrap;
+}
+table.osvvm-buildsummary-table > thead > tr > th.rotated > div {
+	transform: translate(-20px, 5px) rotate(340deg);
+	width: 30px;
+}
+table.osvvm-buildsummary-table > thead > tr > th.rotated > div > span {
+	/*border-bottom: 1px solid #cccccc;*/
+	padding: 5px 10px;
+}
+
+table.osvvm-buildsummary-table > tbody > tr.osvvm-warning-mismatch {
+	background: hsl(45 85% 80% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-warning-mismatch {
+	background: hsl(45 75% 80%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-error-mismatch {
+	background: hsl(0 75% 85% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-error-mismatch {
+	background: hsl(0 75% 85%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-failure-mismatch {
+	background: hsl(240 75% 85% / 65%);
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase > td.osvvm-failure-mismatch {
+	background: hsl(240 75% 85%);
+}
+
+table.osvvm-buildsummary-table > tbody > tr.osvvm-buildsummary:hover,
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testsuite:hover,
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcase:hover {
+	background-color: rgba(0,187, 255, 0.5); /* #88d0ff; */
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcases > td,
+table.osvvm-buildsummary-table > tbody > tr.osvvm-testcases > td > div {
+	padding: 0;
+	margin: 0;
+}
+table.osvvm-buildsummary-table > tbody > tr.osvvm-summary {
 	font-weight: bold;
 }
-table.osvvm-unittest-table > tbody > tr.osvvm-summary {
+table.osvvm-buildsummary-table > tbody > tr.osvvm-summary {
 	background: #ebebeb;
 }
-table.osvvm-unittest-table > tbody > tr.testsuitesummary-unknown,
-table.osvvm-unittest-table > tbody > tr.testsuite-unknown,
-table.osvvm-unittest-table > tbody > tr.testcase-unknown {
+table.osvvm-buildsummary-table > tbody > tr.testsuitesummary-unknown,
+table.osvvm-buildsummary-table > tbody > tr.testsuite-unknown,
+table.osvvm-buildsummary-table > tbody > tr.testcase-unknown {
 	background: hsl(0 75% 65%);
 }
-table.osvvm-unittest-table > tbody > tr.testsuitesummary-failed,
-table.osvvm-unittest-table > tbody > tr.testsuitesummary-skipped,
-table.osvvm-unittest-table > tbody > tr.testsuitesummary-excluded,
-table.osvvm-unittest-table > tbody > tr.testsuite-failed,
-table.osvvm-unittest-table > tbody > tr.testcase-failed {
+table.osvvm-buildsummary-table > tbody > tr.testsuitesummary-failed,
+table.osvvm-buildsummary-table > tbody > tr.testsuitesummary-skipped,
+table.osvvm-buildsummary-table > tbody > tr.testsuitesummary-excluded,
+table.osvvm-buildsummary-table > tbody > tr.testsuite-failed,
+table.osvvm-buildsummary-table > tbody > tr.testcase-failed {
 	background: hsl(0 75% 90%);
 }
-table.osvvm-unittest-table > tbody > tr.testsuite-excluded,
-table.osvvm-unittest-table > tbody > tr.testcase-excluded {
+table.osvvm-buildsummary-table > tbody > tr.testsuite-excluded,
+table.osvvm-buildsummary-table > tbody > tr.testcase-excluded {
 	background: #ebebeb;
 }
-table.osvvm-unittest-table > tbody > tr.testsuite-skipped,
-table.osvvm-unittest-table > tbody > tr.testcase-skipped {
+table.osvvm-buildsummary-table > tbody > tr.testsuite-skipped,
+table.osvvm-buildsummary-table > tbody > tr.testcase-skipped {
 	background: hsl(60 75% 77%);
 }
-table.osvvm-unittest-table > tbody > tr.osvvm-summary.testsuitesummary-passed /*,
-table.osvvm-unittest-table > tbody > tr.testsuite-passed,
-table.osvvm-unittest-table > tbody > tr.testcase-passed */ {
+table.osvvm-buildsummary-table > tbody > tr.osvvm-summary.testsuitesummary-passed /*,
+table.osvvm-buildsummary-table > tbody > tr.testsuite-passed,
+table.osvvm-buildsummary-table > tbody > tr.testcase-passed */ {
 	background: hsl(120 75% 90%);
 }

@@ -193,6 +193,8 @@ intersphinx_mapping = {
 	"pyTool": ("https://pyTooling.github.io/pyTooling/", None),
 	# "osvvm":  ("https://OSVVM.github.io/OSVVM/", None),
 	# OSVVM-Scripts?
+	"vhdl":   ("https://vhdl.github.io/pyVHDLModel/", None),
+	"prj":    ("https://edaa-org.github.io/pyEDAA.ProjectModel/", None),
 }
 
 
@@ -294,6 +296,11 @@ report_doccov_packages = {
 	}
 }
 
+
+
+# ==============================================================================
+# pyEDAA.OSVVM
+# ==============================================================================
 osvvm_build_summaries = {
 	"osvvmlibraries": {
 		"name":        "OsvvmLibraries",

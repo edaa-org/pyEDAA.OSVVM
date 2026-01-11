@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -169,8 +169,10 @@ def main() -> NoReturn:
 		program.Run()
 	except OSVVMException as ex:
 		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.Foreground))
-		if ex.__cause__ is not None:
-			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex.__cause__}{{NOCOLOR}}".format(**Application.Foreground))
+		if (ex := ex.__cause__) is not None:
+			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
+		if (ex := ex.__cause__) is not None:
+			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
 
 	except NotImplementedError as ex:
 		program.PrintNotImplementedError(ex)

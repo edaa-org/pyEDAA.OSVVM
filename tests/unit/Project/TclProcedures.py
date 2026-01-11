@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -69,7 +69,7 @@ def throw():
 
 
 class BasicProcedures(TestCase):
-	def setUp(self):
+	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
@@ -567,7 +567,7 @@ class BasicProcedures(TestCase):
 
 
 class SetterGatter(TestCase):
-	def setUp(self):
+	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
@@ -638,7 +638,7 @@ class SetterGatter(TestCase):
 
 
 class Helper(TestCase):
-	def setUp(self):
+	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()
@@ -688,7 +688,7 @@ class Helper(TestCase):
 
 
 class NoOperation(TestCase):
-	def setUp(self):
+	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
 		osvvmContext.Clear()

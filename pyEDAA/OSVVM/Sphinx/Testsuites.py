@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2025 Patrick Lehmann - Bötzingen, Germany                                                             #
+# Copyright 2025-2026 Patrick Lehmann - Bötzingen, Germany                                                             #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -29,7 +29,7 @@
 # ==================================================================================================================== #
 #
 """
-**Report unit test results as Sphinx documentation page(s).**
+**Report build results as Sphinx documentation page(s).**
 """
 from datetime import timedelta
 from enum     import Flag
@@ -38,14 +38,14 @@ from typing   import Dict, Tuple, Any, List, Mapping, Generator, TypedDict, Clas
 
 from docutils                          import nodes
 from docutils.parsers.rst.directives   import flag
+from sphinx.config                     import Config
+from sphinx.application                import Sphinx
 from pyTooling.Decorators              import export
 from pyEDAA.Reports.Unittesting        import TestcaseStatus, TestsuiteStatus
-from pyEDAA.Reports.Unittesting.JUnit  import Testsuite, TestsuiteSummary, Testcase
-from sphinx.application                import Sphinx
-from sphinx.config                     import Config
 from sphinx_reports.Common             import ReportExtensionError
 from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
-from pyEDAA.OSVVM.TestsuiteSummary     import BuildSummaryDocument
+
+from pyEDAA.OSVVM.Build                import BuildSummaryDocument, TestsuiteSummary, Testsuite, Testcase
 
 
 class report_DictType(TypedDict):
@@ -147,11 +147,11 @@ class BuildSummary(BaseDirective):
 	@classmethod
 	def ReadReports(cls, sphinxApplication: Sphinx) -> None:
 		"""
-		Read unittest report files.
+		Read build report files.
 
 		:param sphinxApplication:   Sphinx application instance.
 		"""
-		print(f"[REPORT] Reading unittest reports ...")
+		print(f"[REPORT] Reading build reports ...")
 
 	@classmethod
 	def _CheckConfiguration(cls, sphinxConfiguration: Config) -> None:
@@ -240,33 +240,58 @@ class BuildSummary(BaseDirective):
 		hours = minutes // 60
 		return f"{hours:02}:{minutes % 60:02}:{seconds % 60:02}.{milliseconds % 1000:03}"
 
-	def _GenerateBuildSummaryTable(self) -> nodes.table:
-		# Create a table and table header with 8 columns
+	def _GenerateBuildSummaryTable(self) -> nodes.Element:
 		columns = [
-			("Testsuite / Testcase", None, 500),
-			("Testcases", None, 100),
-			("Skipped", None, 100),
-			("Errored", None, 100),
-			("Failed", None, 100),
-			("Passed", None, 100),
-			("Assertions", None, 100),
+			("Testsuite", (
+				("  Testcase", 50),
+			), None),
+			("Testsuite Status", (
+				("Skipped", 50),
+				("Errored", 50),
+				("Failed", 50),
+				("Passed", 50),
+				("Testcases", 50),
+			), None),
+			("Warnings", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Errors", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Failures", (
+				("Counted", 50),
+				("Expected", 50),
+			), None),
+			("Assertions", (
+				("passed", 50),
+				("Total", 50),
+			), None),
+			("Requirements", (
+				("Passed", 50),
+				("Total", 50),
+			), None),
+			("Coverage", (
+				("Code", 50),
+				("Functional", 50),
+			), None),
 			("Runtime (HH:MM:SS.sss)", None, 100),
 		]
 
-		cssClasses = ["osvvm-unittest-table", f"osvvm-unittest-{self._reportID}"]
+		cssClasses = ["osvvm-buildsummary-table", f"osvvm-buildsummary-{self._reportID}"]
 		cssClasses.extend(self._cssClasses)
 
-		table, tableGroup = self._CreateTableHeader(
+		tableGroup = self._CreateDoubleRowTableHeader(
 			identifier=self._reportID,
 			columns=columns,
 			classes=cssClasses
 		)
-		tableBody = nodes.tbody()
-		tableGroup += tableBody
+		tableGroup += (tableBody := nodes.tbody())
 
 		self.renderRoot(tableBody, self._build, not self._hideTestsuiteSummary, self._buildName)
 
-		return table
+		return tableGroup.parent
 
 	def renderRoot(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary, includeRoot: bool = True, testsuiteSummaryName: Nullable[str] = None) -> None:
 		level = 0
@@ -275,17 +300,18 @@ class BuildSummary(BaseDirective):
 			level += 1
 			state = self._convertTestsuiteStatusToSymbol(testsuiteSummary._status)
 
-			tableRow = nodes.row("", classes=["osvvm-testsuitesummary", f"testsuitesummary-{testsuiteSummary._status.name.lower()}"])
+			tableRow = nodes.row("", classes=["osvvm-buildsummary", f"buildsummary-{testsuiteSummary._status.name.lower()}"])
 			tableBody += tableRow
 
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{state}{testsuiteSummary.Name if testsuiteSummaryName == '' else testsuiteSummaryName}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.TestcaseCount}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Skipped}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-			tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-			tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
+			tableRow += nodes.entry("", nodes.Text(f"{state}{testsuiteSummary.Name if testsuiteSummaryName == '' else testsuiteSummaryName}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
+			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
+			for _ in range(12):
+				tableRow += nodes.entry()
+			tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuiteSummary._testsuites):
 			self.renderTestsuite(tableBody, ts, level)
@@ -295,39 +321,85 @@ class BuildSummary(BaseDirective):
 	def renderTestsuite(self, tableBody: nodes.tbody, testsuite: Testsuite, level: int) -> None:
 		state = self._convertTestsuiteStatusToSymbol(testsuite._status)
 
-		tableRow = nodes.row("", classes=["osvvm-testsuite", f"testsuite-{testsuite._status.name.lower()}"])
-		tableBody += tableRow
-
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{'  ' * level}{state}{testsuite.Name}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Skipped}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Errored}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Failed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuite.Passed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuite.TotalDuration)}"))
+		tableBody += (tableRow := nodes.row("", classes=["osvvm-testsuite", f"testsuite-{testsuite._status.name.lower()}"]))
+		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testsuite.Name}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.TestcaseCount}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Skipped}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Errored}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Failed}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Passed}"))
+		for _ in range(12):
+			tableRow += nodes.entry()
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuite.TotalDuration)}"))
 
 		for ts in self._sortedValues(testsuite._testsuites):
 			self.renderTestsuite(tableBody, ts, level + 1)
 
 		for testcase in self._sortedValues(testsuite._testcases):
-			if testcase._status == self._showTestcases:
-				self.renderTestcase(tableBody, testcase, level + 1)
+			# if testcase._status == self._showTestcases:
+				self.renderTestcase(tableBody, testcase, level)
 
 	def renderTestcase(self, tableBody: nodes.tbody, testcase: Testcase, level: int) -> None:
 		state = self._convertTestcaseStatusToSymbol(testcase._status)
 
-		tableRow =	nodes.row("", classes=["osvvm-testcase", f"testcase-{testcase._status.name.lower()}"])
+		def countVsExpected(count: int, expectedCount: int, kind: str) -> Tuple[nodes.entry, nodes.entry]:
+			classes = []
+			if count == expectedCount == 0:
+				text = f"⸻"
+			else:
+				if count != expectedCount:
+					classes = [f"osvvm-{kind}-mismatch"]
+
+			return (
+				nodes.entry("", nodes.paragraph(text=f"{count}"),         classes=classes),
+				nodes.entry("", nodes.paragraph(text=f"{expectedCount}"), classes=classes)
+			)
+
+		def functionalCoverage(percent: float, kind: str) -> nodes.entry:
+			classes = []
+			if percent is None:
+				text = f"⸻"
+			else:
+				text = f"{percent * 100:.1f}"
+
+			return nodes.entry("", nodes.paragraph(text=text), classes=classes)
+
+		warningCell,     expectedWarningCell =     countVsExpected(testcase.WarningCount, testcase.ExpectedWarningCount, "warning")
+		errorCell,       expectedErrorCell =       countVsExpected(testcase.ErrorCount, testcase.ExpectedErrorCount, "error")
+		failureCell,     expectedFailureCell =     countVsExpected(testcase.FatalCount, testcase.ExpectedFatalCount, "failure")
+		assertionCell,   expectedAssertionCell =   countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
+		requirementCell, expectedRequirementCell = countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "requirement")
+		coverageCell, _ =    countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
+		# tableRow += countVsExpected(testcase.PassedRequirementsCount, testcase.RequirementsCount, "requirement")
+		# tableRow += functionalCoverage(testcase.FunctionalCoverage)
+
+		classes = ["osvvm-testcase", f"testcase-{testcase._status.name.lower()}"]
+		classes.extend(warningCell["classes"])
+		classes.extend(errorCell["classes"])
+		classes.extend(failureCell["classes"])
+		classes.extend(assertionCell["classes"])
+		classes.extend(requirementCell["classes"])
+		classes.extend(coverageCell["classes"])
+
+		tableRow =	nodes.row("", classes=classes)
 		tableBody += tableRow
 
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{'  ' * level}{state}{testcase.Name}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Expected}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Covered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testcase.AssertionCount}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testcase.TotalDuration)}"))
+		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testcase.Name}"))
+		for _ in range(5):
+			tableRow += nodes.entry()
+		tableRow += warningCell
+		tableRow += expectedWarningCell
+		tableRow += errorCell
+		tableRow += expectedErrorCell
+		tableRow += failureCell
+		tableRow += expectedFailureCell
+		tableRow += assertionCell
+		tableRow += expectedAssertionCell
+		tableRow += requirementCell
+		tableRow += expectedRequirementCell
+		tableRow += coverageCell
+		tableRow += coverageCell
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testcase.TotalDuration)}"))
 
 	def renderSummary(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary) -> None:
 		state = self._convertTestsuiteStatusToSymbol(testsuiteSummary._status)
@@ -335,14 +407,15 @@ class BuildSummary(BaseDirective):
 		tableRow = nodes.row("", classes=["osvvm-summary", f"testsuitesummary-{testsuiteSummary._status.name.lower()}"])
 		tableBody += tableRow
 
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{state} {testsuiteSummary.Status.name.upper()}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Skipped}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Errored}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Failed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{testsuiteSummary.Passed}"))
-		tableRow += nodes.entry("", nodes.paragraph(text=f""))  # {testsuite.Uncovered}")),
-		tableRow += nodes.entry("", nodes.paragraph(text=f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
+		tableRow += nodes.entry("", nodes.Text(f"{state} {testsuiteSummary.Status.name.upper()}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
+		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
+		for _ in range(12):
+			tableRow += nodes.entry()
+		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 	def run(self) -> List[nodes.Node]:
 		container = nodes.container()

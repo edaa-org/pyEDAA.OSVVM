@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2021-2025 Electronic Design Automation Abstraction (EDA²)                                                  #
+# Copyright 2021-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -35,8 +35,8 @@ from unittest     import TestCase
 
 from pyEDAA.Reports.Unittesting.JUnit import Document as JUnitDocument
 
-from pyEDAA.OSVVM.TestsuiteSummary import BuildSummaryDocument
-from pyEDAA.OSVVM.AlertLog         import Document as AlertLogDocument, AlertLogException
+from pyEDAA.OSVVM.Build               import BuildSummaryDocument
+from pyEDAA.OSVVM.AlertLog            import Document as AlertLogDocument, AlertLogException
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -45,7 +45,7 @@ if __name__ == "__main__": # pragma: no cover
 
 
 class JUnitGeneratedByOSVVM(TestCase):
-	def test_OsvvmLibraries(self):
+	def test_OsvvmLibraries(self) -> None:
 		print()
 
 		junitExampleFile = Path("tests/data/JUnit/OSVVMLibraries_OsvvmLibraries.xml")
@@ -62,7 +62,7 @@ class JUnitGeneratedByOSVVM(TestCase):
 		print(f"Statistics:")
 		print(f"  Times: parsing by lxml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
-	def test_RunAllTests(self):
+	def test_RunAllTests(self) -> None:
 		print()
 
 		junitExampleFile = Path("tests/data/JUnit/OSVVMLibraries_RunAllTests.xml")
