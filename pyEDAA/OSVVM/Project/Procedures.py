@@ -681,11 +681,13 @@ def ChangeWorkingDirectory(directory: str) -> None:
 
 
 @export
-def FindOsvvmSettingsDirectory(*args) -> None:
+def FindOsvvmSettingsDirectory(*args) -> str:
 	"""
-	Not implemented by pyEDAA.OSVVM.
+	.. todo::
+
+	   Needs documentation.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'FindOsvvmSettingsDirectory' is not implemented."))
+	return osvvmContext.CurrentDirectory.as_posix()
 
 
 @export

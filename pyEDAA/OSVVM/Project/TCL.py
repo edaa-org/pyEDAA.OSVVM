@@ -38,6 +38,7 @@ from typing                          import Any, Dict, Callable, Optional as Nul
 
 from pyTooling.Decorators            import export, readonly
 from pyTooling.MetaClasses           import ExtendedType
+from pyTooling.Versioning            import YearMonthVersion
 from pyVHDLModel                     import VHDLVersion
 
 from pyEDAA.OSVVM                    import OSVVMException
@@ -180,39 +181,97 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 	"""
 	A class representing OSVVM's setting variables.
 	"""
-	_vhdlVersion: VHDLVersion  #: Default VHDL language revision.
-	_toolVendor:  str          #: Name of the tool vendor.
-	_toolName:    str          #: Name of the tool.
-	_toolVersion: str          #: Version of the tool.
+	_osvvmVersion:                YearMonthVersion  #: Latest supported OSVVM version.
+	_osvvmCreateVTI:                   str               #: Create derived VTI components. Not supported.
+
+	_vhdlVersion:                 VHDLVersion       #: Default VHDL language revision.
+	_toolVendor:                  str               #: Name of the tool vendor.
+	_toolName:                    str               #: Name of the tool.
+	_toolVersion:                 str               #: Version of the tool.
+
+	_supportsDeferredConstants:   str               #: True, if deferred constants are supported.
+	_supports2008GenericPackages: str               #: True, if VHDL-2008 generic packages are supported.
+	_supports2019Interface:       str               #: True, if VHDL-2019 mode views are supported.
+	_supports2019ImpureFunctions: str               #: True, if VHDL-2019 impure functions are supported.
+	_supports2019FilePath:        str               #: True, if VHDL-2019 file path is supported.
+	_supports2019AssertAPI:       str               #: True, if VHDL-2019 assert API is support
+	_supports2019Integer64Bits:   str               #: True, if VHDL-2019 64-bit integers are supported.
 
 	def __init__(
 		self,
-		vhdlVersion: Nullable[VHDLVersion] = None,
-		toolVendor:  Nullable[str] = None,
-		toolName:    Nullable[str] = None,
-		toolVersion: Nullable[str] = None
+		osvvmVersion:                Nullable[YearMonthVersion] = None,
+		vhdlVersion:                 Nullable[VHDLVersion] = None,
+		toolVendor:                  Nullable[str] = None,
+		toolName:                    Nullable[str] = None,
+		toolVersion:                 Nullable[str] = None,
+		supports2019Interface:       Nullable[str] = None,
+		supports2019ImpureFunctions: Nullable[str] = None,
+		supports2019FilePath:        Nullable[str] = None,
+		supports2019AssertAPI:       Nullable[str] = None,
+		supports2019Integer64Bits:   Nullable[str] = None
 	) -> None:
 		"""
 		Initialize OSVVM's setting variables.
 
-		:param vhdlVersion: Optional, default VHDL language revision.
-		:param toolVendor:  Optional, name of the tool vendor.
-		:param toolName:    Optional, name of the tool.
-		:param toolVersion: Optional, version of the tool.
+		:param osvvmVersion:                Optional, latest supported OSVVM version.
+		:param vhdlVersion:                 Optional, default VHDL language revision.
+		:param toolVendor:                  Optional, name of the tool vendor.
+		:param toolName:                    Optional, name of the tool.
+		:param toolVersion:                 Optional, version of the tool.
+		:param supports2019Interface:       Optional, VHDL-2019 mode views are supported.
+		:param supports2019ImpureFunctions: Optional, VHDL-2019 impure functions are supported.
+		:param supports2019FilePath:        Optional, VHDL-2019 file path is supported.
+		:param supports2019AssertAPI:       Optional, VHDL-2019 assert API is support
+		:param supports2019Integer64Bits:   Optional, VHDL-2019 64-bit integers are supported.
 
 		.. note::
 
 		   If not specified, the following values are used:
 
+		   * OSVVM version = :pycode:`YearMonthVersion.Parse("2026.01")`
 		   * VHDL version = :pycode:`VHDLVersion.VHDL2008`
 		   * Tool vendor = :pycode:`"EDA²"`
 		   * Tool name = :pycode:`"pyEDAA.ProjectModel"`
 		   * Tool version = :pycode:`"0.1"`
+		   * Supports VHDL-2019 interface = :pycode:`"false"`
+		   * Supports VHDL-2019 impure functions = :pycode:`"false"`
+		   * Supports VHDL-2019 file path = :pycode:`"false"`
+		   * Supports VHDL-2019 assert API = :pycode:`"false"`
+		   * Supports VHDL-2019 64-bit integers = :pycode:`"false"`
 		"""
-		self._vhdlVersion = vhdlVersion if vhdlVersion is not None else VHDLVersion.VHDL2008
-		self._toolVendor =  toolVendor  if toolVendor  is not None else "EDA²"
-		self._toolName =    toolName    if toolName    is not None else "pyEDAA.ProjectModel"
-		self._toolVersion = toolVersion if toolVersion is not None else "0.1"
+		self._osvvmVersion =                osvvmVersion                if osvvmVersion                is not None else YearMonthVersion.Parse("2026.01")
+		self._osvvmCreateVTI =              "false"
+
+		self._vhdlVersion =                 vhdlVersion                 if vhdlVersion                 is not None else VHDLVersion.VHDL2008
+		self._toolVendor =                  toolVendor                  if toolVendor                  is not None else "EDA²"
+		self._toolName =                    toolName                    if toolName                    is not None else "pyEDAA.ProjectModel"
+		self._toolVersion =                 toolVersion                 if toolVersion                 is not None else "0.1"
+
+		self._supportsDeferredConstants =   "true"
+		self._supports2008GenericPackages = "true"
+		self._supports2019Interface =       supports2019Interface       if supports2019Interface       is not None else "false"
+		self._supports2019ImpureFunctions = supports2019ImpureFunctions if supports2019ImpureFunctions is not None else "false"
+		self._supports2019FilePath =        supports2019FilePath        if supports2019FilePath        is not None else "false"
+		self._supports2019AssertAPI =       supports2019AssertAPI       if supports2019AssertAPI       is not None else "false"
+		self._supports2019Integer64Bits =   supports2019Integer64Bits   if supports2019Integer64Bits   is not None else "false"
+
+	@readonly
+	def OSVVMVersion(self) -> YearMonthVersion:
+		"""
+		Read-only property to access the latest support OSVVM version (:attr:`_osvvmVersion`).
+
+		:returns: The latest supported OSVVM version.
+		"""
+		return self._osvvmVersion
+
+	@readonly
+	def OSVVMCreateVTI(self) -> str:
+		"""
+		Read-only property to access the task deriving VTI components (:attr:`_osvvmCreateVTI`).
+
+		:returns: The task if VTI components should be derived..
+		"""
+		return self._osvvmCreateVTI
 
 	@readonly
 	def VHDLVersion(self) -> VHDLVersion:
@@ -250,6 +309,78 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		"""
 		return self._toolVersion
 
+	@readonly
+	def SupportsDeferredConstants(self) -> str:
+		"""
+		Read-only property to access the VHDL feature flag if deferred constants are supported (:attr:`_supportsDeferredConstants`).
+
+		:returns: The VHDL feature flag if deferred constants is supported.
+		"""
+		return self._supportsDeferredConstants
+
+	@readonly
+	def Supports2008GenericPackages(self) -> str:
+		"""
+		Read-only property to access the VHDL-2008 feature flag if generic packages are supported (:attr:`_supports2008GenericPackages`).
+
+		:returns: The VHDL-2008 feature flag if generic packages is supported.
+		"""
+		return self._supports2008GenericPackages
+
+	@readonly
+	def Supports2019ImpureFunctions(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if impure functions are supported (:attr:`_supports2019ImpureFunctions`).
+
+		:returns: The VHDL-2019 feature flag if impure functions are supported.
+		"""
+		return self._supports2019ImpureFunctions
+
+	@readonly
+	def Supports2019Interface(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if mode views (interfaces) are supported (:attr:`_supports2019Interface`).
+
+		:returns: The VHDL-2019 feature flag if mode views are supported.
+		"""
+		return self._supports2019Interface
+
+	@readonly
+	def Supports2019ImpureFunctions(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if impure functions are supported (:attr:`_supports2019ImpureFunctions`).
+
+		:returns: The VHDL-2019 feature flag if impure functions are supported.
+		"""
+		return self._supports2019ImpureFunctions
+
+	@readonly
+	def Supports2019FilePath(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if file path is supported (:attr:`_supports2019FilePath`).
+
+		:returns: The VHDL-2019 feature flag if file path is supported.
+		"""
+		return self._supports2019FilePath
+
+	@readonly
+	def Supports2019AssertAPI(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if assert API is supported (:attr:`_supports2019AssertAPI`).
+
+		:returns: The VHDL-2019 feature flag if assert API is supported.
+		"""
+		return self._supports2019AssertAPI
+
+	@readonly
+	def Supports2019Integer64Bits(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if 64-bit integers are supported (:attr:`_supports2019Integer64Bits`).
+
+		:returns: The VHDL-2019 feature flag if 64-bit integers are supported.
+		"""
+		return self._supports2019Integer64Bits
+
 
 @export
 class OsvvmProFileProcessor(TclEnvironment):
@@ -259,7 +390,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 	def __init__(
 		self,
-		context: Nullable[Context] = None,
+		context:        Nullable[Context] = None,
 		osvvmVariables: Nullable[OsvvmVariables] = None
 	) -> None:
 		"""
@@ -297,16 +428,22 @@ class OsvvmProFileProcessor(TclEnvironment):
 		.. code-block:: TCL
 
 		   namespace eval ::osvvm {
-		     variable VhdlVersion                             <Version>
+		     variable OsvvmVersion                            "<Version>"
+		     variable CreateVti                               "false"
+		     variable VhdlVersion                             "<Version>"
 		     variable ToolVendor                              "<ToolVendor>"
 		     variable ToolName                                "<ToolName>"
 		     variable ToolNameVersion                         "<ToolVersion>"
-		     variable ToolSupportsDeferredConstants           1
-		     variable ToolSupportsGenericPackages             1
+		     variable ToolSupportsDeferredConstants           "true"
+		     variable ToolSupportsGenericPackages             "true"
 		     variable FunctionalCoverageIntegratedInSimulator "default"
-		     variable Support2019FilePath                     1
+		     variable Supports2019Interface                   "false"
+		     variable Supports2019ImpureFunctions             "false"
+		     variable Supports2019FilePath                    "false"
+		     variable Supports2019AssertApi                   "false"
+		     variable Supports2019Integer64Bits               "false"
 
-		     variable ClockResetVersion                       0
+		     variable ClockResetVersion                       $OsvvmVersion
 		   }
 		"""
 		match osvvmVariables.VHDLVersion:
@@ -321,16 +458,22 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		code = dedent(f"""\
 			namespace eval ::osvvm {{
-			  variable VhdlVersion     {version}
-			  variable ToolVendor      "{osvvmVariables.ToolVendor}"
-			  variable ToolName        "{osvvmVariables.ToolName}"
-			  variable ToolNameVersion "{osvvmVariables.ToolVersion}"
-			  variable ToolSupportsDeferredConstants           1
-			  variable ToolSupportsGenericPackages             1
+			  variable OsvvmVersion                            "{osvvmVariables.OSVVMVersion}"
+			  variable CreateVti                               "{osvvmVariables.OSVVMCreateVTI}"
+			  variable VhdlVersion                             "{version}"
+			  variable ToolVendor                              "{osvvmVariables.ToolVendor}"
+			  variable ToolName                                "{osvvmVariables.ToolName}"
+			  variable ToolNameVersion                         "{osvvmVariables.ToolVersion}"
+			  variable ToolSupportsDeferredConstants           "{osvvmVariables.SupportsDeferredConstants}"
+			  variable ToolSupportsGenericPackages             "{osvvmVariables.Supports2008GenericPackages}"
 			  variable FunctionalCoverageIntegratedInSimulator "default"
-			  variable Support2019FilePath                     1
+		    variable Supports2019Interface                   "{osvvmVariables.Supports2019Interface}"
+		    variable Supports2019ImpureFunctions             "{osvvmVariables.Supports2019ImpureFunctions}"
+		    variable Supports2019FilePath                    "{osvvmVariables.Supports2019FilePath}"
+		    variable Supports2019AssertApi                   "{osvvmVariables.Supports2019AssertAPI}"
+		    variable Supports2019Integer64Bits               "{osvvmVariables.Supports2019Integer64Bits}"
 
-			  variable ClockResetVersion                       0
+			  variable ClockResetVersion                       $OsvvmVersion
 			}}
 			""")
 
