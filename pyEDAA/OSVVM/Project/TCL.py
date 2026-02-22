@@ -642,7 +642,7 @@ def getException(ex: Exception, context: Context) -> Exception:
 	   This helper function restores these preserved exception objects.
 	"""
 	if str(ex) == "":
-		if (lastException := context.LastException) is not None:
+		if (lastException := context.ClearLastException()) is not None:
 			return lastException
 
 	return ex

@@ -46,8 +46,6 @@ variable :data:`~pyEDAA.OSVVM.Project.osvvmContext` to preserve its state or mod
         try:
           # do something
 
-        except OSVVMException as ex:  # pragma: no cover
-          raise ex
         except Exception as ex:       # pragma: no cover
           osvvmContext.RaiseException(ex)
 """
@@ -77,8 +75,7 @@ def BuildName(name: str) -> int:
 	try:
 		buildName = OSVVM_BuildName(name)
 		return osvvmContext.AddOption(buildName)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -151,8 +148,6 @@ def build(file: str, *options: int) -> None:
 		# Restore current directory after recursively evaluating *.pro files.
 		osvvmContext._currentDirectory = currentDirectory
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -191,8 +186,6 @@ def include(file: str) -> None:
 		# Restore current directory after recursively evaluating *.pro files.
 		osvvmContext._currentDirectory = currentDirectory
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -228,8 +221,6 @@ def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 
 		osvvmContext.SetLibrary(libraryName)
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -246,8 +237,7 @@ def NoNullRangeWarning() -> int:
 	try:
 		option = OSVVM_NoNullRangeWarning()
 		return osvvmContext.AddOption(option)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -316,8 +306,6 @@ def analyze(file: str, *options: int) -> None:
 		else:  # pragma: no cover
 			osvvmContext.RaiseException(OSVVMException(f"Path '{fullPath}' is no VHDL file (*.vhd, *.vhdl)."))
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -362,8 +350,6 @@ def simulate(toplevelName: str, *options: int) -> None:
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
 				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a GenericValue object"), ex)
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -382,8 +368,7 @@ def generic(name: str, value: str) -> int:
 	try:
 		genericValue = GenericValue(name, value)
 		return osvvmContext.AddOption(genericValue)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -399,8 +384,7 @@ def TestSuite(name: str) -> None:
 	"""
 	try:
 		osvvmContext.SetTestsuite(name)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -416,8 +400,7 @@ def TestName(name: str) -> None:
 	"""
 	try:
 		osvvmContext.AddTestcase(name)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -477,8 +460,6 @@ def RunTest(file: str, *options: int) -> None:
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
 				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a GenericValue object"), ex)
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -540,8 +521,6 @@ def SetVHDLVersion(value: str) -> None:
 			case _:  # pragma: no cover
 				osvvmContext.RaiseException(OSVVMException(f"Unsupported VHDL version '{value}'."))
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -574,8 +553,6 @@ def GetVHDLVersion() -> int:
 		else:  # pragma: no cover
 			osvvmContext.RaiseException(OSVVMException(f"Unsupported VHDL version '{osvvmContext.VHDLVersion}'."))
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -617,8 +594,6 @@ def FileExists(file: str) -> bool:
 
 		return (osvvmContext._currentDirectory / file).is_file()
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -644,8 +619,6 @@ def DirectoryExists(directory: str) -> bool:
 
 		return (osvvmContext._currentDirectory / directory).is_dir()
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -674,8 +647,6 @@ def ChangeWorkingDirectory(directory: str) -> None:
 		if not newDirectory.is_dir():  # pragma: no cover
 			osvvmContext.RaiseException(OSVVMException(f"Directory '{newDirectory}' doesn't exist."), NotADirectoryError(newDirectory))
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -752,8 +723,6 @@ def ConstraintFile(file: str, *options: int) -> int:
 		constraint = OSVVM_ConstraintFile(Path(file), **properties)
 		return osvvmContext.AddOption(constraint)
 
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -775,8 +744,7 @@ def ScopeToRef(refName: str) -> int:
 
 		ref = OSVVM_ScopeToRef(refName)
 		return osvvmContext.AddOption(ref)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
 
@@ -798,7 +766,6 @@ def ScopeToCell(cellName: str) -> int:
 
 		ref = OSVVM_ScopeToCell(cellName)
 		return osvvmContext.AddOption(ref)
-	except OSVVMException as ex:  # pragma: no cover
-		raise ex
+
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)

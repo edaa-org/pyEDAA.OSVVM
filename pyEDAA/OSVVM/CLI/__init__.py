@@ -169,9 +169,7 @@ def main() -> NoReturn:
 		program.Run()
 	except OSVVMException as ex:
 		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.Foreground))
-		if (ex := ex.__cause__) is not None:
-			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
-		if (ex := ex.__cause__) is not None:
+		while (ex := ex.__cause__) is not None:
 			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
 
 	except NotImplementedError as ex:

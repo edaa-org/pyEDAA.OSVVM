@@ -1267,9 +1267,7 @@ class Context(Base):
 
 		:returns: The last seen Python exception. This might return ``None``.
 		"""
-		lastException = self._lastException
-		self._lastException = None
-		return lastException
+		return self._lastException
 
 	@LastException.setter
 	def LastException(self, value: Exception) -> None:
@@ -1379,6 +1377,16 @@ class Context(Base):
 		:returns: The dictionary of OSVVM builds.
 		"""
 		return self._builds
+
+	def ClearLastException(self) -> Nullable[Exception]:
+		# """
+		# Property to access the last seen Python exception (:attr:`_lastException`).
+		#
+		# :returns: The last seen Python exception. This might return ``None``.
+		# """
+		lastException = self._lastException
+		self._lastException = None
+		return lastException
 
 	def ToProject(self, projectName: str) -> Project:
 		"""
