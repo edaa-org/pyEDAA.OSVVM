@@ -147,7 +147,7 @@ class TclEnvironment(metaclass=ExtendedType, slots=True):
 			self._tcl.evalfile(str(path))
 		except TclError as e:
 			ex = getException(e, self._context)
-			raise OSVVMException(f"Caught TclError while processing '{path}'.") from ex
+			raise OSVVMException(f"Caught TclError while processing '{self._context.WorkingDirectory / path}'.") from ex
 
 	def __setitem__(self, tclVariableName: str, value: Any) -> None:
 		"""
