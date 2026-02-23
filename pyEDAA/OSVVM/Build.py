@@ -538,7 +538,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			self._name = self._yamlDocument["Name"]
 			buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
 			self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
-			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "Elapsed")
+			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "ElapsedTime")
 
 			if "TestSuites" in self._yamlDocument:
 				for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):
