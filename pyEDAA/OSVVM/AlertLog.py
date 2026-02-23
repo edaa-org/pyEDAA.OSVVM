@@ -40,6 +40,7 @@ from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
+from pyTooling.Versioning  import SemanticVersion
 
 from pyEDAA.OSVVM          import OSVVMException
 
@@ -382,6 +383,7 @@ class Settings(metaclass=ExtendedType, mixin=True):
 		self._failOnWarning =           False
 
 
+# TODO: Derive from common Document class?
 @export
 class Document(AlertLogItem, Settings):
 	"""
@@ -393,11 +395,12 @@ class Document(AlertLogItem, Settings):
 	captured.
 	"""
 
-	_path:             Path                 #: Path to the YAML file.
-	_yamlDocument:     Nullable[YAML]       #: Internal YAML document instance.
+	_path:                   Path                       #: Path to the YAML file.
+	_yamlDocument:           Nullable[YAML]             #: Internal YAML document instance.
+	_version:                Nullable[SemanticVersion]  #: YAML data structure version.
 
-	_analysisDuration: Nullable[timedelta]  #: YAML file analysis duration in seconds.
-	_modelConversionDuration:  Nullable[timedelta]  #: Data structure conversion duration in seconds.
+	_analysisDuration:        Nullable[timedelta]       #: YAML file analysis duration in seconds.
+	_modelConversionDuration: Nullable[timedelta]       #: Data structure conversion duration in seconds.
 
 	def __init__(self, filename: Path, analyzeAndConvert: bool = False) -> None:
 		"""
@@ -411,6 +414,7 @@ class Document(AlertLogItem, Settings):
 
 		self._path = filename
 		self._yamlDocument = None
+		self._version = None
 
 		self._analysisDuration = None
 		self._modelConversionDuration =  None
@@ -484,6 +488,12 @@ class Document(AlertLogItem, Settings):
 			raise ex
 
 		with Stopwatch() as sw:
+			self._version = SemanticVersion.Parse(self._yamlDocument["Version"])
+			if not (self._version >> "0.1"):
+				ex = AlertLogException(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
+				ex.add_note("Supported versions are: 1.0")
+				raise ex
+
 			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
 			self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
 			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):

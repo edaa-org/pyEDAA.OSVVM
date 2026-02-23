@@ -1,4 +1,4 @@
-Version: "1.0"
+Version: "0.1"
 Date: 2026-02-22T20:21:18+01:00
 TestSuites:
   - Name: StreamTransactionPkg
