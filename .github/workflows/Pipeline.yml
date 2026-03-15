@@ -15,17 +15,18 @@ permissions:
 
 jobs:
   Pipeline:
-    uses: pyTooling/Actions/.github/workflows/CompletePipeline.yml@r7
+    uses: pyTooling/Actions/.github/workflows/CompletePipeline.yml@dev
     with:
-      package_namespace: 'pyEDAA'
-      package_name:      'OSVVM'
+      package_namespace:   'pyEDAA'
+      package_name:        'OSVVM'
       unittest_python_version_list: '3.12 3.13 3.14'
       unittest_disable_list:        'windows-arm:*'
-      bandit:            'true'
-      pylint:            'false'
-      codecov:           'true'
-      codacy:            'true'
-      dorny:             'true'
+      bandit:              'true'
+      pylint:              'false'
+      codecov:             'true'
+      codacy:              'true'
+      dorny:               'true'
+      documentation_steps: 'html latex pages pdf'
     secrets:
       PYPI_TOKEN:    ${{ secrets.PYPI_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
