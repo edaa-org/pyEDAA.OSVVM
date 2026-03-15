@@ -1,9 +1,11 @@
 .. include:: shields.inc
 
-.. image:: _static/logo_on_light.svg
-   :height: 90 px
-   :align: center
-   :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM
+.. only:: html
+
+   .. image:: _static/logo_on_light.svg
+      :height: 90 px
+      :align: center
+      :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM
 
 .. raw:: html
 
