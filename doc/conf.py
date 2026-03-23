@@ -115,15 +115,6 @@ modindex_common_prefix = [
 # ==============================================================================
 # Options for LaTeX / PDF output
 # ==============================================================================
-preamblePath = Path("preamble.tex")
-try:
-	with preamblePath.open("r", encoding="utf-8") as fileHandle:
-		latexPreamble = fileHandle.read()
-except Exception as ex:
-	print(f"[ERROR:] While reading '{preamblePath}'.")
-	print(ex)
-	latexPreamble = ""
-
 latex_engine = "lualatex"
 latex_use_xindy = False
 latex_elements = {
@@ -149,7 +140,6 @@ latex_elements = {
 	"passoptionstopackages": dedent("""\
 		\\PassOptionsToPackage{verbatimvisiblespace=\\ }{sphinx}
 	"""),
-# "preamble":  latexPreamble,  # Additional stuff for the LaTeX preamble.
 # "sphinxsetup": "verbatimvisiblespace=\\textvisiblespace"
 # "figure_align": "htbp",     # Latex figure (float) alignment
 	"makeindex":  r"\usepackage[columns=1]{idxlayout}\makeindex",
