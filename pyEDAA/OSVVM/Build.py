@@ -365,14 +365,25 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 
 @export
 class BuildSummaryDocument(TestsuiteSummary, Document):
-	_yamlDocument: Nullable[YAML]
+	_yamlDocument: Nullable[YAML]             #: Internal YAML document instance.
+	_version:      Nullable[SemanticVersion]  #: YAML data structure version.
 
 	def __init__(self, yamlReportFile: Path, analyzeAndConvert: bool = False) -> None:
 		super().__init__("Unprocessed OSVVM YAML file")
 
 		self._yamlDocument = None
+		self._version =      None
 
 		Document.__init__(self, yamlReportFile, analyzeAndConvert)
+
+	@readonly
+	def Version(self) -> Nullable[SemanticVersion]:
+		"""
+		Read-only property to access the YAML file's data structure version (:attr:`_version`).
+
+		:returns: The YAML data structures version.
+		"""
+		return self._version
 
 	def Analyze(self) -> None:
 		"""
@@ -535,10 +546,16 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			raise ex
 
 		with Stopwatch() as sw:
+			self._version = SemanticVersion.Parse(self._yamlDocument["Version"])
+			if not (self._version >> "0.1"):
+				ex = UnittestException(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
+				ex.add_note("Supported versions are: 1.0")
+				raise ex
+
 			self._name = self._yamlDocument["Name"]
 			buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
 			self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
-			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "Elapsed")
+			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "ElapsedTime")
 
 			if "TestSuites" in self._yamlDocument:
 				for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):

@@ -1,21 +1,20 @@
-Version: "2025.02"
-Date: 2025-06-05T18:49:00+02:00
-Name:     "OSVVMLibraries_OsvvmLibraries"
+Version: "0.1"
+Date: 2026-02-22T20:21:10+01:00
+Name:     "OsvvmLibraries"
 BuildInfo:
-  StartTime:            2025-06-05T18:49:00+02:00
-  FinishTime:           2025-06-05T18:49:32+02:00
-  Elapsed:              31.701
-  Simulator:            "GHDL"
-  SimulatorVersion:     "5.0.1"
-  OsvvmVersion:         "2025.04"
+  StartTime:            2026-02-22T20:21:10+01:00
+  FinishTime:           2026-02-22T20:21:17+01:00
+  ElapsedTime:              6.723
+  Simulator:            "NVC"
+  SimulatorVersion:     "1.19.2"
+  OsvvmVersion:         "2026.01"
   BuildErrorCode:       0
   AnalyzeErrorCount:    0
   SimulateErrorCount:   0
 OsvvmSettingsInfo:
-  BaseDirectory:        ""
   ReportsSubdirectory:  "reports"
-  SimulationLogFile: "logs/GHDL-5.0.1/OSVVMLibraries_OsvvmLibraries.log"
-  SimulationHtmlLogFile: "logs/GHDL-5.0.1/OSVVMLibraries_OsvvmLibraries_log.html"
+  SimulationLogFile: "logs/OsvvmLibraries.log"
+  SimulationHtmlLogFile: "logs/OsvvmLibraries_log.html"
   RequirementsSubdirectory: ""
   CoverageSubdirectory: ""
   Report2CssFiles:

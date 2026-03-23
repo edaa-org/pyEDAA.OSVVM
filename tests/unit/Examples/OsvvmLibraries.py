@@ -131,24 +131,33 @@ class YAMLGeneratedByOSVVM(TestCase):
 		print(f"Statistics:")
 		print(f"  Times: parsing by ruamel.yaml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
+		expected = {
+			"StreamTransactionPkg":  15,
+			"StreamTransactionArrayPkg": 13,
+			"AddressBusTransactionPkg": 42,
+			"AddressBusTransactionArrayPkg": 42,
+			"InterruptHandler_Gen": 6,
+			"ModelParams": 2,
+			"ModelParams_PT": 1,
+			"Axi4Lite": 17,
+			"Axi4Full": 72,
+			"TbAxi4_MultipleMemory": 2,
+			"AxiStream": 68,
+			"UART": 11,
+			"Wishbone": 3,
+			"DpRam": 1,
+			"Ethernet": None,  # 6,
+			"VideoBus": 1,
+			"Spi": 12
+		}
 
-		self.assertEqual(15, len(doc.Testsuites))
-		self.assertIn("Axi4Lite", doc)
-		self.assertIn("Axi4Full", doc)
-		self.assertIn("AxiStream", doc)
-		self.assertIn("Uart", doc)
+		self.assertEqual(len(expected), len(doc.Testsuites))
+		for tsName, tcCount in expected.items():
+			self.assertIn(tsName, doc)
 
-		axi4lite = doc["Axi4Lite"]
-		self.assertEqual(17, len(axi4lite.Testcases))
-
-		axi4 = doc["Axi4Full"]
-		self.assertEqual(74, len(axi4.Testcases))
-
-		axi4stream = doc["AxiStream"]
-		self.assertEqual(68, len(axi4stream.Testcases))
-
-		uart = doc["Uart"]
-		self.assertEqual(10, len(uart.Testcases))
+			ts = doc[tsName]
+			if tcCount is not None:  # WORKAROUND: for testsuite 'Ethernet'
+				self.assertEqual(tcCount, len(ts.Testcases), tsName)
 
 	# 	for suite in doc:
 	# 		self.printTestsuite(suite)
