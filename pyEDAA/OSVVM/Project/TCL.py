@@ -429,7 +429,6 @@ class OsvvmProFileProcessor(TclEnvironment):
 
 		   namespace eval ::osvvm {
 		     variable OsvvmVersion                            "<Version>"
-		     variable CreateVti                               "false"
 		     variable VhdlVersion                             "<Version>"
 		     variable ToolVendor                              "<ToolVendor>"
 		     variable ToolName                                "<ToolName>"
@@ -444,6 +443,9 @@ class OsvvmProFileProcessor(TclEnvironment):
 		     variable Supports2019Integer64Bits               "false"
 
 		     variable ClockResetVersion                       $OsvvmVersion
+
+		     variable CreateVti                               "false"
+		     variable OsvvmDevDeriveArchitectures             "false"
 		   }
 		"""
 		match osvvmVariables.VHDLVersion:
@@ -459,7 +461,6 @@ class OsvvmProFileProcessor(TclEnvironment):
 		code = dedent(f"""\
 			namespace eval ::osvvm {{
 			  variable OsvvmVersion                            "{osvvmVariables.OSVVMVersion}"
-			  variable CreateVti                               "{osvvmVariables.OSVVMCreateVTI}"
 			  variable VhdlVersion                             "{version}"
 			  variable ToolVendor                              "{osvvmVariables.ToolVendor}"
 			  variable ToolName                                "{osvvmVariables.ToolName}"
@@ -474,6 +475,9 @@ class OsvvmProFileProcessor(TclEnvironment):
 		    variable Supports2019Integer64Bits               "{osvvmVariables.Supports2019Integer64Bits}"
 
 			  variable ClockResetVersion                       $OsvvmVersion
+
+			  variable CreateVti                               "{osvvmVariables.OSVVMCreateVTI}"
+			  variable OsvvmDevDeriveArchitectures             "false"
 			}}
 			""")
 
