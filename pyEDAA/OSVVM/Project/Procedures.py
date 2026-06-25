@@ -666,7 +666,7 @@ def CreateOsvvmScriptSettingsPkg(*args) -> None:
 	"""
 	Not implemented by pyEDAA.OSVVM.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'CreateOsvvmScriptSettingsPkg' is not implemented."))
+	# osvvmContext.RaiseException(NotImplementedError(f"Procedure 'CreateOsvvmScriptSettingsPkg' is not implemented."))
 
 
 @export

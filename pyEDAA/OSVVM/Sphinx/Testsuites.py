@@ -41,6 +41,8 @@ from docutils.parsers.rst.directives   import flag
 from sphinx.config                     import Config
 from sphinx.application                import Sphinx
 from pyTooling.Decorators              import export
+from sphinx_reports                    import Landscape
+
 from pyEDAA.Reports.Unittesting        import TestcaseStatus, TestsuiteStatus
 from sphinx_reports.Common             import ReportExtensionError
 from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
@@ -243,40 +245,40 @@ class BuildSummary(BaseDirective):
 	def _GenerateBuildSummaryTable(self) -> nodes.Element:
 		columns = [
 			("Testsuite", (
-				("  Testcase", 50),
+				("  Testcase", 1),
 			), None),
 			("Testsuite Status", (
-				("Skipped", 50),
-				("Errored", 50),
-				("Failed", 50),
-				("Passed", 50),
-				("Testcases", 50),
+				("Skipped", 1),
+				("Errored", 1),
+				("Failed", 1),
+				("Passed", 1),
+				("Testcases", 1),
 			), None),
 			("Warnings", (
-				("Counted", 50),
-				("Expected", 50),
+				("Counted", 1),
+				("Expected", 1),
 			), None),
 			("Errors", (
-				("Counted", 50),
-				("Expected", 50),
+				("Counted", 1),
+				("Expected", 1),
 			), None),
 			("Failures", (
-				("Counted", 50),
-				("Expected", 50),
+				("Counted", 1),
+				("Expected", 1),
 			), None),
 			("Assertions", (
-				("passed", 50),
-				("Total", 50),
+				("passed", 1),
+				("Total", 1),
 			), None),
 			("Requirements", (
-				("Passed", 50),
-				("Total", 50),
+				("Passed", 1),
+				("Total", 1),
 			), None),
 			("Coverage", (
-				("Code", 50),
-				("Functional", 50),
+				("Code", 1),
+				("Functional", 1),
 			), None),
-			("Runtime (HH:MM:SS.sss)", None, 100),
+			("Runtime (HH:MM:SS.sss)", None, 2),
 		]
 
 		cssClasses = ["osvvm-buildsummary-table", f"osvvm-buildsummary-{self._reportID}"]
@@ -418,7 +420,7 @@ class BuildSummary(BaseDirective):
 		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
 
 	def run(self) -> List[nodes.Node]:
-		container = nodes.container()
+		container = Landscape()
 
 		try:
 			self._CheckOptions()
