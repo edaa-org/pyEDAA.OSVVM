@@ -192,6 +192,7 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 	_supportsDeferredConstants:   str               #: True, if deferred constants are supported.
 	_supports2008GenericPackages: str               #: True, if VHDL-2008 generic packages are supported.
 	_supports2019Interface:       str               #: True, if VHDL-2019 mode views are supported.
+	_supports2019Generics:        str               #: True, if VHDL-2019 extended incomplete type generics are supported.
 	_supports2019ImpureFunctions: str               #: True, if VHDL-2019 impure functions are supported.
 	_supports2019FilePath:        str               #: True, if VHDL-2019 file path is supported.
 	_supports2019AssertAPI:       str               #: True, if VHDL-2019 assert API is support
@@ -205,6 +206,7 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		toolName:                    Nullable[str] = None,
 		toolVersion:                 Nullable[str] = None,
 		supports2019Interface:       Nullable[str] = None,
+		supports2019Generics:        Nullable[str] = None,
 		supports2019ImpureFunctions: Nullable[str] = None,
 		supports2019FilePath:        Nullable[str] = None,
 		supports2019AssertAPI:       Nullable[str] = None,
@@ -219,6 +221,7 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		:param toolName:                    Optional, name of the tool.
 		:param toolVersion:                 Optional, version of the tool.
 		:param supports2019Interface:       Optional, VHDL-2019 mode views are supported.
+		:param supports2019Generics:        Optional, VHDL-2019 extended incomplete type generics are supported.
 		:param supports2019ImpureFunctions: Optional, VHDL-2019 impure functions are supported.
 		:param supports2019FilePath:        Optional, VHDL-2019 file path is supported.
 		:param supports2019AssertAPI:       Optional, VHDL-2019 assert API is support
@@ -234,6 +237,7 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		   * Tool name = :pycode:`"pyEDAA.ProjectModel"`
 		   * Tool version = :pycode:`"0.1"`
 		   * Supports VHDL-2019 interface = :pycode:`"false"`
+		   * Supports VHDL-2019 generics = :pycode:`"false"`
 		   * Supports VHDL-2019 impure functions = :pycode:`"false"`
 		   * Supports VHDL-2019 file path = :pycode:`"false"`
 		   * Supports VHDL-2019 assert API = :pycode:`"false"`
@@ -250,6 +254,7 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		self._supportsDeferredConstants =   "true"
 		self._supports2008GenericPackages = "true"
 		self._supports2019Interface =       supports2019Interface       if supports2019Interface       is not None else "false"
+		self._supports2019Generics =        supports2019Generics        if supports2019Generics        is not None else "false"
 		self._supports2019ImpureFunctions = supports2019ImpureFunctions if supports2019ImpureFunctions is not None else "false"
 		self._supports2019FilePath =        supports2019FilePath        if supports2019FilePath        is not None else "false"
 		self._supports2019AssertAPI =       supports2019AssertAPI       if supports2019AssertAPI       is not None else "false"
@@ -346,6 +351,15 @@ class OsvvmVariables(metaclass=ExtendedType, slots=True):
 		return self._supports2019Interface
 
 	@readonly
+	def Supports2019Generics(self) -> str:
+		"""
+		Read-only property to access the VHDL-2019 feature flag if extended incomplete type generics are supported (:attr:`_supports2019Generics`).
+
+		:returns: The VHDL-2019 feature flag if extended incomplete type generics are supported.
+		"""
+		return self._supports2019Generics
+
+	@readonly
 	def Supports2019ImpureFunctions(self) -> str:
 		"""
 		Read-only property to access the VHDL-2019 feature flag if impure functions are supported (:attr:`_supports2019ImpureFunctions`).
@@ -437,6 +451,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 		     variable ToolSupportsGenericPackages             "true"
 		     variable FunctionalCoverageIntegratedInSimulator "default"
 		     variable Supports2019Interface                   "false"
+		     variable Supports2019Generics                    "false"
 		     variable Supports2019ImpureFunctions             "false"
 		     variable Supports2019FilePath                    "false"
 		     variable Supports2019AssertApi                   "false"
@@ -469,6 +484,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 			  variable ToolSupportsGenericPackages             "{osvvmVariables.Supports2008GenericPackages}"
 			  variable FunctionalCoverageIntegratedInSimulator "default"
 		    variable Supports2019Interface                   "{osvvmVariables.Supports2019Interface}"
+		    variable Supports2019Generics                    "{osvvmVariables.Supports2019Generics}"
 		    variable Supports2019ImpureFunctions             "{osvvmVariables.Supports2019ImpureFunctions}"
 		    variable Supports2019FilePath                    "{osvvmVariables.Supports2019FilePath}"
 		    variable Supports2019AssertApi                   "{osvvmVariables.Supports2019AssertAPI}"
