@@ -12,8 +12,9 @@ from pyTooling.Packaging import extractVersionInformation
 # Project configuration
 # ==============================================================================
 githubNamespace = "edaa-org"
-project = "pyEDAA.OSVVM"
-directoryName = project.replace('.', '/')
+githubProject = pythonProject = "pyEDAA.OSVVM"
+directoryName = pythonProject.replace('.', '/')
+
 
 # ==============================================================================
 # Project paths
@@ -34,6 +35,7 @@ sys_path.insert(0, abspath(f"../{directoryName}"))
 packageInformationFile = Path(f"../{directoryName}/__init__.py")
 versionInformation = extractVersionInformation(packageInformationFile)
 
+project =   pythonProject
 author =    versionInformation.Author
 copyright = versionInformation.Copyright
 version =   ".".join(versionInformation.Version.split(".")[:2])  # e.g. 2.3    The short X.Y version.
@@ -118,24 +120,15 @@ modindex_common_prefix = [
 latex_engine = "lualatex"
 latex_use_xindy = False
 latex_elements = {
-	"papersize": "a4paper",      # The paper size ('letterpaper' or 'a4paper').
-	"pointsize": "10pt",         # The font size ('10pt', '11pt' or '12pt').
-	"inputenc":   "",            # Let LuaLaTeX handle input encoding
-	"utf8extra":  "",
+	"papersize":   "a4paper",      # The paper size ('letterpaper' or 'a4paper').
+	"pointsize":   "10pt",         # The font size ('10pt', '11pt' or '12pt').
+	"inputenc":    "",             # Let LuaLaTeX handle input encoding
+	"utf8extra":   "",
+	"polyglossia": "",
+	"babel":      r"\usepackage[english]{babel}",
 	"fontenc":    r"\usepackage{fontspec}",  # Disable the default T1 font encoding (Essential for LuaLaTeX)
 	"fontpkg":    dedent("""\
-		\\usepackage{unicode-math}
-
-		% Set the Text Fonts (Libertinus)
-		\\setmainfont{Libertinus Serif}
-		\\setsansfont{Libertinus Sans}
-		\\setmonofont{Libertinus Mono}
-		\\setmathfont{Libertinus Math}
-
-		% Set Symbol font
-		\\usepackage{newunicodechar}
-		\\newfontfamily{\\emojifont}[Renderer=OpenType]{NotoColorEmoji.ttf}
-		\\usepackage{pytooling}
+		\\usepackage[fontfamily=libertinus]{pytooling}
 	"""),
 	"passoptionstopackages": dedent("""\
 		\\PassOptionsToPackage{verbatimvisiblespace=\\ }{sphinx}
@@ -151,10 +144,10 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
 	( master_doc,
-		f"{project}.tex",
-		f"The {project} Documentation",
-		f"Patrick Lehmann",
-		f"manual"
+		f"{pythonProject}.tex",
+		f"The {pythonProject.replace("_", r"\_")} Documentation",
+		 "Patrick Lehmann",
+		 "manual"
 	),
 ]
 
