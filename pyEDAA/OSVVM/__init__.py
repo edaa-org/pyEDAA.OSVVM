@@ -29,12 +29,15 @@
 # ==================================================================================================================== #
 #
 """Parser and converters for OSVVM-specific data models and report formats."""
-__author__ =    "Patrick Lehmann"
-__email__ =     "Paebbels@gmail.com"
-__copyright__ = "2025-2026, Patrick Lehmann"
-__license__ =   "Apache License, Version 2.0"
-__version__ =   "0.8.0"
-__keywords__ =  ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
+__author__ =            "Patrick Lehmann"
+__email__ =             "Paebbels@gmail.com"
+__copyright__ =         "2025-2026, Patrick Lehmann"
+__license__ =           "Apache License, Version 2.0"
+__version__ =           "0.8.1"
+__keywords__ =          ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
+__project_url__ =       "https://github.com/edaa-org/pyEDAA.OSVVM"
+__documentation_url__ = "https://edaa-org.github.io/pyEDAA.OSVVM"
+__issue_tracker_url__ = "https://GitHub.com/edaa-org/pyEDAA.OSVVM/issues"
 
 from pyTooling.Decorators import export
 from pyTooling.Exceptions import ExceptionBase

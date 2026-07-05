@@ -33,7 +33,7 @@ Param(
 )
 
 $PackageName = "pyEDAA.OSVVM"
-$PackageVersion = "0.8.0"
+$PackageVersion = "0.8.1"
 
 # set default values
 $EnableDebug =        [bool]$PSCmdlet.MyInvocation.BoundParameters["Debug"]
