@@ -21,6 +21,7 @@ jobs:
       package_name:        'OSVVM'
       unittest_python_version_list: '3.12 3.13 3.14'
       unittest_disable_list:        'windows-arm:*'
+      apptest:             'true'
       bandit:              'true'
       pylint:              'false'
       codecov:             'true'

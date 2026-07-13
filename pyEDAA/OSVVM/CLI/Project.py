@@ -31,9 +31,7 @@
 from argparse import Namespace
 from pathlib  import Path
 from sys      import stdin
-from typing   import NoReturn
 
-from pyTooling.Decorators                     import readonly
 from pyTooling.MetaClasses                    import ExtendedType
 from pyTooling.Common                         import count
 from pyTooling.Attributes.ArgParse            import CommandHandler
@@ -92,7 +90,9 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			osvvmProject = processor.Context.ToProject("unnamed")
 
 		else:
-			self.Exit(1)
+			self.WriteError(f"Neither --stdin, --regressionTCL nor --buildPro has been provided.")
+			self._PrintHelp("project")
+			self.Exit(2)
 
 		self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
 		self.WriteNormal(f"  Builds:           {len(osvvmProject.Builds)}")
