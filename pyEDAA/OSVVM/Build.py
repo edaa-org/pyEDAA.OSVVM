@@ -130,13 +130,23 @@ class Testcase(ut_Testcase):
 		"""
 		super().__init__(
 			name,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			assertionCount, failedAssertionCount, passedAssertionCount,
-			warningCount, errorCount, fatalCount,
-			expectedWarningCount, expectedErrorCount, expectedFatalCount,
-			keyValuePairs,
-			parent
+			startTime=startTime,
+			setupDuration=setupDuration,
+			testDuration=testDuration,
+			teardownDuration=teardownDuration,
+			totalDuration=totalDuration,
+			status=status,
+			assertionCount=assertionCount,
+			failedAssertionCount=failedAssertionCount,
+			passedAssertionCount=passedAssertionCount,
+			warningCount=warningCount,
+			errorCount=errorCount,
+			fatalCount=fatalCount,
+			expectedWarningCount=expectedWarningCount,
+			expectedErrorCount=expectedErrorCount,
+			expectedFatalCount=expectedFatalCount,
+			keyValuePairs=keyValuePairs,
+			parent=parent
 		)
 
 		if not isinstance(disabledWarningCount, int):
@@ -354,12 +364,18 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		"""
 		super().__init__(
 			name,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			warningCount, errorCount, fatalCount,
-			testsuites,
-			keyValuePairs,
-			parent
+			startTime=startTime,
+			setupDuration=setupDuration,
+			testDuration=testDuration,
+			teardownDuration=teardownDuration,
+			totalDuration=totalDuration,
+			status=status,
+			warningCount=warningCount,
+			errorCount=errorCount,
+			fatalCount=fatalCount,
+			testsuites=testsuites,
+			keyValuePairs=keyValuePairs,
+			parent=parent
 		)
 
 
