@@ -281,7 +281,7 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 
 		self._noNullRangeWarning = noNullRangeWarning
 		# TODO: iterate and check element types
-		self._associatedFiles =    [] if associatedFiles is None else [f for f in associatedFiles]
+		self._associatedFiles =    [] if associatedFiles is None else list(associatedFiles)
 
 	@readonly
 	def VHDLLibrary(self) -> Nullable["VHDLLibrary"]:
