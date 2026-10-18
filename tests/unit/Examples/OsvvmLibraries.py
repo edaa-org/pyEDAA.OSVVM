@@ -54,12 +54,12 @@ class JUnitGeneratedByOSVVM(TestCase):
 		self.assertEqual(0, doc.TestsuiteCount)
 		self.assertEqual(0, doc.TestcaseCount)
 
-		print(f"JUnit file:")
+		print("JUnit file:")
 		print(f"  Testsuites: {doc.TestsuiteCount}")
 		print(f"  Testcases:  {doc.TestcaseCount}")
 
 		print()
-		print(f"Statistics:")
+		print("Statistics:")
 		print(f"  Times: parsing by lxml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
 	def test_RunAllTests(self) -> None:
@@ -77,12 +77,12 @@ class JUnitGeneratedByOSVVM(TestCase):
 		print("=" * 40)
 
 		print()
-		print(f"JUnit file:")
+		print("JUnit file:")
 		print(f"  Testsuites: {doc.TestsuiteCount}")
 		print(f"  Testcases:  {doc.TestcaseCount}")
 
 		print()
-		print(f"Statistics:")
+		print("Statistics:")
 		print(f"  Times: parsing by lxml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
 
@@ -99,12 +99,12 @@ class YAMLGeneratedByOSVVM(TestCase):
 		print("=" * 40)
 
 		print()
-		print(f"YAML file:")
+		print("YAML file:")
 		print(f"  Testsuites: {doc.TestsuiteCount}")
 		print(f"  Testcases:  {doc.TestcaseCount}")
 
 		print()
-		print(f"Statistics:")
+		print("Statistics:")
 		print(f"  Times: parsing by ruamel.yaml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
 
@@ -123,12 +123,12 @@ class YAMLGeneratedByOSVVM(TestCase):
 		print("=" * 40)
 
 		print()
-		print(f"YAML file:")
+		print("YAML file:")
 		print(f"  Testsuites: {doc.TestsuiteCount}")
 		print(f"  Testcases:  {doc.TestcaseCount}")
 
 		print()
-		print(f"Statistics:")
+		print("Statistics:")
 		print(f"  Times: parsing by ruamel.yaml: {doc.AnalysisDuration.total_seconds():.3f}s   convert: {doc.ModelConversionDuration.total_seconds():.3f}s")
 
 		expected = {
@@ -211,5 +211,5 @@ class AlertLog(TestCase):
 		print(f"Total errors: {doc.TotalErrors}")
 
 		print()
-		print(f"Statistics:")
+		print("Statistics:")
 		print(f"  Times: YAML parsing: {doc.AnalysisDuration}s   convert: {doc.ModelConversionDuration}s")
