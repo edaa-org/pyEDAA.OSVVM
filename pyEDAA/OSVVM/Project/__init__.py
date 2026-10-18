@@ -97,11 +97,11 @@ class Named(Base[_ParentType], Generic[_ParentType]):
 		super().__init__(parent)
 
 		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex = TypeError("Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 		elif name == "":
-			raise ValueError(f"Parameter 'name' is empty.")
+			raise ValueError("Parameter 'name' is empty.")
 
 		self._name = name
 
@@ -163,7 +163,7 @@ class SourceFile(Base[_ParentType], Generic[_ParentType]):
 		super().__init__(parent)
 
 		if not isinstance(path, Path):  # pragma: no cover
-			ex = TypeError(f"Parameter 'path' is not a Path.")
+			ex = TypeError("Parameter 'path' is not a Path.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 			raise ex
 
@@ -203,14 +203,14 @@ class XDCConstraintFile(SourceFile):
 		super().__init__(path)
 
 		if scopeToRef is not None and not isinstance(scopeToRef, str):
-			ex = TypeError(f"Parameter 'scopeToRef' is not a str.")
+			ex = TypeError("Parameter 'scopeToRef' is not a str.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(scopeToRef)}'.")
 			raise ex
 
 		self._scopeToRef =  scopeToRef
 
 		if scopeToCell is not None and not isinstance(scopeToCell, str):
-			ex = TypeError(f"Parameter 'scopeToCell' is not a str.")
+			ex = TypeError("Parameter 'scopeToCell' is not a str.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(scopeToCell)}'.")
 			raise ex
 
@@ -263,19 +263,19 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 			super().__init__(path, vhdlLibrary)
 			vhdlLibrary._files.append(self)
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlLibrary' is not a Library.")
+			ex = TypeError("Parameter 'vhdlLibrary' is not a Library.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
 			raise ex
 
 		if not isinstance(vhdlVersion, VHDLVersion):  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlVersion' is not a VHDLVersion.")
+			ex = TypeError("Parameter 'vhdlVersion' is not a VHDLVersion.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlVersion)}'.")
 			raise ex
 
 		self._vhdlVersion = vhdlVersion
 
 		if noNullRangeWarning is not None and not isinstance(noNullRangeWarning, bool):
-			ex = TypeError(f"Parameter 'noNullRangeWarning' is not a boolean.")
+			ex = TypeError("Parameter 'noNullRangeWarning' is not a boolean.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(noNullRangeWarning)}'.")
 			raise ex
 
@@ -304,7 +304,7 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	@VHDLVersion.setter
 	def VHDLVersion(self, value: VHDLVersion) -> None:
 		if not isinstance(value, VHDLVersion):
-			ex = TypeError(f"Parameter 'value' is not a VHDLVersion.")
+			ex = TypeError("Parameter 'value' is not a VHDLVersion.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 			raise ex
 
@@ -322,7 +322,7 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	@NoNullRangeWarning.setter
 	def NoNullRangeWarning(self, value: bool) -> None:
 		if value is not None and not isinstance(value, bool):
-			ex = TypeError(f"Parameter 'value' is not a boolean.")
+			ex = TypeError("Parameter 'value' is not a boolean.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 			raise ex
 
@@ -340,7 +340,7 @@ class VHDLSourceFile(SourceFile["VHDLLibrary"]):
 	def __repr__(self) -> str:
 		options = ""
 		if self._noNullRangeWarning is not None:
-			options += f", NoNullRangeWarning"
+			options += ", NoNullRangeWarning"
 		return f"VHDLSourceFile: {self._path} ({self._vhdlVersion}{options})"
 
 
@@ -376,7 +376,7 @@ class VHDLLibrary(Named["Build"]):
 			super().__init__(name, build)
 			build._vhdlLibraries[name] = self
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex = TypeError("Parameter 'build' is not a Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
@@ -386,14 +386,14 @@ class VHDLLibrary(Named["Build"]):
 		elif isinstance(vhdlFiles, Iterable):
 			for vhdlFile in vhdlFiles:
 				if not isinstance(vhdlFile, VHDLSourceFile):
-					ex = TypeError(f"Parameter 'vhdlFiles' contains elements not of type VHDLSourceFile.")
+					ex = TypeError("Parameter 'vhdlFiles' contains elements not of type VHDLSourceFile.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFile)}'.")
 					raise ex
 
 				vhdlFile._parent = self
 				self._files.append(vhdlFile)
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlFiles' is not an iterable of VHDLSourceFile.")
+			ex = TypeError("Parameter 'vhdlFiles' is not an iterable of VHDLSourceFile.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFiles)}'.")
 			raise ex
 
@@ -423,7 +423,7 @@ class VHDLLibrary(Named["Build"]):
 		:raises TypeError: When parameter 'file' is not of type :class:`VHDLSourceFile`.
 		"""
 		if not isinstance(file, VHDLSourceFile):  # pragma: no cover
-			ex = TypeError(f"Parameter 'file' is not a VHDLSourceFile.")
+			ex = TypeError("Parameter 'file' is not a VHDLSourceFile.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(file)}'.")
 			raise ex
 
@@ -458,16 +458,16 @@ class GenericValue(Option):
 		super().__init__()
 
 		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex = TypeError("Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 		elif name == "":
-			raise ValueError(f"Parameter 'name' is empty.")
+			raise ValueError("Parameter 'name' is empty.")
 
 		self._name = name
 
 		if not isinstance(value, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'value' is not a string.")
+			ex = TypeError("Parameter 'value' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 			raise ex
 
@@ -523,21 +523,21 @@ class ConstraintFile(Option):
 		super().__init__()
 
 		if not isinstance(path, Path):  # pragma: no cover
-			ex = TypeError(f"Parameter 'path' is not a Path.")
+			ex = TypeError("Parameter 'path' is not a Path.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 			raise ex
 
 		self._path = path
 
 		if scopeToRef is not None and not isinstance(scopeToRef, str):
-			ex = TypeError(f"Parameter 'scopeToRef' is not a str.")
+			ex = TypeError("Parameter 'scopeToRef' is not a str.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 			raise ex
 
 		self._scopeToRef = scopeToRef
 
 		if scopeToCell is not None and not isinstance(scopeToCell, str):
-			ex = TypeError(f"Parameter 'scopeToCell' is not a str.")
+			ex = TypeError("Parameter 'scopeToCell' is not a str.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 			raise ex
 
@@ -602,7 +602,7 @@ class ScopeToRef(Option):
 		super().__init__()
 
 		if not isinstance(reference, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'reference' is not a string.")
+			ex = TypeError("Parameter 'reference' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(reference)}'.")
 			raise ex
 
@@ -641,7 +641,7 @@ class ScopeToCell(Option):
 		super().__init__()
 
 		if not isinstance(cell, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'cell' is not a string.")
+			ex = TypeError("Parameter 'cell' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(cell)}'.")
 			raise ex
 
@@ -695,12 +695,12 @@ class Testcase(Named["Testsuite"]):
 			super().__init__(name, testsuite)
 			testsuite._testcases[name] = self
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
+			ex = TypeError("Parameter 'testsuite' is not a Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
 			raise ex
 
 		if toplevelName is not None and not isinstance(toplevelName, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'toplevelName' is not a string.")
+			ex = TypeError("Parameter 'toplevelName' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(toplevelName)}'.")
 			raise ex
 
@@ -716,13 +716,13 @@ class Testcase(Named["Testsuite"]):
 		elif isinstance(generics, Iterable):
 			for item in generics:
 				if not isinstance(item, GenericValue):  # pragma: no cover
-					ex = TypeError(f"Parameter 'generics' contains elements which are not of type GenericValue.")
+					ex = TypeError("Parameter 'generics' contains elements which are not of type GenericValue.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(item)}'.")
 					raise ex
 
 				self._generics[item._name] = item._value
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'generics' is not an iterable of GenericValue nor a dictionary of strings.")
+			ex = TypeError("Parameter 'generics' is not an iterable of GenericValue nor a dictionary of strings.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
 			raise ex
 
@@ -762,11 +762,11 @@ class Testcase(Named["Testsuite"]):
 		:raises TypeError:   When parameter 'toplevelName' is not of type string.
 		"""
 		if not isinstance(toplevelName, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'toplevelName' is not a string.")
+			ex = TypeError("Parameter 'toplevelName' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(toplevelName)}'.")
 			raise ex
 		elif toplevelName == "":
-			raise ValueError(f"Parameter 'toplevelName' is empty.")
+			raise ValueError("Parameter 'toplevelName' is empty.")
 
 		self._toplevelName = toplevelName
 
@@ -778,7 +778,7 @@ class Testcase(Named["Testsuite"]):
 		:raises TypeError:   When parameter 'genericValue' is not of type :class:`GenericValue`.
 		"""
 		if not isinstance(genericValue, GenericValue):  # pragma: no cover
-			ex = TypeError(f"Parameter 'genericValue' is not a GenericValue.")
+			ex = TypeError("Parameter 'genericValue' is not a GenericValue.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(genericValue)}'.")
 			raise ex
 
@@ -820,7 +820,7 @@ class Testsuite(Named["Build"]):
 			super().__init__(name, build)
 			build._testsuites[name] = self
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex = TypeError("Parameter 'build' is not a Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
@@ -835,14 +835,14 @@ class Testsuite(Named["Build"]):
 		elif isinstance(testcases, Iterable):
 			for item in testcases:
 				if not isinstance(item, Testcase):  # pragma: no cover
-					ex = TypeError(f"Parameter 'testcases' contains elements not of type Testcase.")
+					ex = TypeError("Parameter 'testcases' contains elements not of type Testcase.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(item)}'.")
 					raise ex
 
 				item._parent = self
 				self._testcases[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testcases' is not an iterable of Testcase nor a mapping of Testcase.")
+			ex = TypeError("Parameter 'testcases' is not an iterable of Testcase nor a mapping of Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcases)}'.")
 			raise ex
 
@@ -872,7 +872,7 @@ class Testsuite(Named["Build"]):
 		:raises TypeError: When parameter 'testcase' is not of type :class:`Testcase`.
 		"""
 		if not isinstance(testcase, Testcase):  # pragma: no cover
-			ex = TypeError(f"Parameter 'testcase' is not a Testcase.")
+			ex = TypeError("Parameter 'testcase' is not a Testcase.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testcase)}'.")
 			raise ex
 
@@ -901,7 +901,7 @@ class BuildName(Option):
 		super().__init__()
 
 		if not isinstance(name, str):  # pragma: no cover
-			ex = TypeError(f"Parameter 'name' is not a string.")
+			ex = TypeError("Parameter 'name' is not a string.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
 			raise ex
 
@@ -957,7 +957,7 @@ class Build(Named["Project"]):
 			super().__init__(name, project)
 			project._builds[name] = self
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'project' is not a Project.")
+			ex = TypeError("Parameter 'project' is not a Project.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(project)}'.")
 			raise ex
 
@@ -973,14 +973,14 @@ class Build(Named["Project"]):
 		elif isinstance(vhdlLibraries, Iterable):
 			for item in vhdlLibraries:
 				if not isinstance(item, VHDLLibrary):  # pragma: no cover
-					ex = TypeError(f"Parameter 'vhdlLibraries' contains elements not of type VHDLLibrary.")
+					ex = TypeError("Parameter 'vhdlLibraries' contains elements not of type VHDLLibrary.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(item)}'.")
 					raise ex
 
 				item._parent = self
 				self._vhdlLibraries[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'libraries' is not an iterable of VHDLLibrary nor a mapping of VHDLLibrary.")
+			ex = TypeError("Parameter 'libraries' is not an iterable of VHDLLibrary nor a mapping of VHDLLibrary.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibraries)}'.")
 			raise ex
 
@@ -995,14 +995,14 @@ class Build(Named["Project"]):
 		elif isinstance(testsuites, Iterable):
 			for item in testsuites:
 				if not isinstance(item, Testsuite):  # pragma: no cover
-					ex = TypeError(f"Parameter 'testsuites' contains elements not of type Testsuite.")
+					ex = TypeError("Parameter 'testsuites' contains elements not of type Testsuite.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(item)}'.")
 					raise ex
 
 				item._parent = self
 				self._testsuites[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'testsuites' is not an iterable of Testsuite nor a mapping of Testsuite.")
+			ex = TypeError("Parameter 'testsuites' is not an iterable of Testsuite nor a mapping of Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuites)}'.")
 			raise ex
 
@@ -1050,7 +1050,7 @@ class Build(Named["Project"]):
 		:raises TypeError:  When parameter 'vhdlLibrary' is not of type :class:`VHDLLibrary`.
 		"""
 		if not isinstance(vhdlLibrary, VHDLLibrary):  # pragma: no cover
-			ex = TypeError(f"Parameter 'vhdlLibrary' is not a VHDLLibrary.")
+			ex = TypeError("Parameter 'vhdlLibrary' is not a VHDLLibrary.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlLibrary)}'.")
 			raise ex
 
@@ -1065,7 +1065,7 @@ class Build(Named["Project"]):
 		:raises TypeError: When parameter 'testsuite' is not of type :class:`Testsuite`.
 		"""
 		if not isinstance(testsuite, Testsuite):  # pragma: no cover
-			ex = TypeError(f"Parameter 'testsuite' is not a Testsuite.")
+			ex = TypeError("Parameter 'testsuite' is not a Testsuite.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(testsuite)}'.")
 			raise ex
 
@@ -1111,14 +1111,14 @@ class Project(Named):
 		elif isinstance(builds, Iterable):
 			for item in builds:
 				if not isinstance(item, Build):  # pragma: no cover
-					ex = TypeError(f"Parameter 'builds' contains elements not of type Build.")
+					ex = TypeError("Parameter 'builds' contains elements not of type Build.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(item)}'.")
 					raise ex
 
 				item._parent = self
 				self._builds[item._name] = item
 		else:  # pragma: no cover
-			ex = TypeError(f"Parameter 'builds' is not an iterable of Build nor a mapping of Build.")
+			ex = TypeError("Parameter 'builds' is not an iterable of Build nor a mapping of Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(builds)}'.")
 			raise ex
 
@@ -1153,7 +1153,7 @@ class Project(Named):
 		:raises TypeError: When parameter 'build' is not of type :class:`Build`.
 		"""
 		if not isinstance(build, Build):  # pragma: no cover
-			ex = TypeError(f"Parameter 'build' is not a Build.")
+			ex = TypeError("Parameter 'build' is not a Build.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
@@ -1419,12 +1419,12 @@ class Context(Base):
 		:raises OSVVMException: When a OSVVM testsuite has been created outside a build context.
 		"""
 		if len(self._vhdlLibraries) > 0:
-			ex = OSVVMException(f"VHDL libraries have been created outside of an OSVVM build script.")
-			ex.add_note(f"TCL command 'library' has been called before 'build'.")
+			ex = OSVVMException("VHDL libraries have been created outside of an OSVVM build script.")
+			ex.add_note("TCL command 'library' has been called before 'build'.")
 			raise ex
 		if len(self._testsuites) > 0:
-			ex = OSVVMException(f"Testsuites have been created outside of an OSVVM build script.")
-			ex.add_note(f"TCL command 'TestSuite' has been called before 'build'.")
+			ex = OSVVMException("Testsuites have been created outside of an OSVVM build script.")
+			ex.add_note("TCL command 'TestSuite' has been called before 'build'.")
 			raise ex
 
 		build = Build(buildName)
@@ -1481,7 +1481,7 @@ class Context(Base):
 		                                directory.
 		"""
 		if not isinstance(proFileOrBuildDirectory, Path):  # pragma: no cover
-			ex = TypeError(f"Parameter 'proFileOrBuildDirectory' is not a Path.")
+			ex = TypeError("Parameter 'proFileOrBuildDirectory' is not a Path.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(proFileOrBuildDirectory)}'.")
 			self.RaiseException(ex)
 

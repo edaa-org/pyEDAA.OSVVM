@@ -63,7 +63,7 @@ def EndBuild() -> None:
 
 
 def throw():
-	ex = ValueError(f"Dummy exception")
+	ex = ValueError("Dummy exception")
 	osvvmContext.LastException = ex
 	raise ex
 
@@ -172,8 +172,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			library lib
 			EndBuild
 			""")
@@ -373,8 +373,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tb
 			simulate harness
 			EndBuild
@@ -406,8 +406,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tb
 			simulate harness [generic param value]
 			EndBuild
@@ -443,8 +443,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestSuite ts
 			EndBuild
 			""")
@@ -473,8 +473,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tn
 			EndBuild
 			""")
@@ -576,7 +576,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			SetVHDLVersion 2019
 			""")
 
@@ -593,7 +593,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			set vhdlVersion [GetVHDLVersion]
 			""")
 
@@ -608,7 +608,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			set vhdlVersion [GetVHDLVersion]
 
 			SetVHDLVersion 1987
@@ -698,7 +698,7 @@ class NoOperation(TestCase):
 		processor = OsvvmProFileProcessor()
 		processor.RegisterPythonFunctionAsTclProcedure(throw)
 
-		code = dedent(f"""\
+		code = dedent("""\
 			throw
 			""")
 
@@ -712,8 +712,8 @@ class NoOperation(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
-			puts {{Hello World}}
+		code = dedent("""\
+			puts {Hello World}
 			""")
 
 		try:

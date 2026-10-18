@@ -140,17 +140,17 @@ class Testcase(ut_Testcase):
 		)
 
 		if not isinstance(disabledWarningCount, int):
-			ex = TypeError(f"Parameter 'disabledWarningCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledWarningCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledWarningCount)}'.")
 			raise ex
 
 		if not isinstance(disabledErrorCount, int):
-			ex = TypeError(f"Parameter 'disabledErrorCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledErrorCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledErrorCount)}'.")
 			raise ex
 
 		if not isinstance(disabledFatalCount, int):
-			ex = TypeError(f"Parameter 'disabledFatalCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledFatalCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledFatalCount)}'.")
 			raise ex
 
@@ -159,17 +159,17 @@ class Testcase(ut_Testcase):
 		self._disabledFatalCount =   disabledFatalCount
 
 		if requirementsCount is not None and not isinstance(requirementsCount, int):
-			ex = TypeError(f"Parameter 'requirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'requirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(requirementsCount)}'.")
 			raise ex
 
 		if passedRequirementsCount is not None and not isinstance(passedRequirementsCount, int):
-			ex = TypeError(f"Parameter 'passedRequirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'passedRequirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(passedRequirementsCount)}'.")
 			raise ex
 
 		if failedRequirementsCount is not None and not isinstance(failedRequirementsCount, int):
-			ex = TypeError(f"Parameter 'failedRequirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'failedRequirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(failedRequirementsCount)}'.")
 			raise ex
 
@@ -177,7 +177,7 @@ class Testcase(ut_Testcase):
 			if passedRequirementsCount is not None:
 				if failedRequirementsCount is not None:
 					if passedRequirementsCount + failedRequirementsCount != requirementsCount:
-						raise ValueError(f"Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
+						raise ValueError("Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
 				else:
 					failedRequirementsCount = requirementsCount - passedRequirementsCount
 			elif failedRequirementsCount is not None:
@@ -202,12 +202,12 @@ class Testcase(ut_Testcase):
 
 		if functionalCoverage is not None:
 			if not isinstance(functionalCoverage, float):
-				ex = TypeError(f"Parameter 'functionalCoverage' is not of type 'float'.")
+				ex = TypeError("Parameter 'functionalCoverage' is not of type 'float'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(functionalCoverage)}'.")
 				raise ex
 
 			if not (0.0 <= functionalCoverage <= 1.0):
-				raise ValueError(f"Parameter 'functionalCoverage' is not in range 0.0..1.0.")
+				raise ValueError("Parameter 'functionalCoverage' is not in range 0.0..1.0.")
 
 		self._functionalCoverage = functionalCoverage
 
@@ -428,7 +428,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		# 	self.Generate(overwrite=True)
 
 		if self._yamlDocument is None:
-			ex = UnittestException(f"Internal YAML document tree is empty and needs to be generated before write is possible.")
+			ex = UnittestException("Internal YAML document tree is empty and needs to be generated before write is possible.")
 			# ex.add_note(f"Call 'BuildSummaryDocument.Generate()' or 'BuildSummaryDocument.Write(..., regenerate=True)'.")
 			raise ex
 
@@ -542,7 +542,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		"""
 		if self._yamlDocument is None:
 			ex = UnittestException(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note(f"Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
+			ex.add_note("Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:

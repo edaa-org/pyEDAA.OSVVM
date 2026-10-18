@@ -55,7 +55,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 
 		returnCode = 0
 		if (args.stdin is None and args.regressionTCL is None and args.buildPro is None):
-			self.WriteError(f"Either option '--stdin' or '--regressionTCL=<TCL file>' or '--buildPro=<PRO file>' is missing.")
+			self.WriteError("Either option '--stdin' or '--regressionTCL=<TCL file>' or '--buildPro=<PRO file>' is missing.")
 			returnCode = 3
 
 		if returnCode != 0:
@@ -65,7 +65,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 		processor = OsvvmProFileProcessor()
 
 		if args.stdin is True:
-			self.WriteNormal(f"Reading TCL code from STDIN ...")
+			self.WriteNormal("Reading TCL code from STDIN ...")
 			tclCode = stdin.read()
 
 			with sw:
@@ -74,7 +74,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			osvvmProject = processor.Context.ToProject("unnamed")
 
 		elif args.regressionTCL is not None:
-			self.WriteNormal(f"Reading regression TCL file ...")
+			self.WriteNormal("Reading regression TCL file ...")
 
 			with sw:
 				osvvmProject = processor.LoadRegressionFile(Path(args.regressionTCL))
@@ -90,7 +90,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			osvvmProject = processor.Context.ToProject("unnamed")
 
 		else:
-			self.WriteError(f"Neither --stdin, --regressionTCL nor --buildPro has been provided.")
+			self.WriteError("Neither --stdin, --regressionTCL nor --buildPro has been provided.")
 			self._PrintHelp("project")
 			self.Exit(2)
 

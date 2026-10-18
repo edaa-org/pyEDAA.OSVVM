@@ -153,7 +153,7 @@ class BuildSummary(BaseDirective):
 
 		:param sphinxApplication:   Sphinx application instance.
 		"""
-		print(f"[REPORT] Reading build reports ...")
+		print("[REPORT] Reading build reports ...")
 
 	@classmethod
 	def _CheckConfiguration(cls, sphinxConfiguration: Config) -> None:
@@ -347,7 +347,7 @@ class BuildSummary(BaseDirective):
 		def countVsExpected(count: int, expectedCount: int, kind: str) -> Tuple[nodes.entry, nodes.entry]:
 			classes = []
 			if count == expectedCount == 0:
-				text = f"⸻"
+				text = "⸻"
 			else:
 				if count != expectedCount:
 					classes = [f"osvvm-{kind}-mismatch"]
@@ -360,7 +360,7 @@ class BuildSummary(BaseDirective):
 		def functionalCoverage(percent: float, kind: str) -> nodes.entry:
 			classes = []
 			if percent is None:
-				text = f"⸻"
+				text = "⸻"
 			else:
 				text = f"{percent * 100:.1f}"
 
