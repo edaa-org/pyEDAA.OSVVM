@@ -46,6 +46,8 @@ setup(
 		gitHubNamespace=gitHubNamespace,
 		sourceFileWithVersion=packageInformationFile,
 		classifiers=list(DEFAULT_CLASSIFIERS) + [
+			"Framework :: Sphinx :: Domain",
+			"Framework :: Sphinx :: Extension",
 			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 		],
 		developmentStatus="beta",
