@@ -279,6 +279,6 @@ def setup(sphinxApplication: Sphinx) -> "setup_ReturnType":
 	return {
 		"version": __version__,                          # version of the extension
 		"env_version": int(__version__.split(".")[0]),   # version of the data structure stored in the environment
-		'parallel_read_safe': False,                     # Not yet evaluated, thus false
+		'parallel_read_safe': True,                      # The domain merges the entries of parallel readers.
 		'parallel_write_safe': True,                     # Internal data structure is used read-only, thus no problems will occur by parallel writing.
 	}
