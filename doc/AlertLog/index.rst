@@ -11,6 +11,9 @@ Alert and Log Report
 
 .. rubric:: Features
 
+* Read OSVVM's AlertLog YAML files (:file:`<test>_alerts.yml`), as written by ``WriteAlertYaml`` of OSVVM's
+  ``AlertLogPkg``.
+* Report keys the format doesn't define as warnings.
 * Convert AlertLog hierarchy into a :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>`
 
 
@@ -26,9 +29,12 @@ Quick Start
       :columns: 6
 
       The following example code opens an OSVVM AlertLog report in YAML format, analyzes the data structure and converts
-      the content to an AlertLog hierarchy. Then the total number of warnings, errors and failures is printed. At
-      next two nested loops iterate all second-level and third-level child items and prints its warnings, errors and
-      failures. Finally, it prints a summary line.
+      the content to an AlertLog hierarchy. Then the total number of failures, errors and warnings is printed. At
+      next two nested loops iterate all second-level and third-level child items and prints its failures, errors and
+      warnings. Finally, it prints a summary line.
+
+      Keys of the YAML file, which the format doesn't define, are reported as
+      :exc:`~pyEDAA.OSVVM.AlertLog.UnknownKeyWarning` to a :class:`~pyTooling.Warning.WarningCollector`.
 
    .. grid-item::
       :columns: 6
@@ -40,24 +46,30 @@ Quick Start
             .. code-block:: Python
 
                from pathlib import Path
+               from pyTooling.Warning import WarningCollector
                from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
-               path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-               doc = AlertLogDocument(path, analyzeAndConvert=True)
+               def counts(item) -> str:
+                 return f"{item.AlertCount.FailureCount}/{item.AlertCount.ErrorCount}/{item.AlertCount.WarningCount}"
 
-               print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
+               path = Path("TbAxi4_BasicReadWrite_alerts.yml")
+               with WarningCollector() as warnings:
+                 doc = AlertLogDocument(path, analyzeAndConvert=True)
+
+               print(f"{doc.Name}: {counts(doc)}")
                for item in doc:
-                 print(f"  {item.Name:<19}: {item.AlertCountWarnings}/{item.AlertCountErrors}/{item.AlertCountFailures}")
+                 print(f"  {item.Name:<19}: {counts(item)}")
                  for innerItem in item:
-                   print(f"    {innerItem.Name:<17}: {innerItem.AlertCountWarnings}/{innerItem.AlertCountErrors}/{innerItem.AlertCountFailures}")
+                   print(f"    {innerItem.Name:<17}: {counts(innerItem)}")
                print("=" * 40)
-               print(f"Total errors: {doc.TotalErrors}")
+               print(f"Total errors: {doc.TotalErrorCount}")
 
          .. tab-item:: Console Output
 
             .. code-block::
 
                TbAxi4_BasicReadWrite: 0/0/0
+                 VHDL Asserts       : 0/0/0
                  Default            : 0/0/0
                  OSVVM              : 0/0/0
                  subordinate_1      : 0/0/0
@@ -70,6 +82,8 @@ Quick Start
                    No response      : 0/0/0
                    WriteResp SB     : 0/0/0
                    ReadResp SB      : 0/0/0
+                   WriteBurstFifo   : 0/0/0
+                   ReadBurstFifo    : 0/0/0
                ========================================
                Total errors: 0
 
@@ -84,6 +98,8 @@ An OSVVM AlertLog report can be summarized as follows:
 
 1. An *AlertLog* report is a tree (or hierarchy) of :ref:`ALERT/DataModel/AlertLogItem` instances.
 2. The tree's root element is a :ref:`ALERT/DataModel/Document` instance derived from :ref:`ALERT/DataModel/AlertLogItem`.
+3. The root has :ref:`ALERT/DataModel/Settings`, which decide whether the test failed.
+4. Alert counts - failures, errors and warnings - are :ref:`ALERT/DataModel/AlertCount` values.
 
 
 
@@ -99,7 +115,8 @@ AlertLog Document
 
       An Alertlog Document represents an OSVVM YAML file and its AlertLog data structure, which is a hierarchy of
       AlertLog items. The OSVVM AlertLog :class:`~pyEDAA.OSVVM.AlertLog.Document` class inherits all methods and
-      properties of an :ref:`ALERT/DataModel/AlertLogItem`.
+      properties of an :ref:`ALERT/DataModel/AlertLogItem`. In addition, it has the format version, the settings, the
+      alerts the test expects and the external errors.
 
       When a document is instantiated, a path to a YAML file is required. Optionally, the YAML file can be immediately
       analyzed and converted to an AlertLog hierarchy. The given path can be accessed by the
@@ -107,37 +124,17 @@ AlertLog Document
       (:attr:`~pyEDAA.OSVVM.AlertLog.Document._yamlDocument`) to the analyzed YAML document.
 
       If the document was not analyzed, the :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` and
-      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Parse` methods can be used to start these steps. The spent time is captured
-      and can be accessed via :data:`~pyEDAA.OSVVM.AlertLog.Document.AnalysisDuration` and
+      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Convert` methods can be used to start these steps. The spent time is
+      captured and can be accessed via :data:`~pyEDAA.OSVVM.AlertLog.Document.AnalysisDuration` and
       :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`.
+
+      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` checks the format version the file states
+      (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`).
 
    .. grid-item::
       :columns: 6
 
-      .. code-block:: Python
-
-         @export
-         class Document(AlertLogItem, Settings):
-            def __init__(self, filename: Path, analyzeAndConvert: bool = False) -> None:
-              ...
-
-            @property
-            def Path(self) -> Path:
-              ...
-
-            @readonly
-            def AnalysisDuration(self) -> timedelta:
-              ...
-
-            @readonly
-            def ModelConversionDuration(self) -> timedelta:
-              ...
-
-            def Analyze(self) -> None:
-              ...
-
-            def Parse(self) -> None:
-              ...
+      .. condensed-class:: pyEDAA.OSVVM.AlertLog.Document
 
 
 .. _ALERT/DataModel/Settings:
@@ -150,15 +147,14 @@ AlertLog Settings
    .. grid-item::
       :columns: 6
 
-      tbd
+      The settings of OSVVM's ``AlertLogPkg``, which decide whether a test failed: whether warnings, disabled alerts and
+      failed requirements are errors, and the external errors passed to ``WriteAlertYaml`` less the alerts the test
+      expects.
 
    .. grid-item::
       :columns: 6
 
-      .. code-block:: Python
-
-         @export
-         class Settings(metaclass=ExtendedType, mixin=True):
+      .. condensed-class:: pyEDAA.OSVVM.AlertLog.Settings
 
 
 .. _ALERT/DataModel/AlertLogItem:
@@ -171,102 +167,30 @@ AlertLog Item
    .. grid-item::
       :columns: 6
 
-      An OSVVM AlertLog entry.
-
-      .. todo::
-
-         **Data model: OSVVM AlertLog Item**
-
-         To be documented.
+      An OSVVM AlertLog entry: an AlertLog ID with its status, its alert counts, its affirmations and its requirements.
+      Child items are unique by name. :meth:`~pyEDAA.OSVVM.AlertLog.AlertLogItem.IterateItems` iterates all items below
+      an item, optionally filtered by a predicate.
 
    .. grid-item::
       :columns: 6
 
-      .. code-block:: Python
+      .. condensed-class:: pyEDAA.OSVVM.AlertLog.AlertLogItem
 
-         @export
-         class AlertLogItem(metaclass=ExtendedType, slots=True):
-            def __init__(
-               self,
-               name: str,
-               status: AlertLogStatus = AlertLogStatus.Unknown,
-               totalErrors: int = 0,
-               alertCountWarnings: int = 0,
-               alertCountErrors: int = 0,
-               alertCountFailures: int = 0,
-               passedCount: int = 0,
-               affirmCount: int = 0,
-               requirementsPassed: int = 0,
-               requirementsGoal: int = 0,
-               disabledAlertCountWarnings: int = 0,
-               disabledAlertCountErrors: int = 0,
-               disabledAlertCountFailures: int = 0,
-               children: Iterable["AlertLogItem"] = None,
-               parent: Nullable["AlertLogItem"] = None
-            ) -> None:
-              ...
 
-            @readonly
-            def Parent(self) -> Nullable["AlertLogItem"]:
-              ...
+.. _ALERT/DataModel/AlertCount:
 
-            @readonly
-            def Name(self) -> str:
-              ...
+Alert Count
+===========
 
-            @readonly
-            def Status(self) -> AlertLogStatus:
-              ...
+.. grid:: 2
 
-            @readonly
-            def TotalErrors(self) -> int:
-              ...
+   .. grid-item::
+      :columns: 6
 
-            @readonly
-            def AlertCountWarnings(self) -> int:
-              ...
+      The number of failures, errors and warnings, as OSVVM's ``AlertCountType`` holds it. An alert count is a value:
+      it belongs to no element, and two alert counts with equal counts are equal.
 
-            @readonly
-            def AlertCountErrors(self) -> int:
-              ...
+   .. grid-item::
+      :columns: 6
 
-            @readonly
-            def AlertCountFailures(self) -> int:
-              ...
-
-            @readonly
-            def PassedCount(self) -> int:
-              ...
-
-            @readonly
-            def AffirmCount(self) -> int:
-              ...
-
-            @readonly
-            def RequirementsPassed(self) -> int:
-              ...
-
-            @readonly
-            def RequirementsGoal(self) -> int:
-              ...
-
-            @readonly
-            def DisabledAlertCountWarnings(self) -> int:
-              ...
-
-            @readonly
-            def DisabledAlertCountErrors(self) -> int:
-              ...
-
-            @readonly
-            def DisabledAlertCountFailures(self) -> int:
-              ...
-
-            def __iter__(self) -> Iterator["AlertLogItem"]:
-              ...
-
-            def __getitem__(self, name: str) -> "AlertLogItem":
-              ...
-
-            def ToTree(self) -> Node:
-              ...
+      .. condensed-class:: pyEDAA.OSVVM.AlertLog.AlertCount
