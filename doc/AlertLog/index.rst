@@ -13,7 +13,8 @@ Alert and Log Report
 
 * Read OSVVM's AlertLog YAML files (:file:`<test>_alerts.yml`), as written by ``WriteAlertYaml`` of OSVVM's
   ``AlertLogPkg``.
-* Report keys the format doesn't define as warnings.
+* Validate a file against the JSON Schema of the format version it states; a key the format doesn't define is a
+  validation error.
 * Convert AlertLog hierarchy into a :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>`
 
 
@@ -33,8 +34,8 @@ Quick Start
       next two nested loops iterate all second-level and third-level child items and prints its failures, errors and
       warnings. Finally, it prints a summary line.
 
-      Keys of the YAML file, which the format doesn't define, are reported as
-      :exc:`~pyEDAA.OSVVM.AlertLog.UnknownKeyWarning` to a :class:`~pyTooling.Warning.WarningCollector`.
+      Analyzing the file validates it against the JSON Schema of its format version: a key the format doesn't define
+      raises :exc:`~pyEDAA.OSVVM.AlertLog.AlertLogError`, with a note per violation.
 
    .. grid-item::
       :columns: 6
@@ -46,15 +47,13 @@ Quick Start
             .. code-block:: Python
 
                from pathlib import Path
-               from pyTooling.Warning import WarningCollector
                from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
                def counts(item) -> str:
                  return f"{item.FailureCount}/{item.ErrorCount}/{item.WarningCount}"
 
                path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-               with WarningCollector() as warnings:
-                 doc = AlertLogDocument(path, analyzeAndConvert=True)
+               doc = AlertLogDocument(path, analyzeAndConvert=True)
 
                print(f"{doc.Name}: {counts(doc)}")
                for item in doc.Children.values():
@@ -127,8 +126,9 @@ AlertLog Document
       captured and can be accessed via :data:`~pyEDAA.OSVVM.AlertLog.Document.AnalysisDuration` and
       :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`.
 
-      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` checks the format version the file states
-      (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`).
+      :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` validates the file against the JSON Schema of the format version
+      it states (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`, :data:`~pyEDAA.OSVVM.AlertLog.SCHEMAS`). The schemas
+      are in the resource package :mod:`pyEDAA.OSVVM.Resources`.
 
    .. grid-item::
       :columns: 6

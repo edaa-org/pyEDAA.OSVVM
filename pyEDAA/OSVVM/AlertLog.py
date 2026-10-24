@@ -36,22 +36,21 @@ item, its status, alert counts, affirmations and requirements; for the test (the
 test expected, the external errors and the settings deciding whether the test failed. The OSVVM scripts move the file to
 :file:`reports/<testsuite>/<test>_alerts.yml` and read it to write the test's HTML report.
 
-A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and checks the
-format version it states (:class:`FormatVersion`), :meth:`Document.Convert` converts the content to the model. Each
-element below the root is parsed by its ``Parse`` classmethod, e.g. :meth:`AlertLogItem.Parse`. A key the format
-doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`, which must be collected by a
-:class:`~pyTooling.Warning.WarningCollector`.
+A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and validates
+it against the JSON Schema of the format version it states (:class:`FormatVersion`, :data:`SCHEMAS`), so a key the
+format doesn't define is a validation error. :meth:`Document.Convert` converts the content to the model. Each element
+below the root is parsed by its ``Parse`` classmethod, e.g. :meth:`AlertLogItem.Parse`. Used on a mapping no schema
+validated, a ``Parse`` classmethod reports a key the format doesn't define as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`,
+which must be collected by a :class:`~pyTooling.Warning.WarningCollector`.
 
 .. rubric:: Example
 
 .. code-block:: Python
 
    from pathlib import Path
-   from pyTooling.Warning import WarningCollector
    from pyEDAA.OSVVM.AlertLog import Document
 
-   with WarningCollector() as warnings:
-     document = Document(Path("TbAxi4_BasicReadWrite_alerts.yml"), analyzeAndConvert=True)
+   document = Document(Path("TbAxi4_BasicReadWrite_alerts.yml"), analyzeAndConvert=True)
 
    print(f"{document.Name}: {document.Status} with {document.TotalErrorCount} errors")
    for item in document.IterateItems():
@@ -60,20 +59,24 @@ doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`, which must
 from __future__            import annotations
 
 from datetime              import timedelta
+from json                  import JSONDecodeError, loads
 from pathlib               import Path
 from typing                import Callable, Generator, Iterable, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq, YAMLError
 
-from pyTooling.Common      import getFullyQualifiedName, StringEnum
+from pyTooling.Common      import getFullyQualifiedName, getResourceFile, StringEnum
 from pyTooling.Decorators  import export, readonly
-from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
+from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError, ToolingException
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
 from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
+from pyEDAA.OSVVM          import OSVVMException, Resources, UnknownKeyWarning
+
+
+__all__ = ["SCHEMAS"]
 
 
 @export
@@ -152,6 +155,11 @@ class FormatVersion(StringEnum):
 	"""
 
 	Version0_1 = "0.1"  #: Format version 0.1.
+
+
+SCHEMAS: dict[FormatVersion, str] = {
+	FormatVersion.Version0_1: "OSVVM-AlertLog-0.1.schema.json",
+}  #: The JSON Schema an AlertLog file is validated against, per format version.
 
 
 @export
@@ -1202,8 +1210,8 @@ class Document(AlertLogItem):
 
 	def Analyze(self) -> None:
 		"""
-		Read the YAML file (specified by :attr:`_path`), check the format version it states, and store the YAML document in
-		:attr:`_yamlDocument`.
+		Read the YAML file (specified by :attr:`_path`), validate it against the JSON Schema of the format version it states
+		(:data:`SCHEMAS`), and store the YAML document in :attr:`_yamlDocument`.
 
 		:raises AlertLogError: If the YAML file doesn't exist.
 		:raises AlertLogError: If the YAML file can't be read.
@@ -1213,6 +1221,9 @@ class Document(AlertLogItem):
 		                       The note lists the supported format versions.
 		:raises AlertLogError: If the YAML file states an unsupported format version. |br|
 		                       The note lists the supported format versions.
+		:raises AlertLogError: If the JSON Schema can't be read.
+		:raises AlertLogError: If the YAML file isn't valid according to the JSON Schema, e.g. has an unknown key. |br|
+		                       A note per violation names its path.
 		"""
 		if not self._path.exists():
 			raise AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
@@ -1244,6 +1255,21 @@ class Document(AlertLogItem):
 			if formatVersion is None:
 				ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' states no format version.")
 				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
+				raise ex
+
+			schemaFile = SCHEMAS[formatVersion]
+			try:
+				schema = loads(getResourceFile(Resources, schemaFile).read_text(encoding="utf-8"))
+			except (ToolingException, OSError, JSONDecodeError) as ex:
+				raise AlertLogError(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
+
+			from jsonschema import Draft202012Validator
+
+			errors = sorted(Draft202012Validator(schema).iter_errors(yamlDocument), key=lambda error: list(error.path))
+			if len(errors) > 0:
+				ex = AlertLogError(f"Validation error for '{self._path}' using JSON Schema '{schemaFile}'.")
+				for error in errors:
+					ex.add_note(f"/{'/'.join(str(part) for part in error.path)}: {error.message}")
 				raise ex
 
 			self._yamlDocument = yamlDocument

@@ -109,12 +109,10 @@ doc = JUnitDocument(junitExampleFile, analyzeAndConvert=True)
 
 ```python
 from pathlib import Path
-from pyTooling.Warning import WarningCollector
 from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
 path = Path("TbAxi4_BasicReadWrite_alerts.yml")
-with WarningCollector() as warnings:
-	doc = AlertLogDocument(path, analyzeAndConvert=True)
+doc = AlertLogDocument(path, analyzeAndConvert=True)
 
 print(f"{doc.Name}: {doc.WarningCount}/{doc.ErrorCount}/{doc.FailureCount}")
 for item in doc.Children.values():

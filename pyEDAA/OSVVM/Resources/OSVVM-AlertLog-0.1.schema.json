@@ -1,0 +1,96 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-AlertLog-0.1.schema.json",
+	"title": "OSVVM AlertLog YAML file, format version 0.1",
+	"description": "The file '<test>_alerts.yml' OSVVM's AlertLogPkg writes by WriteAlertYaml, format version 0.1 (ALERT_YAML_VERSION). Derived from the writer 'osvvm/AlertLogPkg.vhd' (WriteTopAlertYaml, WriteOneAlertYaml, WriteVhdlAssertYaml, WriteSettingsYaml) and the reader 'Scripts/ReportAlert2Html.tcl'. Keys OSVVM added within the version are optional: the root's ExpectedCount (OSVVM 2025.06) and ExternalErrors (OSVVM 2026.08).",
+	"type": "object",
+	"required": ["Version", "Name", "Status", "Results", "Settings", "Children"],
+	"properties": {
+		"Version":  {"description": "Version of the format.", "const": "0.1"},
+		"Name":     {"description": "Name of the test.", "type": "string"},
+		"Status":   {"description": "The test's result, e.g. PASSED, FAILED, TIMEOUT; configurable in OsvvmSettingsPkg.", "type": "string"},
+		"Results":  {"$ref": "#/$defs/RootResults"},
+		"Settings": {"$ref": "#/$defs/Settings"},
+		"Children": {"$ref": "#/$defs/Children"}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"AlertCount": {
+			"description": "Number of failures, errors and warnings (OSVVM's AlertCountType). Settings' ExternalErrors may be negative.",
+			"type": "object",
+			"required": ["Failure", "Error", "Warning"],
+			"properties": {
+				"Failure": {"type": "integer"},
+				"Error":   {"type": "integer"},
+				"Warning": {"type": "integer"}
+			},
+			"additionalProperties": false
+		},
+		"RootResults": {
+			"description": "The test's results.",
+			"type": "object",
+			"required": ["TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal", "DisabledAlertCount"],
+			"properties": {
+				"TotalErrors":        {"type": "integer"},
+				"AlertCount":         {"$ref": "#/$defs/AlertCount"},
+				"PassedCount":        {"type": "integer"},
+				"AffirmCount":        {"type": "integer"},
+				"RequirementsPassed": {"type": "integer"},
+				"RequirementsGoal":   {"type": "integer"},
+				"DisabledAlertCount": {"$ref": "#/$defs/AlertCount"},
+				"ExpectedCount":      {"description": "Alerts the test expects; since OSVVM 2025.06.", "$ref": "#/$defs/AlertCount"},
+				"ExternalErrors":     {"description": "External alerts; since OSVVM 2026.08.", "$ref": "#/$defs/AlertCount"}
+			},
+			"additionalProperties": false
+		},
+		"Results": {
+			"description": "An item's results.",
+			"type": "object",
+			"required": ["TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal", "DisabledAlertCount"],
+			"properties": {
+				"TotalErrors":        {"type": "integer"},
+				"AlertCount":         {"$ref": "#/$defs/AlertCount"},
+				"PassedCount":        {"type": "integer"},
+				"AffirmCount":        {"type": "integer"},
+				"RequirementsPassed": {"type": "integer"},
+				"RequirementsGoal":   {"type": "integer"},
+				"DisabledAlertCount": {"$ref": "#/$defs/AlertCount"}
+			},
+			"additionalProperties": false
+		},
+		"Settings": {
+			"description": "The settings deciding whether the test failed. The flags are written as strings by to_string(boolean).",
+			"type": "object",
+			"required": ["ExternalErrors", "FailOnDisabledErrors", "FailOnRequirementErrors", "FailOnWarning"],
+			"properties": {
+				"ExternalErrors":          {"$ref": "#/$defs/AlertCount"},
+				"FailOnDisabledErrors":    {"$ref": "#/$defs/Flag"},
+				"FailOnRequirementErrors": {"$ref": "#/$defs/Flag"},
+				"FailOnWarning":           {"$ref": "#/$defs/Flag"}
+			},
+			"additionalProperties": false
+		},
+		"Flag": {
+			"description": "A boolean as string, in any case.",
+			"type": "string",
+			"pattern": "^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])$"
+		},
+		"Children": {
+			"description": "The child items; empty as [] or without value.",
+			"type": ["array", "null"],
+			"items": {"$ref": "#/$defs/Item"}
+		},
+		"Item": {
+			"description": "An AlertLog item: an AlertLog ID with its status, results and children.",
+			"type": "object",
+			"required": ["Name", "Status", "Results", "Children"],
+			"properties": {
+				"Name":     {"type": "string"},
+				"Status":   {"description": "PASSED or FAILED; configurable in OsvvmSettingsPkg.", "type": "string"},
+				"Results":  {"$ref": "#/$defs/Results"},
+				"Children": {"$ref": "#/$defs/Children"}
+			},
+			"additionalProperties": false
+		}
+	}
+}
