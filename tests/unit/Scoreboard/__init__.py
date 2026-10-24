@@ -115,11 +115,15 @@ class Instantiation(Testcase):
 		self.assertIsNone(document.Version)
 		self.assertIsNone(document.TestcaseName)
 		self.assertEqual(0, document.ScoreboardCount)
-		with self.assertRaises(ScoreboardError):
-			_ = document.AnalysisDuration
+		self.assertIsNone(document.AnalysisDuration)
+		self.assertIsNone(document.ModelConversionDuration)
 
-		with self.assertRaises(ScoreboardError):
-			_ = document.ModelConversionDuration
+	def test_Document_Analyzed(self) -> None:
+		document = Document(DATA / "TbAxi4_TimeOut_sb_slv.yml")
+		document.Analyze()
+
+		self.assertGreater(document.AnalysisDuration, timedelta())
+		self.assertIsNone(document.ModelConversionDuration)
 
 	def test_Document_Name(self) -> None:
 		self.assertEqual("int", Document(DATA / "Tb_xMii1_MII_INTERFACE_MII_MII_BPS_BPS_100M_sb_int.yml").Name)

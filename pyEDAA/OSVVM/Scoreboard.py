@@ -465,30 +465,22 @@ class Document(YAMLDocumentMixin, metaclass=ExtendedType, slots=True):
 					yield scoreboard
 
 	@readonly
-	def AnalysisDuration(self) -> timedelta:
+	def AnalysisDuration(self) -> Nullable[timedelta]:
 		"""
 		Read-only property to access the time spent for YAML file analysis (:attr:`_analysisDuration`).
 
-		:returns:                The YAML file analysis duration.
-		:raises ScoreboardError: If the document wasn't analyzed.
+		:returns: The YAML file analysis duration, or ``None`` if the document wasn't analyzed yet.
 		"""
-		if self._analysisDuration is None:
-			raise ScoreboardError(f"Document '{self._path}' was not analyzed.")
-
 		return self._analysisDuration
 
 	@readonly
-	def ModelConversionDuration(self) -> timedelta:
+	def ModelConversionDuration(self) -> Nullable[timedelta]:
 		"""
 		Read-only property to access the time spent for data structure to scoreboard model conversion
 		(:attr:`_modelConversionDuration`).
 
-		:returns:                The data structure conversion duration.
-		:raises ScoreboardError: If the document wasn't converted.
+		:returns: The data structure conversion duration, or ``None`` if the document wasn't converted yet.
 		"""
-		if self._modelConversionDuration is None:
-			raise ScoreboardError(f"Document '{self._path}' was not converted.")
-
 		return self._modelConversionDuration
 
 	def Analyze(self) -> None:

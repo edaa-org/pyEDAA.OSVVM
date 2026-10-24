@@ -91,7 +91,7 @@ Scoreboard Document
       If the document was not analyzed, the :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Analyze` and
       :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Convert` methods can be used to start these steps. The spent time is
       captured and can be accessed via :data:`~pyEDAA.OSVVM.Scoreboard.Document.AnalysisDuration` and
-      :data:`~pyEDAA.OSVVM.Scoreboard.Document.ModelConversionDuration`.
+      :data:`~pyEDAA.OSVVM.Scoreboard.Document.ModelConversionDuration`; both are ``None`` before the step ran.
 
       :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Analyze` validates the file against the JSON Schema of the format
       version it states (:data:`~pyEDAA.OSVVM.Scoreboard.SCHEMAS`), a file of the resource package
