@@ -31,7 +31,7 @@
 """Parser and converters for OSVVM-specific data models and report formats."""
 __author__ =            "Patrick Lehmann"
 __email__ =             "Paebbels@gmail.com"
-__copyright__ =         "2025-2026, Patrick Lehmann"
+__copyright__ =         "2025-2026, Electronic Design Automation Abstraction (EDA²)"
 __license__ =           "Apache License, Version 2.0"
 __version__ =           "0.9.0rc1"
 __keywords__ =          ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
