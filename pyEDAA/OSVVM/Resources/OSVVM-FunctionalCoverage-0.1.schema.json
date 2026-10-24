@@ -1,0 +1,101 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-FunctionalCoverage-0.1.schema.json",
+	"title": "OSVVM functional coverage YAML file, format version 0.1",
+	"description": "The functional coverage file '<testcase>_cov.yml' OSVVM's CoveragePkg writes ('WriteCovYaml'), format version 0.1 (OSVVM 2026.02 and later; the constant 'COVERAGE_YAML_VERSION'). Derived from the writer 'osvvm/CoveragePkg.vhd' and the reader 'Scripts/ReportCov2Html.tcl'. The writer added no key while writing version 0.1, so every key is required.",
+	"type": "object",
+	"required": ["Version", "Coverage", "Settings", "Models"],
+	"properties": {
+		"Version":  {"description": "Version of the format.", "const": "0.1"},
+		"Coverage": {"description": "The testcase's coverage in percent: the models' hits counted toward their goals, weighted by the models' weights.", "type": "number", "minimum": 0},
+		"Settings": {
+			"description": "Settings of the coverage report.",
+			"type": "object",
+			"required": ["WritePassFail"],
+			"properties": {
+				"WritePassFail": {"description": "1, if the HTML report states pass or fail per bin ('WritePassFail' or 'ErrorIfNotCovered' set).", "enum": [0, 1]}
+			},
+			"additionalProperties": false
+		},
+		"Models": {
+			"description": "The coverage models with bins; the models of weight 0 last.",
+			"type": "array",
+			"items": {"$ref": "#/$defs/Model"}
+		}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"Flag": {"description": "A boolean, as VHDL's 'to_upper(to_string(boolean))' writes it.", "enum": ["TRUE", "FALSE"]},
+		"Model": {
+			"description": "A coverage model: its name, testcases, coverage, settings, bin information and bins.",
+			"type": "object",
+			"required": ["Name", "TestCases", "Coverage", "Settings", "BinInfo", "Bins"],
+			"properties": {
+				"Name":      {"description": "Name of the coverage model.", "type": "string"},
+				"TestCases": {"description": "The testcases, which sampled the model.", "type": "array", "items": {"type": "string"}},
+				"Coverage":  {"description": "The model's coverage in percent, relative to its goal.", "type": "number", "minimum": 0},
+				"Settings":  {"$ref": "#/$defs/ModelSettings"},
+				"BinInfo":   {"$ref": "#/$defs/BinInfo"},
+				"Bins":      {"description": "The bins.", "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Bin"}}
+			},
+			"additionalProperties": false
+		},
+		"ModelSettings": {
+			"description": "The settings of a coverage model.",
+			"type": "object",
+			"required": [
+				"CovWeight", "Goal", "WeightMode", "Seeds", "CountMode", "IllegalMode", "Threshold", "ThresholdEnable",
+				"IsRequirement", "TotalCovCount", "TotalCovGoal"
+			],
+			"properties": {
+				"CovWeight":       {"description": "Weight of the model in the testcase's coverage; below 1 excludes it.", "type": "integer"},
+				"Goal":            {"description": "Coverage goal in percent ('CovTarget'), scaling the at-least counts.", "type": "number", "minimum": 0},
+				"WeightMode":      {"description": "WeightModeType.", "enum": ["AT_LEAST", "REMAIN", "WEIGHT", "REMAIN_EXP", "REMAIN_SCALED", "REMAIN_WEIGHT"]},
+				"Seeds":           {"description": "The two seeds of the model's randomization.", "type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2},
+				"CountMode":       {"description": "CountModeType.", "enum": ["COUNT_FIRST", "COUNT_ALL"]},
+				"IllegalMode":     {"description": "IllegalModeType.", "enum": ["ILLEGAL_ON", "ILLEGAL_FAILURE", "ILLEGAL_OFF"]},
+				"Threshold":       {"description": "Threshold in percent of intelligent coverage.", "type": "number"},
+				"ThresholdEnable": {"$ref": "#/$defs/Flag"},
+				"IsRequirement":   {"$ref": "#/$defs/Flag"},
+				"TotalCovCount":   {"description": "The hits counted toward the scaled at-least counts.", "type": "integer", "minimum": 0},
+				"TotalCovGoal":    {"description": "The sum of the scaled at-least counts.", "type": "integer", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"BinInfo": {
+			"description": "The model's dimensions, field names and number of bins.",
+			"type": "object",
+			"required": ["Dimensions", "FieldNames", "NumBins"],
+			"properties": {
+				"Dimensions": {"description": "Number of dimensions.", "type": "integer", "minimum": 1},
+				"FieldNames": {"description": "Name per dimension; 'Bin<n>', if unnamed.", "type": "array", "minItems": 1, "items": {"type": "string"}},
+				"NumBins":    {"description": "Number of bins.", "type": "integer", "minimum": 1}
+			},
+			"additionalProperties": false
+		},
+		"Bin": {
+			"description": "A bin: name, type, one range per dimension, count, at-least count and percentage of coverage.",
+			"type": "object",
+			"required": ["Name", "Type", "Range", "Count", "AtLeast", "PercentCov"],
+			"properties": {
+				"Name":       {"description": "Name of the bin; empty, if unnamed.", "type": "string"},
+				"Type":       {"description": "The bin's action ('ActionToName').", "enum": ["COUNT", "IGNORE", "ILLEGAL"]},
+				"Range":      {"description": "One range per dimension.", "type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Range"}},
+				"Count":      {"description": "How often the bin was hit.", "type": "integer", "minimum": 0},
+				"AtLeast":    {"description": "How often the bin must be hit to be covered.", "type": "integer", "minimum": 0},
+				"PercentCov": {"description": "The count in percent of the at-least count.", "type": "number", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"Range": {
+			"description": "A range of values, both bounds included.",
+			"type": "object",
+			"required": ["Min", "Max"],
+			"properties": {
+				"Min": {"description": "The lowest value.", "type": "integer"},
+				"Max": {"description": "The highest value.", "type": "integer"}
+			},
+			"additionalProperties": false
+		}
+	}
+}

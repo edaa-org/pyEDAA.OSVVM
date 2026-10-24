@@ -33,7 +33,9 @@ A data model of OSVVM's functional coverage YAML file (:file:`<testcase>_cov.yml
 functional coverage model of pyEDAA.Reports.
 
 OSVVM's ``CoveragePkg`` writes the file (``WriteCovYaml``), OSVVM's script ``ReportCov2Html.tcl`` reads it. The file
-states its format version, the total coverage of the testcase, a setting, and the coverage models:
+states its format version, the total coverage of the testcase, a setting, and the coverage models. It is validated
+against the JSON Schema of the format version it states, listed in :data:`SCHEMAS` - e.g.
+:file:`OSVVM-FunctionalCoverage-0.1.schema.json`, derived from OSVVM's writer.
 
 * A :class:`CoverageModel` has a name, the testcases, which sampled it, its coverage, its :class:`ModelSettings`,
   the names of its fields - one per dimension -, and its bins.
@@ -59,21 +61,25 @@ dimension, a :class:`~pyEDAA.Reports.FunctionalCoverage.Cross` of the field name
 """
 from __future__                        import annotations
 
+from json                              import JSONDecodeError, loads
 from pathlib                           import Path
 from typing                            import Any, ClassVar, Generic, Iterable, Mapping, Optional as Nullable, Self, \
                                               TypeVar
 
 from ruamel.yaml                       import YAML, YAMLError
-from pyTooling.Common                  import getFullyQualifiedName, StringEnum
+from pyTooling.Common                  import getFullyQualifiedName, getResourceFile, StringEnum
 from pyTooling.Decorators              import export, readonly
+from pyTooling.Exceptions              import ToolingException
 from pyTooling.MetaClasses             import ExtendedType
 from pyTooling.Stopwatch               import Stopwatch
 
 from pyEDAA.Reports.FunctionalCoverage import BinKind, Covergroup, Coverpoint, CoverpointBin, Cross, CrossBin, \
                                               Document as fc_Document, FunctionalCoverageReport, ValueRange
 
-from pyEDAA.OSVVM                      import OSVVMException
+from pyEDAA.OSVVM                      import OSVVMException, Resources
 
+
+__all__ = ["SCHEMAS", "ParentType"]
 
 ParentType = TypeVar("ParentType")
 
@@ -93,6 +99,11 @@ class FormatVersion(StringEnum):
 	"""
 
 	Version0_1 = "0.1"  #: Format 0.1, written by OSVVM 2026.01 and later.
+
+
+SCHEMAS: dict[FormatVersion, str] = {
+	FormatVersion.Version0_1: "OSVVM-FunctionalCoverage-0.1.schema.json",
+}  #: The JSON Schema a coverage file is validated against, per format version.
 
 
 @export
@@ -736,7 +747,7 @@ class CoverageModel(Element["Report"]):
 		coverageModel = cls(
 			model["Name"],
 			model["TestCases"],
-			model["Coverage"],
+			float(model["Coverage"]),
 			ModelSettings.Parse(model["Settings"]),
 			binInfo["FieldNames"],
 			parent=parent
@@ -953,15 +964,22 @@ class Document(fc_Document, Report):
 
 	def Analyze(self) -> None:
 		"""
-		Read and parse the YAML file, and check its format version.
+		Read and parse the YAML file, read its format version and validate it against the version's JSON Schema in
+		:data:`SCHEMAS`.
 
 		:raises CoverageError: If the file doesn't exist.
 		:raises CoverageError: If the file isn't valid YAML.
-		:raises CoverageError: If the file states no or an unsupported format version.
+		:raises CoverageError: If the file states no or an unsupported format version. |br|
+		                       The note lists the supported format versions.
+		:raises CoverageError: If the JSON Schema can't be read.
+		:raises CoverageError: If the file isn't valid according to the JSON Schema. |br|
+		                       A note per error names its path in the file.
 		"""
 		if not self._path.exists():
 			raise CoverageError(f"OSVVM coverage file '{self._path}' does not exist.") \
 				from FileNotFoundError(f"File '{self._path}' not found.")
+
+		from jsonschema import Draft202012Validator
 
 		with Stopwatch() as sw:
 			try:
@@ -976,6 +994,19 @@ class Document(fc_Document, Report):
 				ex.add_note(f"Supported format versions: {', '.join(member.value for member in FormatVersion)}.")
 				raise ex
 
+			schemaFile = SCHEMAS[FormatVersion(version)]
+			try:
+				schema = loads(getResourceFile(Resources, schemaFile).read_text(encoding="utf-8"))
+			except (ToolingException, OSError, JSONDecodeError) as ex:
+				raise CoverageError(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
+
+			errors = sorted(Draft202012Validator(schema).iter_errors(yamlDocument), key=lambda error: list(error.path))
+			if len(errors) > 0:
+				ex = CoverageError(f"Validation error for '{self._path}' using JSON Schema '{schemaFile}'.")
+				for error in errors:
+					ex.add_note(f"/{'/'.join(str(part) for part in error.path)}: {error.message}")
+				raise ex
+
 			self._yamlDocument = yamlDocument
 
 		self._analysisDuration = sw.Duration
@@ -987,7 +1018,7 @@ class Document(fc_Document, Report):
 		:raises CoverageError: If the YAML file was not analyzed before. |br|
 		                       Call 'Document.Analyze()' or create the document using
 		                       'Document(path, analyzeAndConvert=True)'.
-		:raises CoverageError: If a key is missing, or a value isn't of the type or in the range OSVVM writes.
+		:raises CoverageError: If a range's maximum is less than its minimum.
 		:raises CoverageError: If a coverage model or a bin is inconsistent.
 		"""
 		if self._yamlDocument is None:
@@ -998,14 +1029,14 @@ class Document(fc_Document, Report):
 		with Stopwatch() as sw:
 			try:
 				self._version =       FormatVersion.Parse(self._yamlDocument["Version"])
-				self._coverage =      self._yamlDocument["Coverage"]
+				self._coverage =      float(self._yamlDocument["Coverage"])
 				self._writePassFail = {0: False, 1: True}[self._yamlDocument["Settings"]["WritePassFail"]]
 				self._models =        []
 
 				for model in self._yamlDocument["Models"]:
 					CoverageModel.Parse(model, parent=self)
-			except (KeyError, TypeError, ValueError) as ex:
-				raise CoverageError(f"OSVVM coverage file '{self._path}' isn't in the format OSVVM writes.") from ex
+			except ValueError as ex:
+				raise CoverageError(f"OSVVM coverage file '{self._path}' has an invalid value.") from ex
 
 		self._conversionDuration = sw.Duration
 

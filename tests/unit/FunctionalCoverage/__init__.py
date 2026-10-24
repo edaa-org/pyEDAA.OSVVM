@@ -301,14 +301,66 @@ class Documents(Testcase):
 				_ = Document(path, analyzeAndConvert=True)
 		self.assertTrue(str(context.exception).startswith("YAML syntax error in OSVVM coverage file"))
 
-	def test_Format(self) -> None:
+	def test_Schema_MissingKey(self) -> None:
 		with TemporaryDirectory() as directory:
 			path = Path(directory) / "Test_cov.yml"
 			path.write_text('Version: "0.1"\nCoverage: 0.00\nSettings:\n  WritePassFail: 0\n', encoding="utf-8")
 
 			with self.assertRaises(CoverageError) as context:
 				_ = Document(path, analyzeAndConvert=True)
-		self.assertIsInstance(context.exception.__cause__, KeyError)
+		self.assertEqual(
+			f"Validation error for '{path}' using JSON Schema 'OSVVM-FunctionalCoverage-0.1.schema.json'.",
+			str(context.exception)
+		)
+		self.assertEqual(["/: 'Models' is a required property"], context.exception.__notes__)
+
+	def test_Schema_UnknownKey(self) -> None:
+		"""A key the format version doesn't have is rejected."""
+		text = (DIRECTORY / "TbStream_SendGetRandom1_cov.yml").read_text(encoding="utf-8")
+		text = text.replace("      CovWeight: 0\n", "      CovWeight: 0\n      ParentName: \"DelayCov\"\n", 1)
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text(text, encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertEqual(
+			["/Models/0/Settings: Additional properties are not allowed ('ParentName' was unexpected)"],
+			context.exception.__notes__
+		)
+
+	def test_Schema_Values(self) -> None:
+		"""A value of another type or out of the values OSVVM writes is rejected, each with a note."""
+		text = (DIRECTORY / "TbStream_SendGetRandom1_cov.yml").read_text(encoding="utf-8")
+		text = text.replace('Type: "COUNT"', 'Type: "AUTO"', 1).replace("Count: 19", "Count: -1", 1)
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text(text, encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertEqual(
+			[
+				"/Models/0/Bins/0/Count: -1 is less than the minimum of 0",
+				"/Models/0/Bins/0/Type: 'AUTO' is not one of ['COUNT', 'IGNORE', 'ILLEGAL']"
+			],
+			context.exception.__notes__
+		)
+
+	def test_InvalidRange(self) -> None:
+		"""A range of a minimum above its maximum passes the schema, and is rejected while converting."""
+		text = (DIRECTORY / "TbStream_SendGetRandom1_cov.yml").read_text(encoding="utf-8")
+		text = text.replace("{Min: 3, Max: 11}", "{Min: 11, Max: 3}", 1)
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text(text, encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertIsInstance(context.exception.__cause__, ValueError)
 
 
 class Conversion(Testcase):
