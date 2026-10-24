@@ -124,7 +124,7 @@ AlertLog Document
       If the document was not analyzed, the :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` and
       :meth:`~pyEDAA.OSVVM.AlertLog.Document.Convert` methods can be used to start these steps. The spent time is
       captured and can be accessed via :data:`~pyEDAA.OSVVM.AlertLog.Document.AnalysisDuration` and
-      :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`.
+      :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`; both are ``None`` before the step ran.
 
       :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` validates the file against the JSON Schema of the format version
       it states (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`, :data:`~pyEDAA.OSVVM.AlertLog.SCHEMAS`), as every

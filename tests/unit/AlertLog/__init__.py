@@ -192,11 +192,15 @@ class Instantiation(Testcase):
 		self.assertIsNone(document.ExternalWarningCount)
 		self.assertIsNone(document.ExternalErrorCount)
 		self.assertIsNone(document.ExternalFailureCount)
-		with self.assertRaises(AlertLogError):
-			_ = document.AnalysisDuration
+		self.assertIsNone(document.AnalysisDuration)
+		self.assertIsNone(document.ModelConversionDuration)
 
-		with self.assertRaises(AlertLogError):
-			_ = document.ModelConversionDuration
+	def test_Document_Analyzed(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml")
+		document.Analyze()
+
+		self.assertGreater(document.AnalysisDuration, timedelta())
+		self.assertIsNone(document.ModelConversionDuration)
 
 	def test_Document_Path(self) -> None:
 		with self.assertRaises(ValueError) as context:
