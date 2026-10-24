@@ -57,21 +57,20 @@ schema validated the same way.
 """
 from __future__            import annotations
 
-from datetime              import datetime, timedelta
-from json                  import JSONDecodeError, loads
+from datetime              import timedelta
 from pathlib               import Path
-from typing                import Any, Callable, ClassVar, Generator, Iterable, Optional as Nullable, Self
+from typing                import Callable, ClassVar, Generator, Iterable, Optional as Nullable, Self
 
-from ruamel.yaml           import YAML, CommentedMap, CommentedSeq, YAMLError
+from ruamel.yaml           import CommentedMap, CommentedSeq
 
-from pyTooling.Common      import getFullyQualifiedName, readResourceFile, StringEnum
+from pyTooling.Common      import getFullyQualifiedName, StringEnum
 from pyTooling.Decorators  import export, readonly
-from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError, ToolingException
+from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
 
-from pyEDAA.OSVVM          import OSVVMException, Resources
+from pyEDAA.OSVVM          import OSVVMException, YAMLDocumentMixin
 
 
 __all__ = ["SCHEMAS"]
@@ -989,9 +988,8 @@ _Path =     Path
 _Settings = Settings
 
 
-# TODO: Derive from common Document class?
 @export
-class Document(AlertLogItem):
+class Document(AlertLogItem, YAMLDocumentMixin):
 	"""
 	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
@@ -1008,8 +1006,6 @@ class Document(AlertLogItem):
 	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                     #: Schema per version.
 
 	_path:                    _Path                    #: Path to the YAML file.
-	_yamlDocument:            Nullable[CommentedMap]   #: The parsed YAML document, after :meth:`Analyze`.
-	_version:                 Nullable[FormatVersion]  #: Version of the format.
 	_settings:                Nullable[_Settings]      #: The settings deciding whether the test failed.
 	_expectedWarningCount:    Nullable[int]            #: Number of warnings the test expects.
 	_expectedErrorCount:      Nullable[int]            #: Number of errors the test expects.
@@ -1032,6 +1028,7 @@ class Document(AlertLogItem):
 		:raises TypeError:        If parameter ``filename`` isn't of type :class:`~pathlib.Path`.
 		"""
 		super().__init__("")
+		YAMLDocumentMixin.__init__(self)
 
 		if filename is None:
 			raise ValueError("Parameter 'filename' is None.")
@@ -1041,8 +1038,6 @@ class Document(AlertLogItem):
 			raise ex
 
 		self._path =                    filename
-		self._yamlDocument =            None
-		self._version =                 None
 		self._settings =                None
 		self._expectedWarningCount =    None
 		self._expectedErrorCount =      None
@@ -1082,15 +1077,6 @@ class Document(AlertLogItem):
 		:returns: The document's path to the YAML file.
 		"""
 		return self._path
-
-	@readonly
-	def Version(self) -> Nullable[FormatVersion]:
-		"""
-		Read-only property to access the version of the format (:attr:`_version`).
-
-		:returns: The version; ``None`` before the document was converted.
-		"""
-		return self._version
 
 	@readonly
 	def Settings(self) -> Nullable[Settings]:
@@ -1206,120 +1192,6 @@ class Document(AlertLogItem):
 			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
-
-	def _AnalyzeYAML(self) -> None:
-		"""
-		Read the YAML file, read the format version it states and validate it against the version's JSON Schema.
-
-		YAML timestamps, which ruamel.yaml reads as :class:`~datetime.datetime`, are validated as ISO 8601 strings. A
-		violation of an alternative (``oneOf``, ``anyOf``) is reported by its most relevant cause.
-
-		:raises AlertLogError: If the file doesn't exist.
-		:raises AlertLogError: If the file can't be read.
-		:raises AlertLogError: If the file isn't UTF-8 encoded.
-		:raises AlertLogError: If the file isn't valid YAML.
-		:raises AlertLogError: If the file's content isn't a YAML mapping.
-		:raises AlertLogError: If the file states no format version. |br|
-		                       The note lists the supported format versions.
-		:raises AlertLogError: If the file states an unsupported format version. |br|
-		                       The note lists the supported format versions.
-		:raises AlertLogError: If the JSON Schema can't be read.
-		:raises AlertLogError: If the file isn't valid according to the JSON Schema, e.g. has a key the format doesn't
-		                       define. |br|
-		                       A note per violation names its path and line.
-		"""
-		from jsonschema            import Draft202012Validator
-		from jsonschema.exceptions import best_match
-
-		def toJSON(node: Any) -> Any:
-			"""
-			Nested function for recursion, copying YAML data to JSON data: timestamps become ISO 8601 strings.
-
-			:param node: The YAML data.
-			:returns:    The JSON data.
-			"""
-			if isinstance(node, dict):
-				return {key: toJSON(value) for key, value in node.items()}
-			elif isinstance(node, list):
-				return [toJSON(value) for value in node]
-			elif isinstance(node, datetime):
-				return node.isoformat()
-
-			return node
-
-		def lineOf(path: Any) -> int:
-			"""
-			Nested function finding the line of a value in the YAML file.
-
-			:param path: The path of the value, as a sequence of keys and indices.
-			:returns:    The line of the value, or of the innermost mapping or sequence of its path, 1-based.
-			"""
-			node = yamlDocument
-			line = 1
-			for part in path:
-				if isinstance(node, CommentedMap) and part in node:
-					line = node.lc.key(part)[0] + 1
-				elif isinstance(node, CommentedSeq) and isinstance(part, int) and part < len(node):
-					line = node.lc.item(part)[0] + 1
-				else:
-					break
-
-				node = node[part]
-
-			return line
-
-		if not self._path.exists():
-			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
-		try:
-			content = self._path.read_text(encoding="utf-8")
-		except OSError as ex:
-			raise self._ERROR(f"Couldn't read {self._DESCRIPTION} '{self._path}'.") from ex
-		except UnicodeDecodeError as ex:
-			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not UTF-8 encoded.") from ex
-
-		try:
-			yamlDocument = YAML().load(content)
-		except YAMLError as ex:
-			raise self._ERROR(f"YAML syntax error in {self._DESCRIPTION} '{self._path}'.") from ex
-
-		if not isinstance(yamlDocument, CommentedMap):
-			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not a YAML mapping.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
-			raise ex
-
-		version = yamlDocument.get("Version", None)
-		try:
-			formatVersion = self._FORMAT_VERSION.Parse(version)
-		except (TypeError, ValueError) as cause:
-			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states unsupported format version '{version}'.")
-			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
-			raise ex from cause
-
-		if formatVersion is None:
-			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states no format version.")
-			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
-			raise ex
-
-		schemaFile = self._SCHEMAS[formatVersion]
-		try:
-			schema = loads(readResourceFile(Resources, schemaFile))
-		except (ToolingException, JSONDecodeError) as ex:
-			raise self._ERROR(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
-
-		validator = Draft202012Validator(schema)
-		errors =    sorted(validator.iter_errors(toJSON(yamlDocument)), key=lambda error: list(error.absolute_path))
-		if len(errors) > 0:
-			ex = self._ERROR(f"Validation error for {self._DESCRIPTION} '{self._path}' using JSON Schema '{schemaFile}'.")
-			for error in errors:
-				error = best_match((error, ))
-				path = error.absolute_path
-				ex.add_note(f"/{'/'.join(str(part) for part in path)} (line {lineOf(path)}): {error.message}")
-			raise ex
-
-		self._yamlDocument = yamlDocument
-		self._version =      formatVersion
 
 	def Convert(self) -> None:
 		"""

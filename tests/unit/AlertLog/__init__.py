@@ -565,7 +565,28 @@ class Parse(Testcase):
 		self.assertEqual(
 			f"OSVVM AlertLog YAML file '{path}' states unsupported format version '0.2'.", str(context.exception)
 		)
-		self.assertListEqual(["Supported format versions: 0.1."], context.exception.__notes__)
+		self.assertListEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
+
+	def test_OldVersion(self) -> None:
+		"""OSVVM 2025.06a and older wrote format version 1.0."""
+		path = DATA / "OldVersion_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(
+			f"OSVVM AlertLog YAML file '{path}' states unsupported format version '1.0'.", str(context.exception)
+		)
+		self.assertEqual(
+			"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported.",
+			context.exception.__notes__[1]
+		)
 
 	def test_NoVersion(self) -> None:
 		path = DATA / "NoVersion_alerts.yml"

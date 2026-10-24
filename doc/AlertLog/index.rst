@@ -119,7 +119,7 @@ AlertLog Document
       When a document is instantiated, a path to a YAML file is required. Optionally, the YAML file can be immediately
       analyzed and converted to an AlertLog hierarchy. The given path can be accessed by the
       :data:`~pyEDAA.OSVVM.AlertLog.Document.Path` property. The document class preserves an internal reference
-      (:attr:`~pyEDAA.OSVVM.AlertLog.Document._yamlDocument`) to the analyzed YAML document.
+      (:attr:`~pyEDAA.OSVVM.YAMLDocumentMixin._yamlDocument`) to the analyzed YAML document.
 
       If the document was not analyzed, the :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` and
       :meth:`~pyEDAA.OSVVM.AlertLog.Document.Convert` methods can be used to start these steps. The spent time is
@@ -127,8 +127,9 @@ AlertLog Document
       :data:`~pyEDAA.OSVVM.AlertLog.Document.ModelConversionDuration`.
 
       :meth:`~pyEDAA.OSVVM.AlertLog.Document.Analyze` validates the file against the JSON Schema of the format version
-      it states (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`, :data:`~pyEDAA.OSVVM.AlertLog.SCHEMAS`). The schemas
-      are in the resource package :mod:`pyEDAA.OSVVM.Resources`.
+      it states (:class:`~pyEDAA.OSVVM.AlertLog.FormatVersion`, :data:`~pyEDAA.OSVVM.AlertLog.SCHEMAS`), as every
+      document of OSVVM's YAML files does by :class:`~pyEDAA.OSVVM.YAMLDocumentMixin`. The schemas are in the resource
+      package :mod:`pyEDAA.OSVVM.Resources`.
 
    .. grid-item::
       :columns: 6
