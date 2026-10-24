@@ -33,7 +33,7 @@ from __future__            import annotations
 
 from datetime              import timedelta
 from pathlib               import Path
-from typing                import Callable, Generator, Iterable, Optional as Nullable, Self
+from typing                import Any, Callable, Generator, Iterable, Iterator, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 
@@ -43,8 +43,9 @@ from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
+from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException
+from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
 
 
 @export
@@ -171,6 +172,152 @@ class AlertLogStatus(StringEnum):
 
 
 @export
+class AlertCount(metaclass=ExtendedType, slots=True):
+	"""
+	An alert count: the number of failures, errors and warnings, as OSVVM's ``AlertCountType`` holds it.
+
+	An alert count is a value, like a number: it belongs to no element, and two alert counts are equal, if their counts
+	are equal.
+	"""
+
+	_failureCount: int  #: Number of failures.
+	_errorCount:   int  #: Number of errors.
+	_warningCount: int  #: Number of warnings.
+
+	def __init__(self, failureCount: int = 0, errorCount: int = 0, warningCount: int = 0) -> None:
+		"""
+		Initializes an alert count.
+
+		A count may be negative: the settings' external errors subtract the alerts a test expects.
+
+		:param failureCount: Optional, number of failures. Default: ``0``.
+		:param errorCount:   Optional, number of errors. Default: ``0``.
+		:param warningCount: Optional, number of warnings. Default: ``0``.
+		:raises ValueError:  If parameter ``failureCount`` is ``None``.
+		:raises ValueError:  If parameter ``errorCount`` is ``None``.
+		:raises ValueError:  If parameter ``warningCount`` is ``None``.
+		:raises TypeError:   If parameter ``failureCount`` isn't of type :class:`int`.
+		:raises TypeError:   If parameter ``errorCount`` isn't of type :class:`int`.
+		:raises TypeError:   If parameter ``warningCount`` isn't of type :class:`int`.
+		"""
+		for parameterName, count in (
+			("failureCount", failureCount),
+			("errorCount",   errorCount),
+			("warningCount", warningCount)
+		):
+			if count is None:
+				raise ValueError(f"Parameter '{parameterName}' is None.")
+			elif not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		self._failureCount = failureCount
+		self._errorCount =   errorCount
+		self._warningCount = warningCount
+
+	@classmethod
+	def Parse(cls, node: CommentedMap) -> Self:
+		"""
+		Parse an alert count.
+
+		OSVVM writes an alert count as a flow mapping, e.g. ``AlertCount: {Failure: 0, Error: 2, Warning: 1}``. A key
+		the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+
+		:param node:                           The YAML mapping.
+		:returns:                              The alert count.
+		:raises AlertLogError:                 If the mapping has no key ``Failure``, ``Error`` or ``Warning``.
+		:raises AlertLogError:                 If the value of key ``Failure``, ``Error`` or ``Warning`` isn't an integer.
+		:raises UnhandledCriticalWarningError: If the mapping has an unknown key, and no warning collector collects the
+		                                       warning.
+		"""
+		line = node.lc.line + 1
+		for key in node:
+			if key not in ("Failure", "Error", "Warning"):
+				keyLine = node.lc.key(key)[0] + 1
+				WarningCollector.Raise(
+					UnknownKeyWarning(f"Unknown key '{key}' in alert count at line {keyLine}.", key=key, line=keyLine)
+				)
+
+		for key in ("Failure", "Error", "Warning"):
+			if key not in node:
+				raise AlertLogError(f"Alert count at line {line} has no key '{key}'.")
+			elif not isinstance(node[key], int):
+				ex = AlertLogError(f"Key '{key}' of alert count at line {line} is not an integer.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(node[key])}'.")
+				raise ex
+
+		return cls(node["Failure"], node["Error"], node["Warning"])
+
+	@readonly
+	def FailureCount(self) -> int:
+		"""
+		Read-only property to access the number of failures (:attr:`_failureCount`).
+
+		:returns: Number of failures.
+		"""
+		return self._failureCount
+
+	@readonly
+	def ErrorCount(self) -> int:
+		"""
+		Read-only property to access the number of errors (:attr:`_errorCount`).
+
+		:returns: Number of errors.
+		"""
+		return self._errorCount
+
+	@readonly
+	def WarningCount(self) -> int:
+		"""
+		Read-only property to access the number of warnings (:attr:`_warningCount`).
+
+		:returns: Number of warnings.
+		"""
+		return self._warningCount
+
+	def __eq__(self, other: Any) -> bool:
+		"""
+		Compare two alert counts.
+
+		:param other: The other alert count.
+		:returns:     ``True``, if the numbers of failures, errors and warnings are equal.
+		"""
+		if not isinstance(other, AlertCount):
+			return NotImplemented
+
+		return (
+			self._failureCount == other._failureCount and
+			self._errorCount == other._errorCount and
+			self._warningCount == other._warningCount
+		)
+
+	def __hash__(self) -> int:
+		"""
+		Return a hash of the alert count, consistent with :meth:`__eq__`.
+
+		:returns: The hash of the numbers of failures, errors and warnings.
+		"""
+		return hash((self._failureCount, self._errorCount, self._warningCount))
+
+	def __repr__(self) -> str:
+		"""
+		Return a representation of the alert count.
+
+		:returns: The numbers of failures, errors and warnings.
+		"""
+		return (
+			f"AlertCount(failureCount={self._failureCount}, errorCount={self._errorCount}, "
+			f"warningCount={self._warningCount})"
+		)
+
+
+# A class with a property named like a class - ``AlertCount``, ``Settings`` - can't name that class in the annotation
+# of a field: the class body's namespace, where annotations are evaluated, binds the name to the property.
+_AlertCount = AlertCount
+
+
+@export
 def _format(node: Node) -> str:
 	"""
 	User-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function for nodes referencing
@@ -200,32 +347,24 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	_status:                  AlertLogStatus           #: AlertLog item's status.
 	_totalErrorCount:         int                      #: Total number of errors, as OSVVM computed it.
-	_warningCount:            int                      #: Number of warnings.
-	_errorCount:              int                      #: Number of errors.
-	_failureCount:            int                      #: Number of failures.
+	_alertCount:              _AlertCount              #: Number of failures, errors and warnings.
 	_passedCount:             int                      #: Number of passed affirmations.
 	_affirmCount:             int                      #: Number of affirmations (incl. failed affirmations).
 	_passedRequirementsCount: int                      #: Number of passed requirements.
 	_requirementsGoalCount:   int                      #: Number of requirements to pass.
-	_disabledWarningCount:    int                      #: Number of disabled warnings.
-	_disabledErrorCount:      int                      #: Number of disabled errors.
-	_disabledFailureCount:    int                      #: Number of disabled failures.
+	_disabledAlertCount:      _AlertCount              #: Number of disabled failures, errors and warnings.
 
 	def __init__(
 		self,
 		name:                    str,
 		status:                  AlertLogStatus = AlertLogStatus.Unknown,
 		totalErrorCount:         int = 0,
-		warningCount:            int = 0,
-		errorCount:              int = 0,
-		failureCount:            int = 0,
+		alertCount:              Nullable[AlertCount] = None,
 		passedCount:             int = 0,
 		affirmCount:             int = 0,
 		passedRequirementsCount: int = 0,
 		requirementsGoalCount:   int = 0,
-		disabledWarningCount:    int = 0,
-		disabledErrorCount:      int = 0,
-		disabledFailureCount:    int = 0,
+		disabledAlertCount:      Nullable[AlertCount] = None,
 		children:                Nullable[Iterable[AlertLogItem]] = None,
 		*,
 		parent:                  Nullable[AlertLogItem] = None
@@ -236,16 +375,14 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		:param name:                        Name of the AlertLog item.
 		:param status:                      Optional, the item's status. Default: :attr:`AlertLogStatus.Unknown`.
 		:param totalErrorCount:             Optional, total number of errors. Default: ``0``.
-		:param warningCount:                Optional, number of warnings. Default: ``0``.
-		:param errorCount:                  Optional, number of errors. Default: ``0``.
-		:param failureCount:                Optional, number of failures. Default: ``0``.
+		:param alertCount:                  Optional, number of failures, errors and warnings. Default: ``None``, no
+		                                    alerts.
 		:param passedCount:                 Optional, number of passed affirmations. Default: ``0``.
 		:param affirmCount:                 Optional, number of affirmations. Default: ``0``.
 		:param passedRequirementsCount:     Optional, number of passed requirements. Default: ``0``.
 		:param requirementsGoalCount:       Optional, number of requirements to pass. Default: ``0``.
-		:param disabledWarningCount:        Optional, number of disabled warnings. Default: ``0``.
-		:param disabledErrorCount:          Optional, number of disabled errors. Default: ``0``.
-		:param disabledFailureCount:        Optional, number of disabled failures. Default: ``0``.
+		:param disabledAlertCount:          Optional, number of disabled failures, errors and warnings. Default: ``None``,
+		                                    no disabled alerts.
 		:param children:                    Optional, child items. Default: ``None``.
 		:param parent:                      Optional, the parent item; the item is added to its children. Default:
 		                                    ``None``.
@@ -254,27 +391,17 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		:raises ValueError:                 If parameter ``status`` is ``None``.
 		:raises TypeError:                  If parameter ``status`` isn't of type :class:`AlertLogStatus`.
 		:raises ValueError:                 If parameter ``totalErrorCount`` is ``None``.
-		:raises ValueError:                 If parameter ``warningCount`` is ``None``.
-		:raises ValueError:                 If parameter ``errorCount`` is ``None``.
-		:raises ValueError:                 If parameter ``failureCount`` is ``None``.
 		:raises ValueError:                 If parameter ``passedCount`` is ``None``.
 		:raises ValueError:                 If parameter ``affirmCount`` is ``None``.
 		:raises ValueError:                 If parameter ``passedRequirementsCount`` is ``None``.
 		:raises ValueError:                 If parameter ``requirementsGoalCount`` is ``None``.
-		:raises ValueError:                 If parameter ``disabledWarningCount`` is ``None``.
-		:raises ValueError:                 If parameter ``disabledErrorCount`` is ``None``.
-		:raises ValueError:                 If parameter ``disabledFailureCount`` is ``None``.
 		:raises TypeError:                  If parameter ``totalErrorCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``warningCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``errorCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``failureCount`` isn't of type :class:`int`.
 		:raises TypeError:                  If parameter ``passedCount`` isn't of type :class:`int`.
 		:raises TypeError:                  If parameter ``affirmCount`` isn't of type :class:`int`.
 		:raises TypeError:                  If parameter ``passedRequirementsCount`` isn't of type :class:`int`.
 		:raises TypeError:                  If parameter ``requirementsGoalCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``disabledWarningCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``disabledErrorCount`` isn't of type :class:`int`.
-		:raises TypeError:                  If parameter ``disabledFailureCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``alertCount`` isn't of type :class:`AlertCount`.
+		:raises TypeError:                  If parameter ``disabledAlertCount`` isn't of type :class:`AlertCount`.
 		:raises TypeError:                  If parameter ``children`` isn't iterable.
 		:raises TypeError:                  If parameter ``children`` contains an element not of type
 		                                    :class:`AlertLogItem`.
@@ -299,22 +426,25 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 		for parameterName, count in (
 			("totalErrorCount",         totalErrorCount),
-			("warningCount",            warningCount),
-			("errorCount",              errorCount),
-			("failureCount",            failureCount),
 			("passedCount",             passedCount),
 			("affirmCount",             affirmCount),
 			("passedRequirementsCount", passedRequirementsCount),
-			("requirementsGoalCount",   requirementsGoalCount),
-			("disabledWarningCount",    disabledWarningCount),
-			("disabledErrorCount",      disabledErrorCount),
-			("disabledFailureCount",    disabledFailureCount)
+			("requirementsGoalCount",   requirementsGoalCount)
 		):
 			if count is None:
 				raise ValueError(f"Parameter '{parameterName}' is None.")
 			elif not isinstance(count, int):
 				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		for parameterName, value in (
+			("alertCount",         alertCount),
+			("disabledAlertCount", disabledAlertCount)
+		):
+			if value is not None and not isinstance(value, AlertCount):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'AlertCount'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 				raise ex
 
 		if parent is not None:
@@ -331,16 +461,12 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		self._name =                    name
 		self._status =                  status
 		self._totalErrorCount =         totalErrorCount
-		self._warningCount =            warningCount
-		self._errorCount =              errorCount
-		self._failureCount =            failureCount
+		self._alertCount =              AlertCount() if alertCount is None else alertCount
 		self._passedCount =             passedCount
 		self._affirmCount =             affirmCount
 		self._passedRequirementsCount = passedRequirementsCount
 		self._requirementsGoalCount =   requirementsGoalCount
-		self._disabledWarningCount =    disabledWarningCount
-		self._disabledErrorCount =      disabledErrorCount
-		self._disabledFailureCount =    disabledFailureCount
+		self._disabledAlertCount =      AlertCount() if disabledAlertCount is None else disabledAlertCount
 
 		self._children = childDict = {}
 
@@ -369,6 +495,107 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 		if parent is not None:
 			parent._children[name] = self
+
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[AlertLogItem] = None) -> AlertLogItem:
+		"""
+		Parse an entry of ``Children``: its name, status and ``Results``, and its children.
+
+		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+
+		:param node:                           The YAML mapping of the entry.
+		:param parent:                         Optional, the parent item; the item is added to its children. Default:
+		                                       ``None``.
+		:returns:                              The AlertLog item.
+		:raises AlertLogError:                 If the mapping or its ``Results`` lack a key the format requires.
+		:raises AlertLogError:                 If a value isn't of the type the format requires.
+		:raises AlertLogError:                 If the status is unknown.
+		:raises DuplicateAlertLogItemError:    If parameter ``parent`` has a child of the same name already.
+		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
+		                                       warning.
+		"""
+		line = node.lc.line + 1
+		for key in node:
+			if key not in ("Name", "Status", "Results", "Children"):
+				keyLine = node.lc.key(key)[0] + 1
+				WarningCollector.Raise(
+					UnknownKeyWarning(f"Unknown key '{key}' in AlertLog item at line {keyLine}.", key=key, line=keyLine)
+				)
+
+		for key, keyType, typeName in (
+			("Name",    str,          "a string"),
+			("Status",  str,          "a string"),
+			("Results", CommentedMap, "a mapping")
+		):
+			if key not in node:
+				raise AlertLogError(f"AlertLog item at line {line} has no key '{key}'.")
+			elif not isinstance(node[key], keyType):
+				ex = AlertLogError(f"Key '{key}' of AlertLog item at line {line} is not {typeName}.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(node[key])}'.")
+				raise ex
+
+		if "Children" not in node:
+			raise AlertLogError(f"AlertLog item at line {line} has no key 'Children'.")
+		elif node["Children"] is not None and not isinstance(node["Children"], CommentedSeq):
+			ex = AlertLogError(f"Key 'Children' of AlertLog item at line {line} is not a sequence.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(node['Children'])}'.")
+			raise ex
+
+		results = node["Results"]
+		for key in results:
+			if key not in (
+				"TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal",
+				"DisabledAlertCount"
+			):
+				keyLine = results.lc.key(key)[0] + 1
+				WarningCollector.Raise(
+					UnknownKeyWarning(f"Unknown key '{key}' in results at line {keyLine}.", key=key, line=keyLine)
+				)
+
+		for key, keyType, typeName in (
+			("TotalErrors",        int,          "an integer"),
+			("AlertCount",         CommentedMap, "a mapping"),
+			("PassedCount",        int,          "an integer"),
+			("AffirmCount",        int,          "an integer"),
+			("RequirementsPassed", int,          "an integer"),
+			("RequirementsGoal",   int,          "an integer"),
+			("DisabledAlertCount", CommentedMap, "a mapping")
+		):
+			if key not in results:
+				raise AlertLogError(f"Results of AlertLog item at line {line} have no key '{key}'.")
+			elif not isinstance(results[key], keyType):
+				ex = AlertLogError(f"Key '{key}' of results of AlertLog item at line {line} is not {typeName}.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(results[key])}'.")
+				raise ex
+
+		try:
+			status = AlertLogStatus.Parse(node["Status"])
+		except AlertLogError as ex:
+			ex.add_note(f"Status of AlertLog item at line {line}.")
+			raise
+
+		item = AlertLogItem(
+			node["Name"],
+			status,
+			results["TotalErrors"],
+			AlertCount.Parse(results["AlertCount"]),
+			results["PassedCount"],
+			results["AffirmCount"],
+			results["RequirementsPassed"],
+			results["RequirementsGoal"],
+			AlertCount.Parse(results["DisabledAlertCount"]),
+			parent=parent
+		)
+
+		for child in () if node["Children"] is None else node["Children"]:
+			if not isinstance(child, CommentedMap):
+				ex = AlertLogError(f"Child of AlertLog item '{item._name}' at line {line} is not a mapping.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
+				raise ex
+
+			AlertLogItem.Parse(child, parent=item)
+
+		return item
 
 	@property
 	def Parent(self) -> Nullable[AlertLogItem]:
@@ -444,31 +671,13 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		return self._totalErrorCount
 
 	@readonly
-	def WarningCount(self) -> int:
+	def AlertCount(self) -> AlertCount:
 		"""
-		Read-only property to access the AlertLog item's number of warnings (:attr:`_warningCount`).
+		Read-only property to access the AlertLog item's number of failures, errors and warnings (:attr:`_alertCount`).
 
-		:returns: AlertLog item's number of warnings.
+		:returns: AlertLog item's alert count.
 		"""
-		return self._warningCount
-
-	@readonly
-	def ErrorCount(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's number of errors (:attr:`_errorCount`).
-
-		:returns: AlertLog item's number of errors.
-		"""
-		return self._errorCount
-
-	@readonly
-	def FailureCount(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's number of failures (:attr:`_failureCount`).
-
-		:returns: AlertLog item's number of failures.
-		"""
-		return self._failureCount
+		return self._alertCount
 
 	@readonly
 	def PassedCount(self) -> int:
@@ -507,31 +716,14 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		return self._requirementsGoalCount
 
 	@readonly
-	def DisabledWarningCount(self) -> int:
+	def DisabledAlertCount(self) -> AlertCount:
 		"""
-		Read-only property to access the AlertLog item's number of disabled warnings (:attr:`_disabledWarningCount`).
+		Read-only property to access the AlertLog item's number of disabled failures, errors and warnings
+		(:attr:`_disabledAlertCount`).
 
-		:returns: AlertLog item's number of disabled warnings.
+		:returns: AlertLog item's alert count of disabled alerts.
 		"""
-		return self._disabledWarningCount
-
-	@readonly
-	def DisabledErrorCount(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's number of disabled errors (:attr:`_disabledErrorCount`).
-
-		:returns: AlertLog item's number of disabled errors.
-		"""
-		return self._disabledErrorCount
-
-	@readonly
-	def DisabledFailureCount(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's number of disabled failures (:attr:`_disabledFailureCount`).
-
-		:returns: AlertLog item's number of disabled failures.
-		"""
-		return self._disabledFailureCount
+		return self._disabledAlertCount
 
 	@readonly
 	def Children(self) -> dict[str, AlertLogItem]:
@@ -541,15 +733,6 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		:returns: The child items, by name, in the order of the AlertLog file.
 		"""
 		return self._children
-
-	@readonly
-	def ChildCount(self) -> int:
-		"""
-		Read-only property to return the number of child items.
-
-		:returns: Number of child items.
-		"""
-		return len(self._children)
 
 	def IterateItems(
 		self,
@@ -573,6 +756,32 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 				yield from child.IterateItems(predicate)
 
+	def __iter__(self) -> Iterator[AlertLogItem]:
+		"""
+		Iterate all child AlertLog items.
+
+		:returns: An iterator of child items.
+		"""
+		return iter(self._children.values())
+
+	def __len__(self) -> int:
+		"""
+		Returns the number of child AlertLog items.
+
+		:returns: The number of child items.
+		"""
+		return len(self._children)
+
+	def __getitem__(self, name: str) -> AlertLogItem:
+		"""
+		Index access for returning child AlertLog items.
+
+		:param name:      The child's name.
+		:returns:         The referenced child.
+		:raises KeyError: When the child referenced by parameter 'name' doesn't exist.
+		"""
+		return self._children[name]
+
 	def ToTree(self, format: Callable[[Node], str] = _format) -> Node:
 		"""
 		Convert the AlertLog hierarchy starting from this AlertLog item to a :external+pyTool:ref:`pyTooling Tree
@@ -587,9 +796,9 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 			keyValuePairs={
 				"Name":            self._name,
 				"TotalErrorCount": self._totalErrorCount,
-				"FailureCount":    self._failureCount,
-				"ErrorCount":      self._errorCount,
-				"WarningCount":    self._warningCount,
+				"FailureCount":    self._alertCount._failureCount,
+				"ErrorCount":      self._alertCount._errorCount,
+				"WarningCount":    self._alertCount._warningCount,
 				"PassedCount":     self._passedCount,
 				"AffirmCount":     self._affirmCount
 			},
@@ -599,26 +808,194 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 
 @export
-class Settings(metaclass=ExtendedType, mixin=True):
-	_externalWarningCount:    int
-	_externalErrorCount:      int
-	_externalFailureCount:    int
-	_failOnDisabledErrors:    bool
-	_failOnRequirementErrors: bool
-	_failOnWarning:           bool
+class Settings(metaclass=ExtendedType, slots=True):
+	"""
+	The root's ``Settings``: the settings of ``AlertLogPkg`` deciding whether a test failed.
 
-	def __init__(self) -> None:
-		self._externalWarningCount =    0
-		self._externalErrorCount =      0
-		self._externalFailureCount =    0
-		self._failOnDisabledErrors =    False
-		self._failOnRequirementErrors = True
-		self._failOnWarning =           False
+	The settings belong to the :class:`Document`, which is the root of the AlertLog hierarchy.
+	"""
+
+	_parent:                  Nullable[Document]  #: The document the settings belong to.
+	_externalErrors:          _AlertCount         #: External errors, less the alerts the test expects.
+	_failOnDisabledErrors:    bool                #: If true, disabled alerts are errors.
+	_failOnRequirementErrors: bool                #: If true, failed requirements are errors.
+	_failOnWarning:           bool                #: If true, warnings are errors.
+
+	def __init__(
+		self,
+		externalErrors:          AlertCount,
+		failOnDisabledErrors:    bool,
+		failOnRequirementErrors: bool,
+		failOnWarning:           bool,
+		*,
+		parent:                  Nullable[Document] = None
+	) -> None:
+		"""
+		Initializes the settings, and adds them to their document.
+
+		:param externalErrors:          External errors, less the alerts the test expects.
+		:param failOnDisabledErrors:    If true, disabled alerts are errors.
+		:param failOnRequirementErrors: If true, failed requirements are errors.
+		:param failOnWarning:           If true, warnings are errors.
+		:param parent:                  Optional, the document the settings belong to. Default: ``None``.
+		:raises ValueError:             If parameter ``externalErrors`` is ``None``.
+		:raises TypeError:              If parameter ``externalErrors`` isn't of type :class:`AlertCount`.
+		:raises ValueError:             If parameter ``failOnDisabledErrors`` is ``None``.
+		:raises ValueError:             If parameter ``failOnRequirementErrors`` is ``None``.
+		:raises ValueError:             If parameter ``failOnWarning`` is ``None``.
+		:raises TypeError:              If parameter ``failOnDisabledErrors`` isn't of type :class:`bool`.
+		:raises TypeError:              If parameter ``failOnRequirementErrors`` isn't of type :class:`bool`.
+		:raises TypeError:              If parameter ``failOnWarning`` isn't of type :class:`bool`.
+		:raises TypeError:              If parameter ``parent`` isn't of type :class:`Document`.
+		:raises AlertLogError:          If parameter ``parent`` has settings already.
+		"""
+		if externalErrors is None:
+			raise ValueError("Parameter 'externalErrors' is None.")
+		elif not isinstance(externalErrors, AlertCount):
+			ex = TypeError("Parameter 'externalErrors' is not of type 'AlertCount'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(externalErrors)}'.")
+			raise ex
+
+		for parameterName, flag in (
+			("failOnDisabledErrors",    failOnDisabledErrors),
+			("failOnRequirementErrors", failOnRequirementErrors),
+			("failOnWarning",           failOnWarning)
+		):
+			if flag is None:
+				raise ValueError(f"Parameter '{parameterName}' is None.")
+			elif not isinstance(flag, bool):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'bool'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(flag)}'.")
+				raise ex
+
+		if parent is not None:
+			if not isinstance(parent, Document):
+				ex = TypeError("Parameter 'parent' is not of type 'Document'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
+				raise ex
+			elif parent._settings is not None:
+				raise AlertLogError(f"AlertLog document '{parent._path}' has settings already.")
+
+		self._parent =                  parent
+		self._externalErrors =          externalErrors
+		self._failOnDisabledErrors =    failOnDisabledErrors
+		self._failOnRequirementErrors = failOnRequirementErrors
+		self._failOnWarning =           failOnWarning
+
+		if parent is not None:
+			parent._settings = self
+
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[Document] = None) -> Self:
+		"""
+		Parse the root's ``Settings``.
+
+		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored. A key the format doesn't define
+		is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+
+		:param node:                           The YAML mapping.
+		:param parent:                         Optional, the document the settings belong to. Default: ``None``.
+		:returns:                              The settings.
+		:raises AlertLogError:                 If the mapping lacks a key the format requires.
+		:raises AlertLogError:                 If a value isn't of the type the format requires.
+		:raises AlertLogError:                 If a flag is neither ``true`` nor ``false``.
+		:raises AlertLogError:                 If parameter ``parent`` has settings already.
+		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
+		                                       warning.
+		"""
+		line = node.lc.line + 1
+		for key in node:
+			if key not in ("ExternalErrors", "FailOnDisabledErrors", "FailOnRequirementErrors", "FailOnWarning"):
+				keyLine = node.lc.key(key)[0] + 1
+				WarningCollector.Raise(
+					UnknownKeyWarning(f"Unknown key '{key}' in settings at line {keyLine}.", key=key, line=keyLine)
+				)
+
+		if "ExternalErrors" not in node:
+			raise AlertLogError(f"Settings at line {line} have no key 'ExternalErrors'.")
+		elif not isinstance(node["ExternalErrors"], CommentedMap):
+			ex = AlertLogError(f"Key 'ExternalErrors' of settings at line {line} is not a mapping.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(node['ExternalErrors'])}'.")
+			raise ex
+
+		flags = {}
+		for key in ("FailOnDisabledErrors", "FailOnRequirementErrors", "FailOnWarning"):
+			if key not in node:
+				raise AlertLogError(f"Settings at line {line} have no key '{key}'.")
+			elif not isinstance(value := node[key], str):
+				ex = AlertLogError(f"Key '{key}' of settings at line {line} is not a string.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+				raise ex
+			elif value.lower() not in ("true", "false"):
+				ex = AlertLogError(f"Key '{key}' of settings at line {line} is neither 'true' nor 'false'.")
+				ex.add_note(f"Got value '{value}'.")
+				raise ex
+
+			flags[key] = value.lower() == "true"
+
+		return cls(
+			AlertCount.Parse(node["ExternalErrors"]),
+			flags["FailOnDisabledErrors"],
+			flags["FailOnRequirementErrors"],
+			flags["FailOnWarning"],
+			parent=parent
+		)
+
+	@readonly
+	def Parent(self) -> Nullable[Document]:
+		"""
+		Read-only property to access the document the settings belong to (:attr:`_parent`).
+
+		:returns: The document, or ``None`` if the settings belong to no document.
+		"""
+		return self._parent
+
+	@readonly
+	def ExternalErrors(self) -> AlertCount:
+		"""
+		Read-only property to access the external errors, less the alerts the test expects (:attr:`_externalErrors`).
+
+		A test passes external errors to ``WriteAlertYaml``, e.g. errors found by a script. A count is negative, if the
+		test expects more alerts of that kind than external errors are passed.
+
+		:returns: The external errors.
+		"""
+		return self._externalErrors
+
+	@readonly
+	def FailOnDisabledErrors(self) -> bool:
+		"""
+		Read-only property to access whether disabled alerts are errors (:attr:`_failOnDisabledErrors`).
+
+		:returns: ``True``, if disabled alerts are errors.
+		"""
+		return self._failOnDisabledErrors
+
+	@readonly
+	def FailOnRequirementErrors(self) -> bool:
+		"""
+		Read-only property to access whether failed requirements are errors (:attr:`_failOnRequirementErrors`).
+
+		:returns: ``True``, if failed requirements are errors.
+		"""
+		return self._failOnRequirementErrors
+
+	@readonly
+	def FailOnWarning(self) -> bool:
+		"""
+		Read-only property to access whether warnings are errors (:attr:`_failOnWarning`).
+
+		:returns: ``True``, if warnings are errors.
+		"""
+		return self._failOnWarning
+
+
+_Settings = Settings
 
 
 # TODO: Derive from common Document class?
 @export
-class Document(AlertLogItem, Settings):
+class Document(AlertLogItem):
 	"""
 	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
@@ -631,6 +1008,7 @@ class Document(AlertLogItem, Settings):
 	_path:                   Path                       #: Path to the YAML file.
 	_yamlDocument:           Nullable[YAML]             #: Internal YAML document instance.
 	_version:                Nullable[FormatVersion]    #: YAML data structure version.
+	_settings:               Nullable[_Settings]        #: The settings deciding whether the test failed.
 
 	_analysisDuration:        Nullable[timedelta]       #: YAML file analysis duration in seconds.
 	_modelConversionDuration: Nullable[timedelta]       #: Data structure conversion duration in seconds.
@@ -643,18 +1021,18 @@ class Document(AlertLogItem, Settings):
 		:param analyzeAndConvert: If true, analyze the YAML document and convert the content to an AlertLog data model instance.
 		"""
 		super().__init__("", parent=None)
-		Settings.__init__(self)
 
 		self._path = filename
 		self._yamlDocument = None
 		self._version = None
+		self._settings = None
 
 		self._analysisDuration = None
 		self._modelConversionDuration =  None
 
 		if analyzeAndConvert:
 			self.Analyze()
-			self.Parse()
+			self.Convert()
 
 	@property
 	def Path(self) -> Path:
@@ -664,6 +1042,15 @@ class Document(AlertLogItem, Settings):
 		:returns: The document's path to the YAML file.
 		"""
 		return self._path
+
+	@readonly
+	def Settings(self) -> Nullable[Settings]:
+		"""
+		Read-only property to access the settings deciding whether the test failed (:attr:`_settings`).
+
+		:returns: The settings; ``None`` before the document was converted.
+		"""
+		return self._settings
 
 	@readonly
 	def AnalysisDuration(self) -> timedelta:
@@ -709,15 +1096,21 @@ class Document(AlertLogItem, Settings):
 
 		self._analysisDuration = sw.Duration
 
-	def Parse(self) -> None:
+	def Convert(self) -> None:
 		"""
-		Convert the YAML data structure to a hierarchy of :class:`AlertLogItem` instances.
+		Convert the YAML data structure to the settings and a hierarchy of :class:`AlertLogItem` instances.
 
-		:raises AlertLogError: If YAML file was not analyzed.
+		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+
+		:raises AlertLogError:                 If YAML file was not analyzed.
+		:raises AlertLogError:                 If a mapping lacks a key the format requires.
+		:raises AlertLogError:                 If a value isn't of the type the format requires.
+		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
+		                                       warning.
 		"""
 		if self._yamlDocument is None:
 			ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
+			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
@@ -736,8 +1129,9 @@ class Document(AlertLogItem, Settings):
 
 			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
 			self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
+			Settings.Parse(self._ParseMapFromYAML(self._yamlDocument, "Settings"), parent=self)
 			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
-				_ = self._ParseAlertLogItem(child, self)
+				AlertLogItem.Parse(child, parent=self)
 
 		self._modelConversionDuration = sw.Duration
 
@@ -789,41 +1183,3 @@ class Document(AlertLogItem, Settings):
 			raise AlertLogError(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
 
 		return value
-
-	@staticmethod
-	def _ParseIntFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[int]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = OSVVMException(f"Integer field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, int):
-			raise AlertLogError(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
-
-		return value
-
-	def _ParseAlertLogItem(self, child: CommentedMap, parent: Nullable[AlertLogItem] = None) -> AlertLogItem:
-		results = self._ParseMapFromYAML(child, "Results")
-		yamlAlertCount = self._ParseMapFromYAML(results, "AlertCount")
-		yamlDisabledAlertCount = self._ParseMapFromYAML(results, "DisabledAlertCount")
-		alertLogItem = AlertLogItem(
-			self._ParseStrFieldFromYAML(child, "Name"),
-			AlertLogStatus.Parse(self._ParseStrFieldFromYAML(child, "Status")),
-			self._ParseIntFieldFromYAML(results, "TotalErrors"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Warning"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Error"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Failure"),
-			self._ParseIntFieldFromYAML(results, "PassedCount"),
-			self._ParseIntFieldFromYAML(results, "AffirmCount"),
-			self._ParseIntFieldFromYAML(results, "RequirementsPassed"),
-			self._ParseIntFieldFromYAML(results, "RequirementsGoal"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure"),
-			children=(self._ParseAlertLogItem(ch) for ch in self._ParseSequenceFromYAML(child, "Children")),
-			parent=parent
-		)
-
-		return alertLogItem
