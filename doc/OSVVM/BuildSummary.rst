@@ -18,6 +18,13 @@ is read once per build, with the settings file :file:`<test>_run.yml` of every t
 reader - e.g. a key the format doesn't define, or a missing settings file - is logged as a Sphinx warning.
 
 
+This is how the documentation's demo build renders, declared with pages:
+
+.. osvvm:build-summary::
+   :reportid: demo
+   :columns: status testcases checks alerts requirements coverage simulation-time
+
+
 .. _DIR/BuildSummary/Options:
 
 Options
@@ -98,6 +105,50 @@ A testsuite's row and the build's rows sum the counts of their testcases.
 +---------------------+-------------------------------------+---------------------------------------------------------+
 | ``generics``        | Generics                            | The generics a testcase was simulated with.             |
 +---------------------+-------------------------------------+---------------------------------------------------------+
+
+
+.. _DIR/BuildSummary/Pages:
+
+Pages per testsuite and testcase
+********************************
+
+A build summary declared with the key ``pages`` gets a page per testsuite and per testcase. They are generated when the
+documentation is built - no source file is written - below the document name the key states: ``<pages>/<testsuite>``
+and ``<pages>/<testsuite>/<testcase>``, e.g. ``osvvm/demo/Axi4Full/TbAxi4_BasicReadWrite``. They are pyTooling.Sphinx'
+:external+pyToolSphinx:ref:`unit test pages <DIR/UnittestSummary/Pages>`, with what OSVVM states:
+
+* A **testcase's page** shows its status and OSVVM status, its elapsed and simulation time, its checks, alerts,
+  expected and disabled alerts, requirements, functional coverage, generics and testsuite, and links to its report
+  files - OSVVM's HTML report, the settings, AlertLog, coverage and scoreboard reports and the transcripts -, which
+  Sphinx copies into the build as downloads; a file the settings name, but which doesn't exist, is warned about. The
+  reason of a skipped testcase or of an expected or known status follows as *Message*. Then the testcase's AlertLog,
+  functional coverage and scoreboards, as the directives :ref:`osvvm:alert-log <DIR/AlertLog>`,
+  :ref:`osvvm:functional-coverage <DIR/FunctionalCoverage>` and :ref:`osvvm:scoreboards <DIR/Scoreboards>` show them.
+* A **testsuite's page** shows its status and counts, and a table of its testcases - status, elapsed time, checks,
+  alerts, requirements, functional coverage and simulation time -, each linked to its page.
+
+The :rst:dir:`osvvm:build-summary` table links every testsuite and testcase to its page, and lists the testsuites in a
+hidden table of contents, so the pages are below the summary's document in the navigation. The document showing the
+summary is the build's overview page: a title, the :ref:`build's information <DIR/BuildInformation>` and the summary.
+
+
+.. _DIR/BuildSummary/Roles:
+
+Roles
+*****
+
+.. rst:role:: osvvm:tc
+
+   Refers to a testcase's page: ``:osvvm:tc:`[<report ID>:]<testsuite>.<testcase>```. A suffix of the qualified name
+   - e.g. only the testcase - is accepted, if it's unique. Without a report ID, the first build summary of
+   ``osvvm_build_summaries`` is meant.
+
+.. rst:role:: osvvm:ts
+
+   Refers to a testsuite's page, as :rst:role:`osvvm:tc` refers to a testcase's.
+
+The roles are pyTooling.Sphinx' :external+pyToolSphinx:ref:`report roles <DIR/UnittestSummary/Roles>`, in domain
+``osvvm``. A target matching nothing or several objects is warned about.
 
 
 .. _DIR/BuildSummary/Styling:

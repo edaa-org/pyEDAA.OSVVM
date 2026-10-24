@@ -294,6 +294,7 @@ osvvm_build_summaries = {
 	},
 	"demo": {
 		"yaml_report": "../tests/data/OSVVM/Sphinx/Demo/Demo.yml",
+		"pages":       "OSVVM/demo",
 	}
 }
 

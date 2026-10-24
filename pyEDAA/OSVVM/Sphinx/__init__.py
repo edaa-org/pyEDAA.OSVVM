@@ -29,51 +29,62 @@
 # ==================================================================================================================== #
 #
 """
-**A Sphinx domain providing directives to add reports to the Sphinx-based documentation.**
+**A Sphinx domain providing directives to add OSVVM's reports to the Sphinx-based documentation.**
 
 Supported reports:
 
-* :ref:`BUILDS`
-* :ref:`ALERTLOG`
-* :ref:`COVERAGE`
-* :ref:`SCORE`
-
+* :ref:`Build summary <DIR/BuildSummary>`, with :ref:`a page per testsuite and testcase <DIR/BuildSummary/Pages>`
+* :ref:`Build information <DIR/BuildInformation>`
+* :ref:`AlertLog <DIR/AlertLog>`
+* :ref:`Functional coverage <DIR/FunctionalCoverage>`
+* :ref:`Scoreboards <DIR/Scoreboards>`
 """
+from hashlib                       import md5
+from pathlib                       import Path
+from typing                        import TYPE_CHECKING, Any, Callable, ClassVar, TypedDict
 
-from hashlib               import md5
-from pathlib               import Path
-from typing                import TYPE_CHECKING, Any, Tuple, Dict, Optional as Nullable, TypedDict, List, Callable
+from docutils                      import nodes
+from sphinx.application            import Sphinx
+from sphinx.config                 import Config
+from sphinx.domains                import ObjType
+from sphinx.util.logging           import getLogger
 
-from docutils              import nodes
-from sphinx.addnodes       import pending_xref
-from sphinx.application    import Sphinx
-from sphinx.builders       import Builder
-from sphinx.config         import Config
-from sphinx.domains        import Domain
-from sphinx.environment    import BuildEnvironment
-from sphinx.util.logging   import getLogger
-from pyTooling.Decorators  import export
-from pyTooling.Common      import readResourceFile
-from pyTooling.Sphinx      import ReportExtensionError
+from pyTooling.Common              import readResourceFile
+from pyTooling.Decorators          import export
+from pyTooling.Sphinx              import ReportDomain, ReportExtensionError, ReportRole, ReportRoleDefinition
 
-from pyEDAA.OSVVM          import __version__
-from pyEDAA.OSVVM          import static as ResourcePackage
+from pyEDAA.OSVVM                  import __version__, static as ResourcePackage
+
+
+__all__ = ["OSVVM_ROLES"]
+
+#: The roles referring to the testsuites and testcases of build summaries with pages, by role name.
+OSVVM_ROLES = {
+	"tc": ReportRoleDefinition("testcase",  "osvvm_build_summaries", "OSVVM build summaries"),
+	"ts": ReportRoleDefinition("testsuite", "osvvm_build_summaries", "OSVVM build summaries"),
+}
+
 
 @export
-class OSVVMDomain(Domain):
+class OSVVMDomain(ReportDomain):
 	"""
 	A Sphinx extension providing a ``osvvm`` domain to integrate reports and summaries into a Sphinx-based documentation.
+
+	It derives from pyTooling.Sphinx' domain ``report``: a build summary with pages contributes its testsuites and
+	testcases as objects, which the roles of :data:`OSVVM_ROLES` refer to.
 
 	.. rubric:: New directives:
 
 	* :rst:dir:`osvvm:build-summary`
+	* :rst:dir:`osvvm:build-information`
 	* :rst:dir:`osvvm:alert-log`
 	* :rst:dir:`osvvm:functional-coverage`
 	* :rst:dir:`osvvm:scoreboards`
 
 	.. rubric:: New roles:
 
-	* *None*
+	* :rst:role:`osvvm:ts` - a testsuite's page.
+	* :rst:role:`osvvm:tc` - a testcase's page.
 
 	.. rubric:: New indices:
 
@@ -83,53 +94,59 @@ class OSVVMDomain(Domain):
 
 	All configuration variables in :file:`conf.py` are prefixed with ``osvvm_*``:
 
-	* ``osvvm_testsuites``
-
+	* ``osvvm_build_summaries``
 	"""
 
-	name =  "osvvm"  #: The name of this domain
-	label = "osvvm"  #: The label of this domain
+	_ROLES: ClassVar[dict[str, ReportRoleDefinition]] = OSVVM_ROLES  #: The domain's roles, by role name.
 
-	dependencies: List[str] = [
+	name =         "osvvm"  #: The name of this domain
+	label =        "osvvm"  #: The label of this domain
+	data_version = 1        #: Version of the domain data's layout; a pickled environment of another version is dropped.
+
+	object_types = {
+		definition.objectType: ObjType(definition.objectType, roleName) for roleName, definition in OSVVM_ROLES.items()
+	}  #: The objects: per role, the testsuites or testcases of the build summaries with pages.
+	initial_data: dict[str, Any] = {
+		roleName: {} for roleName in OSVVM_ROLES
+	}  #: The data of an empty documentation: per role, no object.
+	roles = {
+		roleName: ReportRole(domain="osvvm", innernodeclass=nodes.inline, warn_dangling=True) for roleName in OSVVM_ROLES
+	}  #: A dictionary of all roles in this domain.
+	dangling_warnings = {
+		roleName: f"{definition.objectType} '%(target)s' not found in the {definition.reports}"
+		for roleName, definition in OSVVM_ROLES.items()
+	}  #: The warning for a reference to an unknown object, per role.
+
+	dependencies: list[str] = [
 	]  #: A list of other extensions this domain depends on.
 
 	from pyEDAA.OSVVM.Sphinx.AlertLog           import AlertLogTable
 	from pyEDAA.OSVVM.Sphinx.FunctionalCoverage import FunctionalCoverageTables
+	from pyEDAA.OSVVM.Sphinx.Pages              import BuildReportPages
 	from pyEDAA.OSVVM.Sphinx.Scoreboard         import ScoreboardTables
-	from pyEDAA.OSVVM.Sphinx.Testsuites         import BuildSummary
+	from pyEDAA.OSVVM.Sphinx.Testsuites         import BuildInformation, BuildSummary
 
 	directives = {
 		BuildSummary.directiveName:             BuildSummary,
+		BuildInformation.directiveName:         BuildInformation,
 		AlertLogTable.directiveName:            AlertLogTable,
 		FunctionalCoverageTables.directiveName: FunctionalCoverageTables,
 		ScoreboardTables.directiveName:         ScoreboardTables,
 	}  #: A dictionary of all directives in this domain.
 
-	del AlertLogTable, FunctionalCoverageTables, ScoreboardTables
-
-	roles = {
-		# "design":   DesignRole,
-	}  #: A dictionary of all roles in this domain.
-
 	indices = [
-		# LibraryIndex,
 	]  #: A list of all indices in this domain.
 
-	from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
-
-	configValues: Dict[str, Tuple[Any, str, Any]] = {
+	configValues: dict[str, tuple[Any, str, Any]] = {
 		**BuildSummary.configValues,
 	}  #: A dictionary of all configuration values used by this domain. (name: (default, rebuilt, type))
 
-	del BuildSummary
+	pageCallbacks: dict[str, list[Callable[..., None]]] = {
+		"env-before-read-docs": [BuildReportPages.GenerateAll],  # (app, env, docnames)
+		"html-page-context":    [BuildReportPages.HideSource],   # (app, pagename, templatename, context, doctree)
+	}  #: The callbacks generating the pages of the build summaries.
 
-	initial_data = {
-		# "reports": {}
-	}  #: A dictionary of all global data fields used by this domain.
-
-	# @property
-	# def Reports(self) -> Dict[str, Any]:
-	# 	return self.data["reports"]
+	del AlertLogTable, FunctionalCoverageTables, BuildReportPages, ScoreboardTables, BuildInformation, BuildSummary
 
 	@staticmethod
 	def CheckConfigurationVariables(sphinxApplication: Sphinx, config: Config) -> None:
@@ -211,28 +228,18 @@ class OSVVMDomain(Domain):
 
 		:param sphinxApplication: The Sphinx application.
 		"""
+		from pyEDAA.OSVVM.Sphinx.Pages      import BuildReportPages
 		from pyEDAA.OSVVM.Sphinx.Testcase   import TestcaseReports
 		from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
 
 		TestcaseReports.Clear(sphinxApplication)
 		BuildSummary.ReadReports(sphinxApplication)
+		BuildReportPages.CreatePages(sphinxApplication)
 
-	callbacks: Dict[str, List[Callable]] = {
+	callbacks: dict[str, list[Callable[..., None]]] = {
 		"config-inited":    [CheckConfigurationVariables],    # (app, config)
 		"builder-inited":   [AddCSSFiles, ReadReports],       # (app)
 	}  #: A dictionary of all events/callbacks <https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx-core-events>`__ used by this domain.
-
-	def resolve_xref(
-		self,
-		env: BuildEnvironment,
-		fromdocname: str,
-		builder: Builder,
-		typ: str,
-		target: str,
-		node: pending_xref,
-		contnode: nodes.Element
-	) -> Nullable[nodes.Element]:
-		raise NotImplementedError()
 
 
 if TYPE_CHECKING:
@@ -261,7 +268,7 @@ def setup(sphinxApplication: Sphinx) -> "setup_ReturnType":
 	sphinxApplication.add_domain(OSVVMDomain)
 
 	# Register callbacks
-	for eventName, callbacks in OSVVMDomain.callbacks.items():
+	for eventName, callbacks in (*OSVVMDomain.callbacks.items(), *OSVVMDomain.pageCallbacks.items()):
 		for callback in callbacks:
 			sphinxApplication.connect(eventName, callback)
 

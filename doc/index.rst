@@ -268,6 +268,7 @@ The accompanying documentation is licensed under :ref:`Creative Commons - Attrib
    :hidden:
 
    OSVVM/index
+   OSVVM/BuildInformation
    OSVVM/BuildSummary
    OSVVM/AlertLog
    OSVVM/FunctionalCoverage
