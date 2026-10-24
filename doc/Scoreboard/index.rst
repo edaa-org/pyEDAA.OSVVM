@@ -96,7 +96,8 @@ Scoreboard Document
       :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Analyze` validates the file against the JSON Schema of the format
       version it states (:data:`~pyEDAA.OSVVM.Scoreboard.SCHEMAS`), a file of the resource package
       :mod:`pyEDAA.OSVVM.Resources`, as every document of OSVVM's YAML files does by
-      :class:`~pyEDAA.OSVVM.YAMLDocumentMixin`.
+      :class:`~pyEDAA.OSVVM.YAMLDocumentMixin`. An empty file, which OSVVM writes for a package instance without
+      scoreboards, is a document without scoreboards, format version and test's name.
 
    .. grid-item::
       :columns: 6

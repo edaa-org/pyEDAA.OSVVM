@@ -353,6 +353,7 @@ class Document(YAMLDocumentMixin, metaclass=ExtendedType, slots=True):
 	_ERROR:          ClassVar[type[ScoreboardError]] =    ScoreboardError               #: Exception of the reader.
 	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =      FormatVersion                 #: The format's versions.
 	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                       #: Schema per version.
+	_ALLOW_EMPTY:    ClassVar[bool] =                     True                          #: Empty: no scoreboards.
 
 	_path:                    _Path                    #: Path to the YAML file.
 	_name:                    Nullable[str]            #: Name of the scoreboard package's instance, from the file name.
@@ -424,7 +425,7 @@ class Document(YAMLDocumentMixin, metaclass=ExtendedType, slots=True):
 		The YAML key is ``TestCase``. A test with generics states its name without their values, while the file name has
 		them.
 
-		:returns: The test's name; ``None`` before the document was converted.
+		:returns: The test's name; ``None`` before the document was converted, or if the file is empty.
 		"""
 		return self._testcaseName
 
@@ -488,7 +489,8 @@ class Document(YAMLDocumentMixin, metaclass=ExtendedType, slots=True):
 		Read the YAML file (specified by :attr:`_path`), validate it against the JSON Schema of the format version it states
 		(:data:`SCHEMAS`), and store the YAML document in :attr:`_yamlDocument`.
 
-		An empty file, which OSVVM writes if the package instance has no scoreboards, isn't a YAML mapping.
+		An empty file, which OSVVM writes if the package instance has no scoreboards, is a document without scoreboards:
+		it states no format version and no test's name.
 
 		:raises ScoreboardError: If the YAML file can't be read, isn't valid YAML, or isn't valid according to the JSON
 		                         Schema of its format version; see :meth:`_AnalyzeYAML`.
@@ -513,8 +515,9 @@ class Document(YAMLDocumentMixin, metaclass=ExtendedType, slots=True):
 
 		root = self._yamlDocument
 		with Stopwatch() as sw:
-			self._testcaseName = root["TestCase"]
-			for entry in () if root["Scoreboards"] is None else root["Scoreboards"]:
-				Scoreboard.Parse(entry, parent=self)
+			if len(root) > 0:
+				self._testcaseName = root["TestCase"]
+				for entry in () if root["Scoreboards"] is None else root["Scoreboards"]:
+					Scoreboard.Parse(entry, parent=self)
 
 		self._modelConversionDuration = sw.Duration

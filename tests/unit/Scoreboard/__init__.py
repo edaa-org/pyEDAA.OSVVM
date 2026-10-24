@@ -259,12 +259,14 @@ class Parse(Testcase):
 
 	def test_EmptyFile(self) -> None:
 		"""OSVVM writes an empty file, if the package instance has no scoreboards."""
-		path = DATA / "TbNoScoreboards_sb_slv.yml"
+		document = Document(DATA / "TbNoScoreboards_sb_slv.yml", analyzeAndConvert=True)
 
-		with self.assertRaises(ScoreboardError) as context:
-			_ = Document(path, analyzeAndConvert=True)
-
-		self.assertEqual(f"OSVVM scoreboard YAML file '{path}' is empty.", str(context.exception))
+		self.assertEqual("slv", document.Name)
+		self.assertIsNone(document.Version)
+		self.assertIsNone(document.TestcaseName)
+		self.assertEqual(0, document.ScoreboardCount)
+		self.assertGreater(document.AnalysisDuration, timedelta())
+		self.assertGreater(document.ModelConversionDuration, timedelta())
 
 	def test_FileNotFound(self) -> None:
 		path = DATA / "TbMissing_sb_slv.yml"
