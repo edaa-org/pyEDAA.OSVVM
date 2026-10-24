@@ -130,6 +130,17 @@ class Bins(Testcase):
 		self.assertIsNone(coverageBin.Parent)
 		self.assertIsNone(coverageBin.Root)
 
+	def test_Parse_Integers(self) -> None:
+		"""A number OSVVM writes as a real is a float, also when it is written without decimals."""
+		settings = dict(SETTINGS)
+		settings["Goal"] =      100
+		settings["Threshold"] = 45
+		coverageBin = Bin.Parse({"Name": "", "Type": "COUNT", "Range": [], "Count": 1, "AtLeast": 1, "PercentCov": 100})
+
+		self.assertIsInstance(ModelSettings.Parse(settings).Goal, float)
+		self.assertIsInstance(ModelSettings.Parse(settings).Threshold, float)
+		self.assertIsInstance(coverageBin.PercentCoverage, float)
+
 	def test_Parse_Type(self) -> None:
 		with self.assertRaises(ValueError) as context:
 			_ = Bin.Parse({"Name": "", "Type": "AUTO", "Range": [], "Count": 0, "AtLeast": 1, "PercentCov": 0.0})

@@ -66,10 +66,11 @@ class FormatVersion(StringEnum):
 	"""
 	Version of OSVVM's functional coverage YAML format, as a file's ``Version`` states it.
 
-	OSVVM's ``CoveragePkg`` writes the version of ``COVERAGE_YAML_VERSION`` (``OsvvmScriptSettingsPkg``).
+	OSVVM's ``CoveragePkg`` writes the version of ``COVERAGE_YAML_VERSION`` (``OsvvmScriptSettingsPkg``), since OSVVM
+	2026.02. Before, from OSVVM 2021.10 on, it wrote version ``1.0``.
 	"""
 
-	Version0_1 = "0.1"  #: Format 0.1, written by OSVVM 2021.10 and later.
+	Version0_1 = "0.1"  #: Format 0.1, written by OSVVM 2026.02 and later.
 
 
 @export
@@ -252,12 +253,12 @@ class ModelSettings(metaclass=ExtendedType, slots=True):
 
 		return cls(
 			settings["CovWeight"],
-			settings["Goal"],
+			float(settings["Goal"]),
 			WeightMode.Parse(settings["WeightMode"]),
 			tuple(settings["Seeds"]),
 			CountMode.Parse(settings["CountMode"]),
 			IllegalMode.Parse(settings["IllegalMode"]),
-			settings["Threshold"],
+			float(settings["Threshold"]),
 			flags[settings["ThresholdEnable"]],
 			flags[settings["IsRequirement"]],
 			settings["TotalCovCount"],
@@ -534,7 +535,7 @@ class Bin(Element["CoverageModel"]):
 			[ValueRange(valueRange["Min"], valueRange["Max"]) for valueRange in coverageBin["Range"]],
 			coverageBin["Count"],
 			coverageBin["AtLeast"],
-			coverageBin["PercentCov"],
+			float(coverageBin["PercentCov"]),
 			parent=parent
 		)
 
