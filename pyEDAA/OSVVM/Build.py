@@ -28,46 +28,124 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Reader for OSVVM test report summary files in YAML format."""
-from datetime              import timedelta, datetime
-from pathlib               import Path
-from typing                import Optional as Nullable, Iterator, Iterable, Mapping, Any, List
+"""
+A data model for OSVVM's build summary file :file:`<build>.yml`, derived from the unified test entity model of
+:mod:`pyEDAA.Reports.Unittesting`.
 
-from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
-from pyTooling.Decorators  import export, InheritDocString, notimplemented, readonly
-from pyTooling.MetaClasses import ExtendedType
-from pyTooling.Common      import getFullyQualifiedName
-from pyTooling.Stopwatch   import Stopwatch
-from pyTooling.Versioning  import CalendarVersion, SemanticVersion
+OSVVM writes a build summary per build (``build <file>.pro``): its test suites, their test cases and the build's
+information and settings. The hierarchy matches the unified model - a test suite summary of test suites of test cases
+-, so the classes of this module derive from the unified classes and add what OSVVM states besides: per test case the
+VHDL name, the disabled alerts, the requirements and the functional coverage. :meth:`Testsuite.ToTestsuite` copies a
+test suite into the unified model, e.g. to merge it with other reports or to write it as JUnit XML.
+"""
+from __future__                 import annotations
 
-from pyEDAA.Reports.Unittesting import UnittestError, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
-                                       TestsuiteKind
-from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
-from pyEDAA.Reports.Unittesting import Testcase as ut_Testcase
+from datetime                   import datetime, timedelta
+from pathlib                    import Path
+from typing                     import Any, ClassVar, Iterable, Iterator, List, Mapping, Optional as Nullable
+
+from ruamel.yaml                import YAML, CommentedMap, CommentedSeq
+from pyTooling.Common           import getFullyQualifiedName, StringEnum
+from pyTooling.Decorators       import export, InheritDocString, notimplemented, readonly
+from pyTooling.MetaClasses      import ExtendedType
+from pyTooling.Stopwatch        import Stopwatch
+from pyTooling.Versioning       import CalendarVersion, SemanticVersion
+
+from pyEDAA.Reports.Unittesting import UnittestError, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
+                                       TestcaseAggregateReturnType
+from pyEDAA.Reports.Unittesting import Document as ut_Document, TestsuiteSummary as ut_TestsuiteSummary
+from pyEDAA.Reports.Unittesting import Testsuite as ut_Testsuite, Testcase as ut_Testcase
+
+from pyEDAA.OSVVM               import OSVVMException
 
 
 @export
-class OsvvmException:
-	pass
+class BuildSummaryError(OSVVMException, UnittestError):
+	"""
+	The exception raised by the build summary model and its reader.
+
+	It's an :exc:`~pyEDAA.Reports.Unittesting.UnittestError` too, so code handling errors of the unified test entity
+	model handles it as well.
+	"""
 
 
 @export
-@InheritDocString(UnittestError)
-class UnittestException(UnittestError, OsvvmException):
-	pass
+class OSVVMStatus(StringEnum):
+	"""
+	Status of a test case, as OSVVM states it in a build summary.
+
+	OSVVM's ``GetTestResultStatus`` of :file:`AlertLogPkg.vhd` writes the status of a test case that ran; OSVVM's
+	scripts write ``SKIPPED`` and ``ANALYZE_FAILED``. OSVVM's reader of build summaries assigns ``NOREPORTS`` to a test
+	case without results, e.g. a simulation that crashed; an expected status may name it.
+	"""
+
+	Passed =        "PASSED"          #: The test case has no errors.
+	Failed =        "FAILED"          #: The test case has errors.
+	Skipped =       "SKIPPED"         #: The test case was skipped (``SkipTest``).
+	AnalyzeFailed = "ANALYZE_FAILED"  #: The test case's sources failed to analyze.
+	StopLimit =     "STOPLIMIT"       #: The test case stopped, because an alert count reached its stop limit.
+	TimeOut =       "TIMEOUT"         #: The test case timed out.
+	ManualChecks =  "MANUALCHECKS"    #: The test case has no errors, but needs manual checks.
+	NoChecks =      "NOCHECKS"        #: The test case has no errors, but did no affirmations.
+	NoReports =     "NOREPORTS"       #: The test case reported no results.
+
+	__TESTCASE_STATUS: ClassVar[dict[str, TestcaseStatus]] = {
+		Passed:        TestcaseStatus.Passed,
+		Failed:        TestcaseStatus.Failed,
+		Skipped:       TestcaseStatus.Skipped,
+		AnalyzeFailed: TestcaseStatus.Errored,
+		StopLimit:     TestcaseStatus.Failed,
+		TimeOut:       TestcaseStatus.Failed,
+		ManualChecks:  TestcaseStatus.Failed,
+		NoChecks:      TestcaseStatus.Weak,
+		NoReports:     TestcaseStatus.Errored,
+	}
+
+	def ToTestcaseStatus(self) -> TestcaseStatus:
+		"""
+		Convert the status to the status of the unified test entity model.
+
+		OSVVM counts every status except passed, skipped and - unless ``FailOnNoChecks`` is set - no checks as failed. A
+		test case without checks is weak; a test case, which failed to analyze or reported no results, is errored.
+
+		:returns: The status of the unified test entity model.
+		"""
+		return self.__TESTCASE_STATUS[self]
+
+
+# A class with a property named like a class - ``OSVVMStatus`` - can't name that class in the annotation of a field: the
+# class body's namespace, where annotations are evaluated, binds the name to the property.
+_OSVVMStatus = OSVVMStatus
 
 
 @export
-@InheritDocString(ut_Testcase)
 class Testcase(ut_Testcase):
-	_disabledWarningCount: int
-	_disabledErrorCount:   int
-	_disabledFatalCount:   int
+	"""
+	A test case of an OSVVM build: a simulation of a test bench, with the results OSVVM states for it.
 
-	_requirementsCount:       Nullable[int]
-	_passedRequirementsCount: Nullable[int]
-	_failedRequirementsCount: Nullable[int]
-	_functionalCoverage:      Nullable[float]
+	A test case's name is the base name of its report files (``TestCaseFileName``): the test's name, extended by the
+	values of the generics it was simulated with, so the simulations of one test with different generics are distinct
+	test cases. OSVVM's JUnit XML report names test cases the same way.
+
+	Besides the fields of the unified test case, an OSVVM test case states the test's name (``TestCaseName``), the name
+	the VHDL code gives it (``Name``), the status OSVVM determined, the disabled alerts, the requirements and the
+	functional coverage. The unified status (:data:`~pyEDAA.Reports.Unittesting.Testcase.Status`) is computed from the
+	OSVVM status by :meth:`Aggregate`.
+
+	OSVVM's alerts *failure*, *error* and *warning* are the unified *fatal errors*, *errors* and *warnings*; its
+	affirmations are the unified assertions.
+	"""
+
+	_vhdlName:                Nullable[str]           #: Name of the test case, as its VHDL code states it.
+	_testName:                Nullable[str]           #: Name of the test, without the generics' values.
+	_osvvmStatus:             Nullable[_OSVVMStatus]  #: Status of the test case, as OSVVM states it.
+	_totalErrorCount:         Nullable[int]           #: Total number of errors, as OSVVM counted them.
+	_disabledWarningCount:    int                     #: Number of disabled warnings.
+	_disabledErrorCount:      int                     #: Number of disabled errors.
+	_disabledFatalCount:      int                     #: Number of disabled failures.
+	_requirementsGoalCount:   int                     #: Number of passed checks the requirements need.
+	_passedRequirementsCount: int                     #: Number of passed requirement checks.
+	_functionalCoverage:      Nullable[float]         #: Functional coverage in range 0.0..1.0.
 
 	def __init__(
 		self,
@@ -75,217 +153,312 @@ class Testcase(ut_Testcase):
 		title: Nullable[str] = None,
 		summary: Nullable[str] = None,
 		description: Nullable[str] = None,
-		startTime: Nullable[datetime] = None,
-		setupDuration: Nullable[timedelta] = None,
-		testDuration: Nullable[timedelta] = None,
-		teardownDuration: Nullable[timedelta] = None,
-		totalDuration:  Nullable[timedelta] = None,
-		status: TestcaseStatus = TestcaseStatus.Unknown,
+		testName: Nullable[str] = None,
+		vhdlName: Nullable[str] = None,
+		osvvmStatus: Nullable[OSVVMStatus] = None,
+		totalDuration: Nullable[timedelta] = None,
 		assertionCount: Nullable[int] = None,
-		failedAssertionCount: Nullable[int] = None,
 		passedAssertionCount: Nullable[int] = None,
-		requirementsCount: Nullable[int] = None,
-		passedRequirementsCount: Nullable[int] = None,
-		failedRequirementsCount: Nullable[int] = None,
-		functionalCoverage: Nullable[float] = None,
+		totalErrorCount: Nullable[int] = None,
 		warningCount: int = 0,
 		errorCount: int = 0,
 		fatalCount: int = 0,
-		disabledWarningCount: int = 0,
-		disabledErrorCount: int = 0,
-		disabledFatalCount: int = 0,
 		expectedWarningCount: int = 0,
 		expectedErrorCount: int = 0,
 		expectedFatalCount: int = 0,
+		disabledWarningCount: int = 0,
+		disabledErrorCount: int = 0,
+		disabledFatalCount: int = 0,
+		requirementsGoalCount: int = 0,
+		passedRequirementsCount: int = 0,
+		functionalCoverage: Nullable[float] = None,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
 		*,
-		parent: Nullable["Testsuite"] = None
+		parent: Nullable[Testsuite] = None
 	) -> None:
 		"""
-		Initializes the fields of a test case.
+		Initializes an OSVVM test case.
 
-		:param name:                    Name of the test entity.
+		:param name:                    Name of the test case: the base name of its report files (``TestCaseFileName``).
 		:param title:                   Optional, short label of the test case, written for a reader.
 		:param summary:                 Optional, summary of the test case.
 		:param description:             Optional, description of the test case.
-		:param startTime:               Time when the test entity was started.
-		:param setupDuration:           Duration it took to set up the entity.
-		:param testDuration:            Duration of the entity's test run.
-		:param teardownDuration:        Duration it took to tear down the entity.
-		:param totalDuration:           Total duration of the entity's execution (setup + test + teardown)
-		:param status:                  Status of the test case.
-		:param assertionCount:          Number of assertions within the test.
-		:param failedAssertionCount:    Number of failed assertions within the test.
-		:param passedAssertionCount:    Number of passed assertions within the test.
-		:param requirementsCount:       Number of requirements within the test.
-		:param failedRequirementsCount: Number of failed requirements within the test.
-		:param passedRequirementsCount: Number of passed requirements within the test.
-		:param warningCount:            Count of encountered warnings.
-		:param errorCount:              Count of encountered errors.
-		:param fatalCount:              Count of encountered fatal errors.
-		:param disabledWarningCount:    Count of disabled warnings.
-		:param disabledErrorCount:      Count of disabled errors.
-		:param disabledFatalCount:      Count of disabled fatal errors.
-		:param expectedWarningCount:    Count of expected warnings.
-		:param expectedErrorCount:      Count of expected errors.
-		:param expectedFatalCount:      Count of expected fatal errors.
-		:param keyValuePairs:           Mapping of key-value pairs to initialize the test case.
-		:param parent:                  Reference to the parent test suite.
-		:raises TypeError:              If parameter 'parent' is not a Testsuite.
-		:raises ValueError:             If parameter 'assertionCount' is not consistent.
+		:param testName:                Optional, name of the test, without the generics' values (``TestCaseName``).
+		:param vhdlName:                Optional, name of the test case, as its VHDL code states it (``Name``).
+		:param osvvmStatus:             Optional, status of the test case, as OSVVM states it (``Status``).
+		:param totalDuration:           Optional, duration of the simulation (``ElapsedTime``).
+		:param assertionCount:          Optional, number of affirmations (``AffirmCount``).
+		:param passedAssertionCount:    Optional, number of passed affirmations (``PassedCount``).
+		:param totalErrorCount:         Optional, total number of errors, as OSVVM counted them (``TotalErrors``).
+		:param warningCount:            Optional, number of warnings. Default: ``0``.
+		:param errorCount:              Optional, number of errors. Default: ``0``.
+		:param fatalCount:              Optional, number of failures. Default: ``0``.
+		:param expectedWarningCount:    Optional, number of expected warnings. Default: ``0``.
+		:param expectedErrorCount:      Optional, number of expected errors. Default: ``0``.
+		:param expectedFatalCount:      Optional, number of expected failures. Default: ``0``.
+		:param disabledWarningCount:    Optional, number of disabled warnings. Default: ``0``.
+		:param disabledErrorCount:      Optional, number of disabled errors. Default: ``0``.
+		:param disabledFatalCount:      Optional, number of disabled failures. Default: ``0``.
+		:param requirementsGoalCount:   Optional, number of passed checks the requirements need (``RequirementsGoal``).
+		                                Default: ``0``.
+		:param passedRequirementsCount: Optional, number of passed requirement checks (``RequirementsPassed``).
+		                                Default: ``0``.
+		:param functionalCoverage:      Optional, functional coverage in range 0.0..1.0 (``FunctionalCoverage``).
+		:param keyValuePairs:           Optional, mapping of key-value pairs to initialize the test case with.
+		:param parent:                  Optional, reference to the parent test suite.
+		:raises TypeError:              If parameter 'testName' or 'vhdlName' is not of type :class:`str`.
+		:raises TypeError:              If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
+		:raises TypeError:              If parameter 'totalErrorCount' is not of type :class:`int`.
+		:raises TypeError:              If a parameter of the disabled alert counts or of the requirements is not of type
+		                                :class:`int`.
+		:raises TypeError:              If parameter 'functionalCoverage' is not of type :class:`float`.
+		:raises ValueError:             If parameter 'functionalCoverage' is out of range 0.0..1.0.
 		"""
 		super().__init__(
 			name,
 			title, summary, description,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			assertionCount, failedAssertionCount, passedAssertionCount,
+			None, None, None, None, totalDuration,
+			TestcaseStatus.Unknown,
+			assertionCount, None, passedAssertionCount,
 			warningCount, errorCount, fatalCount,
 			expectedWarningCount, expectedErrorCount, expectedFatalCount,
 			keyValuePairs,
 			parent=parent
 		)
 
-		if not isinstance(disabledWarningCount, int):
-			ex = TypeError("Parameter 'disabledWarningCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(disabledWarningCount)}'.")
+		for parameterName, text in (("testName", testName), ("vhdlName", vhdlName)):
+			if text is not None and not isinstance(text, str):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'str'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(text)}'.")
+				raise ex
+
+		if osvvmStatus is not None and not isinstance(osvvmStatus, OSVVMStatus):
+			ex = TypeError("Parameter 'osvvmStatus' is not of type 'OSVVMStatus'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmStatus)}'.")
 			raise ex
 
-		if not isinstance(disabledErrorCount, int):
-			ex = TypeError("Parameter 'disabledErrorCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(disabledErrorCount)}'.")
+		if totalErrorCount is not None and not isinstance(totalErrorCount, int):
+			ex = TypeError("Parameter 'totalErrorCount' is not of type 'int'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(totalErrorCount)}'.")
 			raise ex
 
-		if not isinstance(disabledFatalCount, int):
-			ex = TypeError("Parameter 'disabledFatalCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(disabledFatalCount)}'.")
-			raise ex
-
-		self._disabledWarningCount = disabledWarningCount
-		self._disabledErrorCount =   disabledErrorCount
-		self._disabledFatalCount =   disabledFatalCount
-
-		if requirementsCount is not None and not isinstance(requirementsCount, int):
-			ex = TypeError("Parameter 'requirementsCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(requirementsCount)}'.")
-			raise ex
-
-		if passedRequirementsCount is not None and not isinstance(passedRequirementsCount, int):
-			ex = TypeError("Parameter 'passedRequirementsCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(passedRequirementsCount)}'.")
-			raise ex
-
-		if failedRequirementsCount is not None and not isinstance(failedRequirementsCount, int):
-			ex = TypeError("Parameter 'failedRequirementsCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(failedRequirementsCount)}'.")
-			raise ex
-
-		if requirementsCount is not None:
-			if passedRequirementsCount is not None:
-				if failedRequirementsCount is not None:
-					if passedRequirementsCount + failedRequirementsCount != requirementsCount:
-						raise ValueError("Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
-				else:
-					failedRequirementsCount = requirementsCount - passedRequirementsCount
-			elif failedRequirementsCount is not None:
-				passedRequirementsCount = requirementsCount - failedRequirementsCount
-			else:
-				passedRequirementsCount = requirementsCount
-				failedRequirementsCount = 0
-		else:
-			if passedRequirementsCount is not None:
-				if failedRequirementsCount is not None:
-					requirementsCount = passedRequirementsCount + failedRequirementsCount
-				else:
-					requirementsCount = passedRequirementsCount
-					failedRequirementsCount = 0
-			elif failedRequirementsCount is not None:
-				requirementsCount = failedRequirementsCount
-				passedRequirementsCount = 0
-
-		self._requirementsCount = requirementsCount
-		self._passedRequirementsCount = passedRequirementsCount
-		self._failedRequirementsCount = failedRequirementsCount
+		for parameterName, count in (
+			("disabledWarningCount",    disabledWarningCount),
+			("disabledErrorCount",      disabledErrorCount),
+			("disabledFatalCount",      disabledFatalCount),
+			("requirementsGoalCount",   requirementsGoalCount),
+			("passedRequirementsCount", passedRequirementsCount)
+		):
+			if not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
 
 		if functionalCoverage is not None:
 			if not isinstance(functionalCoverage, float):
 				ex = TypeError("Parameter 'functionalCoverage' is not of type 'float'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(functionalCoverage)}'.")
 				raise ex
+			elif not (0.0 <= functionalCoverage <= 1.0):
+				ex = ValueError("Parameter 'functionalCoverage' is out of range 0.0..1.0.")
+				ex.add_note(f"Got value '{functionalCoverage}'.")
+				raise ex
 
-			if not (0.0 <= functionalCoverage <= 1.0):
-				raise ValueError("Parameter 'functionalCoverage' is not in range 0.0..1.0.")
+		self._testName =                testName
+		self._vhdlName =                vhdlName
+		self._osvvmStatus =             osvvmStatus
+		self._totalErrorCount =         totalErrorCount
+		self._disabledWarningCount =    disabledWarningCount
+		self._disabledErrorCount =      disabledErrorCount
+		self._disabledFatalCount =      disabledFatalCount
+		self._requirementsGoalCount =   requirementsGoalCount
+		self._passedRequirementsCount = passedRequirementsCount
+		self._functionalCoverage =      functionalCoverage
 
-		self._functionalCoverage = functionalCoverage
+	@readonly
+	def TestName(self) -> Nullable[str]:
+		"""
+		Read-only property to access the name of the test, without the generics' values (:attr:`_testName`).
+
+		The test's name is the name given to OSVVM's ``TestName``, or the simulated design unit's name. The simulations of
+		one test with different generics have the same test name.
+
+		:returns: The test's name, or ``None`` if it wasn't recorded.
+		"""
+		return self._testName
+
+	@readonly
+	def VHDLName(self) -> Nullable[str]:
+		"""
+		Read-only property to access the name of the test case, as its VHDL code states it (:attr:`_vhdlName`).
+
+		OSVVM fails a test case, whose VHDL name differs from its name, if ``FailOnVhdlNameNotMatchTestName`` is set.
+
+		:returns: The VHDL name, or ``None`` if it wasn't recorded.
+		"""
+		return self._vhdlName
+
+	@readonly
+	def OSVVMStatus(self) -> Nullable[OSVVMStatus]:
+		"""
+		Read-only property to access the status of the test case, as OSVVM states it (:attr:`_osvvmStatus`).
+
+		:returns: The OSVVM status, or ``None`` if the test case wasn't read from an OSVVM file.
+		"""
+		return self._osvvmStatus
+
+	@readonly
+	def TotalErrorCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the total number of errors, as OSVVM counted them (:attr:`_totalErrorCount`).
+
+		OSVVM counts the alerts beyond the expected ones and - depending on its settings - disabled alerts and failed
+		requirements.
+
+		:returns: The total number of errors, or ``None`` if it wasn't recorded.
+		"""
+		return self._totalErrorCount
 
 	@readonly
 	def DisabledWarningCount(self) -> int:
 		"""
-		Read-only property returning the number of disabled warnings.
+		Read-only property to access the number of disabled warnings (:attr:`_disabledWarningCount`).
 
-		:returns: Count of disabled warnings.
+		:returns: Number of disabled warnings.
 		"""
 		return self._disabledWarningCount
 
 	@readonly
 	def DisabledErrorCount(self) -> int:
 		"""
-		Read-only property returning the number of disabled errors.
+		Read-only property to access the number of disabled errors (:attr:`_disabledErrorCount`).
 
-		:returns: Count of disabled errors.
+		:returns: Number of disabled errors.
 		"""
 		return self._disabledErrorCount
 
 	@readonly
 	def DisabledFatalCount(self) -> int:
 		"""
-		Read-only property returning the number of disabled fatal errors.
+		Read-only property to access the number of disabled failures (:attr:`_disabledFatalCount`).
 
-		:returns: Count of disabled fatal errors.
+		:returns: Number of disabled failures.
 		"""
 		return self._disabledFatalCount
 
 	@readonly
-	def RequirementsCount(self) -> int:
+	def RequirementsGoalCount(self) -> int:
 		"""
-		Read-only property returning the number of requirements.
+		Read-only property to access the number of passed checks the requirements need (:attr:`_requirementsGoalCount`).
 
-		:returns: Count of requirements.
+		:returns: Number of passed checks the requirements need.
 		"""
-		return self._requirementsCount
+		return self._requirementsGoalCount
 
 	@readonly
 	def PassedRequirementsCount(self) -> int:
 		"""
-		Read-only property returning the number of passed requirements.
+		Read-only property to access the number of passed requirement checks (:attr:`_passedRequirementsCount`).
 
-		:returns: Count of passed rerquirements.
+		:returns: Number of passed requirement checks.
 		"""
 		return self._passedRequirementsCount
 
 	@readonly
-	def FailedRequirementsCount(self) -> int:
+	def FunctionalCoverage(self) -> Nullable[float]:
 		"""
-		Read-only property returning the number of failed requirements.
+		Read-only property to access the functional coverage (:attr:`_functionalCoverage`).
 
-		:returns: Count of failed requirements.
-		"""
-		return self._failedRequirementsCount
-
-	@readonly
-	def FunctionalCoverage(self) -> float:
-		"""
-		Read-only property returning the functional coverage.
-
-		:returns: Percentage of functional coverage.
+		:returns: The functional coverage in range 0.0..1.0, or ``None`` if the test case has no coverage model.
 		"""
 		return self._functionalCoverage
 
+	def Copy(self) -> Testcase:
+		"""
+		Copy the test case without its parent.
+
+		:returns: A test case with the same fields.
+		"""
+		return self.__class__(
+			self._name,
+			self._title, self._summary, self._description,
+			self._testName,
+			self._vhdlName,
+			self._osvvmStatus,
+			self._totalDuration,
+			self._assertionCount,
+			self._passedAssertionCount,
+			self._totalErrorCount,
+			self._warningCount, self._errorCount, self._fatalCount,
+			self._expectedWarningCount, self._expectedErrorCount, self._expectedFatalCount,
+			self._disabledWarningCount, self._disabledErrorCount, self._disabledFatalCount,
+			self._requirementsGoalCount,
+			self._passedRequirementsCount,
+			self._functionalCoverage,
+			self._dict
+		)
+
+	def Aggregate(self, strict: bool = True) -> TestcaseAggregateReturnType:
+		"""
+		Compute the unified status from the OSVVM status, then aggregate the test case.
+
+		A test case without OSVVM status is aggregated as a unified test case.
+
+		:param strict: Optional, if true, a fatal error fails a test case without OSVVM status. Default: ``True``.
+		:returns:      The test case's warning, error and fatal error counts, the expected ones and its duration.
+		"""
+		if self._status is TestcaseStatus.Unknown and self._osvvmStatus is not None:
+			self._status = self._osvvmStatus.ToTestcaseStatus()
+
+		return super().Aggregate(strict)
+
+	def ToTestcase(self) -> ut_Testcase:
+		"""
+		Convert the test case to a test case of the unified test entity model.
+
+		The fields of the unified test case and the key-value pairs are copied; the OSVVM-specific fields are dropped.
+
+		:returns: A test case of the unified test entity model.
+		"""
+		return ut_Testcase(
+			self._name,
+			totalDuration=self._totalDuration,
+			status=self._status,
+			assertionCount=self._assertionCount,
+			passedAssertionCount=self._passedAssertionCount,
+			warningCount=self._warningCount,
+			errorCount=self._errorCount,
+			fatalCount=self._fatalCount,
+			expectedWarningCount=self._expectedWarningCount,
+			expectedErrorCount=self._expectedErrorCount,
+			expectedFatalCount=self._expectedFatalCount,
+			keyValuePairs=self._dict,
+			message=self._message
+		)
+
 
 @export
-@InheritDocString(ut_Testsuite)
 class Testsuite(ut_Testsuite):
-	pass
+	"""
+	A test suite of an OSVVM build (``TestSuite``): it groups the build's test cases.
+
+	OSVVM states a test suite's name and the duration of its simulations (``ElapsedTime``). OSVVM's test suites don't
+	nest.
+	"""
+
+	def ToTestsuite(self) -> ut_Testsuite:
+		"""
+		Convert the test suite and its test cases to a test suite of the unified test entity model.
+
+		:returns: A test suite of the unified test entity model.
+		"""
+		return ut_Testsuite(
+			self._name,
+			totalDuration=self._totalDuration,
+			status=self._status,
+			testcases=(testcase.ToTestcase() for testcase in self._testcases.values()),
+			keyValuePairs=self._dict
+		)
 
 
 @export
@@ -377,7 +550,7 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 
 
 @export
-class BuildSummaryDocument(TestsuiteSummary, Document):
+class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 	_yamlDocument: Nullable[YAML]             #: Internal YAML document instance.
 	_version:      Nullable[SemanticVersion]  #: YAML data structure version.
 
@@ -387,7 +560,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		self._yamlDocument = None
 		self._version =      None
 
-		Document.__init__(self, yamlReportFile, analyzeAndConvert)
+		ut_Document.__init__(self, yamlReportFile, analyzeAndConvert)
 
 	@readonly
 	def Version(self) -> Nullable[SemanticVersion]:
@@ -407,7 +580,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		   The time spend for analysis will be made available via property :data:`AnalysisDuration`..
 		"""
 		if not self._path.exists():
-			raise UnittestException(f"OSVVM YAML file '{self._path}' does not exist.") \
+			raise BuildSummaryError(f"OSVVM YAML file '{self._path}' does not exist.") \
 				from FileNotFoundError(f"File '{self._path}' not found.")
 
 		with Stopwatch() as sw:
@@ -415,7 +588,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 				yamlReader = YAML()
 				self._yamlDocument = yamlReader.load(self._path)
 			except Exception as ex:
-				raise UnittestException(f"Couldn't open '{self._path}'.") from ex
+				raise BuildSummaryError(f"Couldn't open '{self._path}'.") from ex
 
 		self._analysisDuration = sw.Duration
 
@@ -426,22 +599,22 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 
 		:param path:               Optional path to the YAML file, if internal path shouldn't be used.
 		:param overwrite:          If true, overwrite an existing file.
-		:raises UnittestException: If the file cannot be overwritten.
-		:raises UnittestException: If the internal YAML data structure wasn't generated.
-		:raises UnittestException: If the file cannot be opened or written.
+		:raises BuildSummaryError: If the file cannot be overwritten.
+		:raises BuildSummaryError: If the internal YAML data structure wasn't generated.
+		:raises BuildSummaryError: If the file cannot be opened or written.
 		"""
 		if path is None:
 			path = self._path
 
 		if not overwrite and path.exists():
-			raise UnittestException(f"OSVVM YAML file '{path}' can not be overwritten.") \
+			raise BuildSummaryError(f"OSVVM YAML file '{path}' can not be overwritten.") \
 				from FileExistsError(f"File '{path}' already exists.")
 
 		# if regenerate:
 		# 	self.Generate(overwrite=True)
 
 		if self._yamlDocument is None:
-			ex = UnittestException("Internal YAML document tree is empty and needs to be generated before write is possible.")
+			ex = BuildSummaryError("Internal YAML document tree is empty and needs to be generated before write is possible.")
 			# ex.add_note(f"Call 'BuildSummaryDocument.Generate()' or 'BuildSummaryDocument.Write(..., regenerate=True)'.")
 			raise ex
 
@@ -453,7 +626,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"Sequence field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(f"Sequence field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
@@ -461,7 +634,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			return ()
 		elif not isinstance(value, CommentedSeq):
 			line = node._yaml_line_col.data[fieldName][0] + 1
-			ex = UnittestException(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
+			ex = BuildSummaryError(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
 			ex.add_note(f"Found type {value.__class__.__name__} at line {line}.")
 			raise ex
 
@@ -472,7 +645,9 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"Dictionary field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(
+				f"Dictionary field '{fieldName}' not found in node starting at line {node.lc.line + 1}."
+			)
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
@@ -480,7 +655,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			return {}
 		elif not isinstance(value, CommentedMap):
 			line = node._yaml_line_col.data[fieldName][0] + 1
-			ex = UnittestException(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
+			ex = BuildSummaryError(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
 			ex.add_note(f"Type mismatch found for line {line}.")
 			raise ex
 		return value
@@ -490,12 +665,12 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"String field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(f"String field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
 		if not isinstance(value, str):
-			raise UnittestException(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
+			raise BuildSummaryError(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
 
 		return value
 
@@ -504,12 +679,12 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"Integer field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(f"Integer field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
 		if not isinstance(value, int):
-			raise UnittestException(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
+			raise BuildSummaryError(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
 
 		return value
 
@@ -518,12 +693,12 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"Date field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(f"Date field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
 		if not isinstance(value, datetime):
-			raise UnittestException(f"Field '{fieldName}' is not of type datetime.")  # TODO: from TypeError??
+			raise BuildSummaryError(f"Field '{fieldName}' is not of type datetime.")  # TODO: from TypeError??
 
 		return value
 
@@ -532,12 +707,12 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		try:
 			value = node[fieldName]
 		except KeyError as ex:
-			newEx = UnittestException(f"Duration field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
+			newEx = BuildSummaryError(f"Duration field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
 			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
 			raise newEx from ex
 
 		if not isinstance(value, float):
-			raise UnittestException(f"Field '{fieldName}' is not of type float.")  # TODO: from TypeError??
+			raise BuildSummaryError(f"Field '{fieldName}' is not of type float.")  # TODO: from TypeError??
 
 		return timedelta(seconds=value)
 
@@ -551,17 +726,17 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 
 		   The time spend for model conversion will be made available via property :data:`ModelConversionDuration`.
 
-		:raises UnittestException: If XML was not read and parsed before.
+		:raises BuildSummaryError: If XML was not read and parsed before.
 		"""
 		if self._yamlDocument is None:
-			ex = UnittestException(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
+			ex = BuildSummaryError(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
 			ex.add_note("Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
 			self._version = SemanticVersion.Parse(self._yamlDocument["Version"])
 			if not (self._version >> "0.1"):
-				ex = UnittestException(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
+				ex = BuildSummaryError(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
 				ex.add_note("Supported versions are: 1.0")
 				raise ex
 
@@ -593,14 +768,15 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 			self._ConvertTestcase(testsuite, yamlTestcase)
 
 	def _ConvertTestcase(self, parentTestsuite: Testsuite, yamlTestcase: CommentedMap) -> None:
-		testcaseName = self._ParseStrFieldFromYAML(yamlTestcase, "TestCaseName")
+		testName = self._ParseStrFieldFromYAML(yamlTestcase, "TestCaseName")
 		totalDuration = self._ParseDurationFieldFromYAML(yamlTestcase, "ElapsedTime")
-		yamlStatus = self._ParseStrFieldFromYAML(yamlTestcase, "Status").lower()
+		osvvmStatus = OSVVMStatus.Parse(self._ParseStrFieldFromYAML(yamlTestcase, "Status").upper())
 		yamlResults = self._ParseMapFromYAML(yamlTestcase, "Results")
 		assertionCount = self._ParseIntFieldFromYAML(yamlResults, "AffirmCount")
 		passedAssertionCount = self._ParseIntFieldFromYAML(yamlResults, "PassedCount")
-
-		totalErrors = self._ParseIntFieldFromYAML(yamlResults, "TotalErrors")
+		totalErrorCount = self._ParseIntFieldFromYAML(yamlResults, "TotalErrors")
+		requirementsGoalCount = self._ParseIntFieldFromYAML(yamlResults, "RequirementsGoal")
+		passedRequirementsCount = self._ParseIntFieldFromYAML(yamlResults, "RequirementsPassed")
 
 		yamlAlertCount = self._ParseMapFromYAML(yamlResults, "AlertCount")
 		warningCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Warning")
@@ -617,46 +793,29 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		expectedErrorCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Error")
 		expectedFailureCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Failure")
 
-		# FIXME: write a Parse classmethod in enum
-		if yamlStatus == "passed":
-			status = TestcaseStatus.Passed
-		elif yamlStatus == "skipped":
-			status = TestcaseStatus.Skipped
-		elif yamlStatus == "failed":
-			status = TestcaseStatus.Failed
-		else:
-			status = TestcaseStatus.Unknown
-
-		if (
-			abs(warningDiff := warningCount - expectedWarningCount) +
-			abs(errorDiff := errorCount - expectedErrorCount) +
-			abs(failureDiff := failureCount - expectedFailureCount) -
-			totalErrors
-		) == 0:
-			if warningDiff > 0:
-				status |= TestcaseStatus.Warned
-			if errorDiff > 0:
-				status |= TestcaseStatus.Errored
-			if failureDiff > 0:
-				status |= TestcaseStatus.Aborted
-		else:
-			status |= TestcaseStatus.Inconsistent
+		functionalCoverage = yamlTestcase.get("FunctionalCoverage", "")
 
 		_ = Testcase(
-			testcaseName,
+			self._ParseStrFieldFromYAML(yamlTestcase, "TestCaseFileName"),
+			testName=testName,
+			vhdlName=self._ParseStrFieldFromYAML(yamlTestcase, "Name"),
+			osvvmStatus=osvvmStatus,
 			totalDuration=totalDuration,
-			status=status,
 			assertionCount=assertionCount,
 			passedAssertionCount=passedAssertionCount,
+			totalErrorCount=totalErrorCount,
 			warningCount=warningCount,
 			errorCount=errorCount,
 			fatalCount=failureCount,
-			disabledWarningCount=disabledWarningCount,
-			disabledErrorCount=disabledErrorCount,
-			disabledFatalCount=disabledFailureCount,
 			expectedWarningCount=expectedWarningCount,
 			expectedErrorCount=expectedErrorCount,
 			expectedFatalCount=expectedFailureCount,
+			disabledWarningCount=disabledWarningCount,
+			disabledErrorCount=disabledErrorCount,
+			disabledFatalCount=disabledFailureCount,
+			requirementsGoalCount=requirementsGoalCount,
+			passedRequirementsCount=passedRequirementsCount,
+			functionalCoverage=None if functionalCoverage == "" else float(functionalCoverage) / 100.0,
 			parent=parentTestsuite
 		)
 
