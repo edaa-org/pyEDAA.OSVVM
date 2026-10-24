@@ -32,14 +32,10 @@
 from datetime              import timedelta
 from pathlib               import Path
 
-from ruamel.yaml           import YAML
-
-from pyTooling.Warning     import WarningCollector
 from pyTooling.Testing     import Testcase
 
-from pyEDAA.OSVVM          import UnknownKeyWarning
-from pyEDAA.OSVVM.AlertLog import AlertCount, AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, \
-                                  Document, DuplicateAlertLogItemError
+from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
+                                  DuplicateAlertLogItemError
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -72,70 +68,6 @@ class Status(Testcase):
 		self.assertFalse(AlertLogStatus.Failed)
 		self.assertFalse(AlertLogStatus.TimeOut)
 		self.assertFalse(AlertLogStatus.Unknown)
-
-
-class Count(Testcase):
-	def test_Default(self) -> None:
-		count = AlertCount()
-
-		self.assertEqual(0, count.FailureCount)
-		self.assertEqual(0, count.ErrorCount)
-		self.assertEqual(0, count.WarningCount)
-
-	def test_Values(self) -> None:
-		count = AlertCount(1, 2, -3)
-
-		self.assertEqual(1, count.FailureCount)
-		self.assertEqual(2, count.ErrorCount)
-		self.assertEqual(-3, count.WarningCount)
-		self.assertEqual("AlertCount(failureCount=1, errorCount=2, warningCount=-3)", repr(count))
-
-	def test_Equality(self) -> None:
-		self.assertEqual(AlertCount(1, 2, 3), AlertCount(1, 2, 3))
-		self.assertNotEqual(AlertCount(1, 2, 3), AlertCount(1, 2, 4))
-		self.assertNotEqual(AlertCount(), 0)
-		self.assertEqual(hash(AlertCount(1, 2, 3)), hash(AlertCount(1, 2, 3)))
-
-	def test_None(self) -> None:
-		with self.assertRaises(ValueError) as context:
-			_ = AlertCount(errorCount=None)
-
-		self.assertEqual("Parameter 'errorCount' is None.", str(context.exception))
-
-	def test_Type(self) -> None:
-		with self.assertRaises(TypeError) as context:
-			_ = AlertCount(warningCount="1")
-
-		self.assertEqual("Parameter 'warningCount' is not of type 'int'.", str(context.exception))
-
-	def test_Parse(self) -> None:
-		count = AlertCount.Parse(YAML().load("{Failure: 1, Error: 2, Warning: 3}"))
-
-		self.assertEqual(AlertCount(1, 2, 3), count)
-
-	def test_Parse_UnknownKey(self) -> None:
-		with WarningCollector() as warnings:
-			count = AlertCount.Parse(YAML().load("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
-
-		self.assertEqual(AlertCount(1, 2, 3), count)
-		self.assertEqual(1, len(warnings))
-		self.assertIsInstance(warnings[0], UnknownKeyWarning)
-		self.assertEqual("Note", warnings[0].Key)
-		self.assertEqual(1, warnings[0].Line)
-
-	def test_Parse_MissingKey(self) -> None:
-		with self.assertRaises(AlertLogError) as context:
-			_ = AlertCount.Parse(YAML().load("{Failure: 1, Warning: 3}"))
-
-		self.assertEqual("Alert count at line 1 has no key 'Error'.", str(context.exception))
-
-	def test_Parse_Type(self) -> None:
-		with self.assertRaises(AlertLogError) as context:
-			_ = AlertCount.Parse(YAML().load("{Failure: 1, Error: two, Warning: 3}"))
-
-		self.assertEqual("Key 'Error' of alert count at line 1 is not an integer.", str(context.exception))
-
-
 
 
 class Instantiation(Testcase):

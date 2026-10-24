@@ -33,7 +33,7 @@ from __future__            import annotations
 
 from datetime              import timedelta
 from pathlib               import Path
-from typing                import Any, Callable, Dict, Iterable, Iterator, Optional as Nullable, Self
+from typing                import Callable, Dict, Iterable, Iterator, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 
@@ -43,9 +43,8 @@ from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
-from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
+from pyEDAA.OSVVM          import OSVVMException
 
 
 @export
@@ -169,143 +168,6 @@ class AlertLogStatus(StringEnum):
 		:returns: ``True``, if the status is :attr:`Passed`.
 		"""
 		return self is AlertLogStatus.Passed
-
-
-@export
-class AlertCount(metaclass=ExtendedType, slots=True):
-	"""
-	An alert count: the number of failures, errors and warnings, as OSVVM's ``AlertCountType`` holds it.
-
-	An alert count is a value, like a number: it belongs to no element, and two alert counts are equal, if their counts
-	are equal.
-	"""
-
-	_failureCount: int  #: Number of failures.
-	_errorCount:   int  #: Number of errors.
-	_warningCount: int  #: Number of warnings.
-
-	def __init__(self, failureCount: int = 0, errorCount: int = 0, warningCount: int = 0) -> None:
-		"""
-		Initializes an alert count.
-
-		A count may be negative: the settings' external errors subtract the alerts a test expects.
-
-		:param failureCount: Optional, number of failures. Default: ``0``.
-		:param errorCount:   Optional, number of errors. Default: ``0``.
-		:param warningCount: Optional, number of warnings. Default: ``0``.
-		:raises ValueError:  If parameter ``failureCount``, ``errorCount`` or ``warningCount`` is ``None``.
-		:raises TypeError:   If parameter ``failureCount``, ``errorCount`` or ``warningCount`` isn't of type :class:`int`.
-		"""
-		for parameterName, count in (
-			("failureCount", failureCount),
-			("errorCount",   errorCount),
-			("warningCount", warningCount)
-		):
-			if count is None:
-				raise ValueError(f"Parameter '{parameterName}' is None.")
-			elif not isinstance(count, int):
-				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
-				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
-				raise ex
-
-		self._failureCount = failureCount
-		self._errorCount =   errorCount
-		self._warningCount = warningCount
-
-	@classmethod
-	def Parse(cls, node: CommentedMap) -> Self:
-		"""
-		Parse an alert count.
-
-		OSVVM writes an alert count as a flow mapping, e.g. ``AlertCount: {Failure: 0, Error: 2, Warning: 1}``. A key
-		the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:param node:                           The YAML mapping.
-		:returns:                              The alert count.
-		:raises AlertLogError:                 If the mapping has no key ``Failure``, ``Error`` or ``Warning``.
-		:raises AlertLogError:                 If the value of key ``Failure``, ``Error`` or ``Warning`` isn't an integer.
-		:raises UnhandledCriticalWarningError: If the mapping has an unknown key, and no warning collector collects the
-		                                       warning.
-		"""
-		line = node.lc.line + 1
-		for key in node:
-			if key not in ("Failure", "Error", "Warning"):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in alert count at line {keyLine}.", key=key, line=keyLine)
-				)
-
-		for key in ("Failure", "Error", "Warning"):
-			if key not in node:
-				raise AlertLogError(f"Alert count at line {line} has no key '{key}'.")
-			elif not isinstance(node[key], int):
-				ex = AlertLogError(f"Key '{key}' of alert count at line {line} is not an integer.")
-				ex.add_note(f"Got type '{getFullyQualifiedName(node[key])}'.")
-				raise ex
-
-		return cls(node["Failure"], node["Error"], node["Warning"])
-
-	@readonly
-	def FailureCount(self) -> int:
-		"""
-		Read-only property to access the number of failures (:attr:`_failureCount`).
-
-		:returns: Number of failures.
-		"""
-		return self._failureCount
-
-	@readonly
-	def ErrorCount(self) -> int:
-		"""
-		Read-only property to access the number of errors (:attr:`_errorCount`).
-
-		:returns: Number of errors.
-		"""
-		return self._errorCount
-
-	@readonly
-	def WarningCount(self) -> int:
-		"""
-		Read-only property to access the number of warnings (:attr:`_warningCount`).
-
-		:returns: Number of warnings.
-		"""
-		return self._warningCount
-
-	def __eq__(self, other: Any) -> bool:
-		"""
-		Compare two alert counts.
-
-		:param other: The other alert count.
-		:returns:     ``True``, if the numbers of failures, errors and warnings are equal.
-		"""
-		if not isinstance(other, AlertCount):
-			return NotImplemented
-
-		return (
-			self._failureCount == other._failureCount and
-			self._errorCount == other._errorCount and
-			self._warningCount == other._warningCount
-		)
-
-	def __hash__(self) -> int:
-		"""
-		Return a hash of the alert count, consistent with :meth:`__eq__`.
-
-		:returns: The hash of the numbers of failures, errors and warnings.
-		"""
-		return hash((self._failureCount, self._errorCount, self._warningCount))
-
-	def __repr__(self) -> str:
-		"""
-		Return a representation of the alert count.
-
-		:returns: The numbers of failures, errors and warnings.
-		"""
-		return (
-			f"AlertCount(failureCount={self._failureCount}, errorCount={self._errorCount}, "
-			f"warningCount={self._warningCount})"
-		)
 
 
 @export
