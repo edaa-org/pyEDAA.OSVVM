@@ -41,6 +41,9 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
+OSVVM_COLUMNS = "   :columns: status testcases checks alerts disabled-alerts requirements coverage runtime\n"
+
+
 def rowOf(html: str, name: str) -> str:
 	"""
 	Return the table row naming a testsuite or testcase.
@@ -60,17 +63,21 @@ class Table(Project):
 		self.assertEqual([], self._warningLines())
 		html = self._html("index")
 		header = html[html.index("<thead>"):html.index("</thead>")]
-		for title in (
-			"Status", "Testcases", "Checks", "Alerts", "Disabled Alerts", "Requirements", "Functional Coverage",
+		titles = (
+			"Testcases", "Errored", "Alerts", "Expected Alerts", "Checks", "Requirements", "Functional Coverage",
 			"Elapsed Time (HH:MM:SS.sss)"
-		):
+		)
+		for title in titles:
 			with self.subTest(title=title):
 				self.assertIn(f">{title}</th>", header)
+		self.assertEqual(sorted(titles, key=lambda title: header.index(f">{title}</th>")), list(titles))
+		self.assertNotIn(">Status</th>", header)
+		self.assertNotIn("Disabled Alerts", header)
 		self.assertNotIn("Simulation Time", header)
 		self.assertIn('class="report-unittest-table osvvm-buildsummary-table osvvm-buildsummary-demo docutils', html)
 
 	def test_TestcaseRow(self) -> None:
-		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n")
+		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n" + OSVVM_COLUMNS)
 
 		cells = rowOf(self._html("index"), "TbDemo_Failed").split("<td")[2:]
 		self.assertEqual(
@@ -85,7 +92,7 @@ class Table(Project):
 		self.assertIn('class="osvvm-warning-mismatch"', cells[9])
 
 	def test_TestsuiteRow(self) -> None:
-		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n")
+		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n" + OSVVM_COLUMNS)
 
 		cells = rowOf(self._html("index"), "Demo").split("<td")[2:]
 		self.assertEqual(
@@ -93,8 +100,20 @@ class Table(Project):
 			[cell[cell.index(">") + 1:cell.index("</td>")] for cell in cells]
 		)
 
+	def test_Errored(self) -> None:
+		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n   :columns: errored\n")
+
+		self.assertEqual([], self._warningLines())
+		html = self._html("index")
+		self.assertIn(">Errored</th>", html[html.index("<thead>"):html.index("</thead>")])
+		testsuiteCells = rowOf(html, "Demo").split("<td")[2:]
+		self.assertEqual(["0"], [cell[cell.index(">") + 1:cell.index("</td>")] for cell in testsuiteCells])
+
+		testcaseCells = rowOf(html, "TbDemo_Failed").split("<td")[2:]
+		self.assertEqual([""], [cell[cell.index(">") + 1:cell.index("</td>")] for cell in testcaseCells])
+
 	def test_ExpectedStatus(self) -> None:
-		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n")
+		self._build("Index\n#####\n\n.. osvvm:build-summary::\n   :reportid: demo\n" + OSVVM_COLUMNS)
 
 		row = rowOf(self._html("index"), "TbExpected_Failed")
 		self.assertIn('class="report-testcase testcase-expectedfailed', row)

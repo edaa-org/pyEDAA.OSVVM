@@ -34,8 +34,10 @@ Options
    .. rst:directive:option:: columns: <column groups>
 
       The column groups after the first column, which names the testsuite or testcase, in their order; separated by
-      spaces or commas. Default: ``status testcases checks alerts disabled-alerts requirements coverage runtime``.
-      See :ref:`DIR/BuildSummary/Columns`.
+      spaces or commas. Default: ``testcases errored alerts expected-alerts checks requirements coverage runtime``,
+      the columns of the directive before this option existed. OSVVM's own HTML build summary shows
+      ``status testcases checks alerts disabled-alerts requirements coverage runtime``. See
+      :ref:`DIR/BuildSummary/Columns`.
 
    .. rst:directive:option:: build-name: <name>
 
@@ -71,6 +73,9 @@ A testsuite's row and the build's rows sum the counts of their testcases.
 +---------------------+-------------------------------------+---------------------------------------------------------+
 | ``testcases``       | Testcases: Passed, Failed, Skipped, | The number of testcases per status, per testsuite.      |
 |                     | Total                               |                                                         |
++---------------------+-------------------------------------+---------------------------------------------------------+
+| ``errored``         | Errored                             | The number of errored testcases, per testsuite: their   |
+|                     |                                     | analysis failed or they wrote no reports.               |
 +---------------------+-------------------------------------+---------------------------------------------------------+
 | ``checks``          | Checks: Passed, Total               | The affirmations: passed ones and all of them.          |
 +---------------------+-------------------------------------+---------------------------------------------------------+

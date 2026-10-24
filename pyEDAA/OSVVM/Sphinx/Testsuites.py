@@ -81,6 +81,7 @@ CONFIG_VALUE = "osvvm_build_summaries"
 COLUMNS = {
 	"status":          "Status",
 	"testcases":       "Testcases",
+	"errored":         "Errored",
 	"checks":          "Checks",
 	"alerts":          "Alerts",
 	"expected-alerts": "Expected Alerts",
@@ -92,9 +93,9 @@ COLUMNS = {
 	"generics":        "Generics",
 }
 
-#: The column groups of a table without option ``:columns:``, as OSVVM's HTML build summary shows them, and the alerts.
+#: The column groups of a table without option ``:columns:``: the columns of the directive before the option.
 DEFAULT_COLUMNS = (
-	"status", "testcases", "checks", "alerts", "disabled-alerts", "requirements", "coverage", "runtime"
+	"testcases", "errored", "alerts", "expected-alerts", "checks", "requirements", "coverage", "runtime"
 )
 
 #: The units a simulation time is written in, as femtoseconds per unit, the largest first.
@@ -289,6 +290,7 @@ class BuildSummary(UnittestSummaryBase):
 				Column("Skipped", 1, testsuite=lambda testsuite: f"{testsuite.Skipped}"),
 				Column("Total",   1, testsuite=lambda testsuite: f"{testsuite.TestcaseCount}")
 			]),
+			"errored":         Column("Errored", 1, testsuite=lambda testsuite: f"{testsuite.Errored}"),
 			"checks":          ColumnGroup("Checks", [
 				Column(
 					"Passed", 1, testsuite=sumOf(lambda tc: tc.PassedAssertionCount or 0),
