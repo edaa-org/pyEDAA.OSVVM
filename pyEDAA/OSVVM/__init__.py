@@ -79,12 +79,17 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 
 	OSVVM restarted the format versions of its YAML files at ``0.1`` with OSVVM 2026.01. Files of older OSVVM releases
 	state other versions (``1.0``, ``1.1`` or a date) or none, and aren't supported.
+
+	An empty file - no bytes, or no YAML node - is checked before the format version: a format, whose writer creates an
+	empty file for a valid case, sets :attr:`_ALLOW_EMPTY`; the document is then empty (:attr:`_yamlDocument` is an empty
+	mapping, :attr:`Version` is ``None``). Otherwise, an empty file is an error.
 	"""
 
 	_DESCRIPTION:    ClassVar[str]                        #: Name of the file format in messages.
 	_ERROR:          ClassVar[type[OSVVMException]]       #: Exception raised, if the file can't be analyzed.
 	_FORMAT_VERSION: ClassVar[type[StringEnum]]           #: Enumeration of the format's versions.
 	_SCHEMAS:        ClassVar[Mapping[StringEnum, str]]   #: Schema file per format version.
+	_ALLOW_EMPTY:    ClassVar[bool] = False               #: An empty file is a valid, empty document.
 	_OLD_VERSIONS:   ClassVar[str] = (
 		"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
 	)                                                     #: Note explaining an unsupported or missing format version.
@@ -104,7 +109,7 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 		"""
 		Read-only property to access the format version the file states (:attr:`_version`).
 
-		:returns: The format version, or ``None`` if the file wasn't analyzed yet.
+		:returns: The format version, or ``None`` if the file wasn't analyzed yet or is empty.
 		"""
 		return self._version
 
@@ -119,6 +124,7 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 		:raises OSVVMException: If the file can't be read.
 		:raises OSVVMException: If the file isn't UTF-8 encoded.
 		:raises OSVVMException: If the file isn't valid YAML.
+		:raises OSVVMException: If the file is empty and the format doesn't allow it (:attr:`_ALLOW_EMPTY`).
 		:raises OSVVMException: If the file's content isn't a YAML mapping.
 		:raises OSVVMException: If the file states no format version. |br|
 		                        The notes list the supported format versions and name the OSVVM release, which
@@ -188,6 +194,14 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 			yamlDocument = YAML().load(content)
 		except YAMLError as ex:
 			raise self._ERROR(f"YAML syntax error in {self._DESCRIPTION} '{self._path}'.") from ex
+
+		if yamlDocument is None:
+			if not self._ALLOW_EMPTY:
+				raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' is empty.")
+
+			self._yamlDocument = CommentedMap()
+			self._version =      None
+			return
 
 		if not isinstance(yamlDocument, CommentedMap):
 			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not a YAML mapping.")

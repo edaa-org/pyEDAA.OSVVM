@@ -214,6 +214,30 @@ class Errors(Testcase):
 			context.exception.__notes__[1]
 		)
 
+	def test_EmptyFile(self) -> None:
+		for text in ("", "# A comment only.\n"):
+			with self.subTest(text=text):
+				with self.assertRaises(BuildSummaryError) as context:
+					_ = self.read(text)
+
+				self.assertTrue(str(context.exception).endswith("' is empty."))
+
+	def test_EmptyFile_Allowed(self) -> None:
+		"""A format, which allows an empty file, gets an empty document."""
+		class EmptyBuildSummary(BuildSummaryDocument):
+			_ALLOW_EMPTY = True
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "build.yml"
+			with path.open("w", encoding="utf-8") as file:
+				file.write("")
+
+			document = EmptyBuildSummary(path)
+			document.Analyze()
+
+		self.assertIsNone(document.Version)
+		self.assertEqual(0, len(document._yamlDocument))
+
 	def test_NoVersion(self) -> None:
 		with self.assertRaises(BuildSummaryError) as context:
 			_ = self.read(MINIMAL.replace('Version: "0.1"\n', ""))
