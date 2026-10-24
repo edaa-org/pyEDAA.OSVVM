@@ -50,16 +50,16 @@ Quick Start
                from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 
                def counts(item) -> str:
-                 return f"{item.AlertCount.FailureCount}/{item.AlertCount.ErrorCount}/{item.AlertCount.WarningCount}"
+                 return f"{item.FailureCount}/{item.ErrorCount}/{item.WarningCount}"
 
                path = Path("TbAxi4_BasicReadWrite_alerts.yml")
                with WarningCollector() as warnings:
                  doc = AlertLogDocument(path, analyzeAndConvert=True)
 
                print(f"{doc.Name}: {counts(doc)}")
-               for item in doc:
+               for item in doc.Children.values():
                  print(f"  {item.Name:<19}: {counts(item)}")
-                 for innerItem in item:
+                 for innerItem in item.Children.values():
                    print(f"    {innerItem.Name:<17}: {counts(innerItem)}")
                print("=" * 40)
                print(f"Total errors: {doc.TotalErrorCount}")
@@ -99,7 +99,6 @@ An OSVVM AlertLog report can be summarized as follows:
 1. An *AlertLog* report is a tree (or hierarchy) of :ref:`ALERT/DataModel/AlertLogItem` instances.
 2. The tree's root element is a :ref:`ALERT/DataModel/Document` instance derived from :ref:`ALERT/DataModel/AlertLogItem`.
 3. The root has :ref:`ALERT/DataModel/Settings`, which decide whether the test failed.
-4. Alert counts - failures, errors and warnings - are :ref:`ALERT/DataModel/AlertCount` values.
 
 
 
@@ -175,22 +174,3 @@ AlertLog Item
       :columns: 6
 
       .. condensed-class:: pyEDAA.OSVVM.AlertLog.AlertLogItem
-
-
-.. _ALERT/DataModel/AlertCount:
-
-Alert Count
-===========
-
-.. grid:: 2
-
-   .. grid-item::
-      :columns: 6
-
-      The number of failures, errors and warnings, as OSVVM's ``AlertCountType`` holds it. An alert count is a value:
-      it belongs to no element, and two alert counts with equal counts are equal.
-
-   .. grid-item::
-      :columns: 6
-
-      .. condensed-class:: pyEDAA.OSVVM.AlertLog.AlertCount
