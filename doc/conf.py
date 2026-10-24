@@ -183,12 +183,13 @@ extensions = [
 # Sphinx.Ext.InterSphinx
 # ==============================================================================
 intersphinx_mapping = {
-	"python": ("https://docs.python.org/3", None),
-	"pyTool": ("https://pyTooling.github.io/pyTooling/", None),
-	# "osvvm":  ("https://OSVVM.github.io/OSVVM/", None),
+	"python":       ("https://docs.python.org/3", None),
+	"pyTool":       ("https://pyTooling.github.io/pyTooling/", None),
+	"pyToolSphinx": ("https://pyTooling.github.io/pyTooling.Sphinx/", None),
+	# "osvvm":        ("https://OSVVM.github.io/OSVVM/", None),
 	# OSVVM-Scripts?
-	"vhdl":   ("https://vhdl.github.io/pyVHDLModel/", None),
-	"prj":    ("https://edaa-org.github.io/pyEDAA.ProjectModel/", None),
+	"vhdl":         ("https://vhdl.github.io/pyVHDLModel/", None),
+	"prj":          ("https://edaa-org.github.io/pyEDAA.ProjectModel/", None),
 }
 
 
@@ -289,7 +290,6 @@ pyTooling_DocCoverage_Packages = {
 # ==============================================================================
 osvvm_build_summaries = {
 	"osvvmlibraries": {
-		"name":        "OsvvmLibraries",
 		"yaml_report": "../tests/data/OSVVM/OSVVMLibraries_RunAllTests.yml",
 	}
 }

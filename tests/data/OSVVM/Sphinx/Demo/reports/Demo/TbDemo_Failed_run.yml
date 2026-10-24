@@ -1,0 +1,23 @@
+Version: "0.1"
+TestCaseName: "TbDemo_Failed"
+TestCaseFile:  "../../src/TbDemo_Failed.vhd"
+TestSuiteName: "Demo"
+BuildName: "Demo"
+Generics:           null
+ReportsTestSuiteDirectory:  "reports/Demo"
+RequirementsYamlFile: ""
+AlertYamlFile:  "reports/Demo/TbDemo_Failed_alerts.yml"
+CovYamlFile:  ""
+ScoreboardDict:           null
+TranscriptFiles: "results/Demo/TbDemo_Failed.log"
+TestCaseFileName: "TbDemo_Failed"
+GenericNames: ""
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Demo.log"
+  SimulationHtmlLogFile: "logs/Demo_log.html"
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory:    ""
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"

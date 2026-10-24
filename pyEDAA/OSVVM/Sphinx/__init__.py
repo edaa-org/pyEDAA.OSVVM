@@ -244,6 +244,7 @@ def setup(sphinxApplication: Sphinx) -> "setup_ReturnType":
 	:param sphinxApplication: The Sphinx application.
 	:returns:                 Dictionary containing the extension version and some properties.
 	"""
+	sphinxApplication.setup_extension("pyTooling.Sphinx")
 	sphinxApplication.add_domain(OSVVMDomain)
 
 	# Register callbacks

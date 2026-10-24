@@ -29,415 +29,355 @@
 # ==================================================================================================================== #
 #
 """
-**Report build results as Sphinx documentation page(s).**
+The directive ``osvvm:build-summary``: OSVVM's build summary as a table, per testsuite and testcase.
+
+The build summaries are declared in :file:`conf.py` under ``osvvm_build_summaries``, each with an identifier a
+directive names in its ``:reportid:`` option, the build summary file :file:`<build>.yml` and optionally the key
+``pages``:
+
+.. code-block:: Python
+
+   # doc/conf.py
+   osvvm_build_summaries = {
+     "demo": {
+       "yaml_report": "../temp/OsvvmLibraries_RunDemoTests/OsvvmLibraries_RunDemoTests.yml",
+       "pages":       "osvvm/demo",
+     }
+   }
+
+A build summary is read once, when the builder is initialized, with the settings file :file:`<test>_run.yml` of every
+testcase, which names the testcase's other report files. A warning of the reader - e.g. a key the format doesn't
+define, or a missing settings file - is logged as a Sphinx warning.
+
+The table is rendered by pyTooling.Sphinx' :class:`~pyTooling.Sphinx.Unittest.UnittestSummaryBase`; its columns are
+chosen by option ``:columns:`` from :data:`COLUMNS`.
 """
-from datetime import timedelta
-from enum     import Flag
-from pathlib  import Path
-from typing   import Dict, Tuple, Any, List, Mapping, Generator, TypedDict, ClassVar, Optional as Nullable
+from __future__                      import annotations
 
-from docutils                          import nodes
-from docutils.parsers.rst.directives   import flag
-from sphinx.config                     import Config
-from sphinx.application                import Sphinx
-from pyTooling.Decorators              import export
-from pyTooling.Sphinx                  import BaseDirective, ReportExtensionError, strip, stripAndNormalize
-from pyTooling.Sphinx.Node             import Landscape
+from pathlib                         import Path
+from typing                          import TYPE_CHECKING, Any, Callable, ClassVar, Optional as Nullable, TypedDict
 
-from pyEDAA.Reports.Unittesting        import TestcaseStatus, TestsuiteStatus
+from docutils                        import nodes
+from docutils.parsers.rst.directives import flag
+from sphinx.util.logging             import getLogger
 
-from pyEDAA.OSVVM.Build                import BuildSummaryDocument, TestsuiteSummary, Testsuite, Testcase
+from pyTooling.Decorators            import export
+from pyTooling.Sphinx                import ReportExtensionError, strip, stripAndNormalize
+from pyTooling.Sphinx.Unittest       import Column, ColumnGroup, ShowTestcases, UnittestSummaryBase
+from pyTooling.Warning               import WarningCollector
+
+from pyEDAA.OSVVM.Build              import BuildSummaryDocument, Testcase
+
+if TYPE_CHECKING:  # pragma: no cover
+	from pyEDAA.Reports.Unittesting    import TestsuiteBase
 
 
-class report_DictType(TypedDict):
-	yaml_report: Path
+__all__ = ["CONFIG_VALUE", "COLUMNS", "DEFAULT_COLUMNS", "TIME_UNITS"]
+
+#: Name of the configuration value in :file:`conf.py` declaring the build summaries.
+CONFIG_VALUE = "osvvm_build_summaries"
+
+#: The column groups option ``:columns:`` chooses from, by name, with their titles.
+COLUMNS = {
+	"status":          "Status",
+	"testcases":       "Testcases",
+	"checks":          "Checks",
+	"alerts":          "Alerts",
+	"expected-alerts": "Expected Alerts",
+	"disabled-alerts": "Disabled Alerts",
+	"requirements":    "Requirements",
+	"coverage":        "Functional Coverage",
+	"simulation-time": "Simulation Time",
+	"runtime":         "Elapsed Time",
+	"generics":        "Generics",
+}
+
+#: The column groups of a table without option ``:columns:``, as OSVVM's HTML build summary shows them, and the alerts.
+DEFAULT_COLUMNS = (
+	"status", "testcases", "checks", "alerts", "disabled-alerts", "requirements", "coverage", "runtime"
+)
+
+#: The units a simulation time is written in, as femtoseconds per unit, the largest first.
+TIME_UNITS = (
+	("sec", 1_000_000_000_000_000),
+	("ms",  1_000_000_000_000),
+	("us",  1_000_000_000),
+	("ns",  1_000_000),
+	("ps",  1_000),
+	("fs",  1),
+)
 
 
 @export
-class ShowTestcases(Flag):
-	passed = 1
-	failed = 2
-	skipped = 4
-	excluded = 8
-	errors = 16
-	aborted = 32
+class BuildSummaryConfiguration(TypedDict):
+	"""An entry of ``osvvm_build_summaries``, after :meth:`BuildSummary.CheckConfiguration` read it."""
 
-	all = passed | failed | skipped | excluded | errors | aborted
-	not_passed = all & ~passed
-
-	def __eq__(self, other):
-		if isinstance(other, TestcaseStatus):
-			if other is TestcaseStatus.Passed:
-				return ShowTestcases.passed in self
-			elif other is TestcaseStatus.Failed:
-				return ShowTestcases.failed in self
-			elif other is TestcaseStatus.Skipped:
-				return ShowTestcases.skipped in self
-			elif other is TestcaseStatus.Excluded:
-				return ShowTestcases.excluded in self
-			elif other is TestcaseStatus.Errored or other is TestcaseStatus.SetupError:
-				return ShowTestcases.errors in self
-			elif other is TestcaseStatus.Aborted:
-				return ShowTestcases.aborted in self
-
-		return False
+	yaml_report: Path           #: The build summary file :file:`<build>.yml`.
+	pages:       Nullable[str]  #: Document name the pages per testsuite and testcase are generated below, if any.
 
 
 @export
-class BuildSummary(BaseDirective):
+class BuildSummary(UnittestSummaryBase):
 	"""
-	This directive will be replaced by a table representing unit test results.
-	"""
-	has_content = False
-	required_arguments = 0
-	optional_arguments = 6
+	The ``osvvm:build-summary`` directive: a table of an OSVVM build summary, per testsuite and testcase.
 
-	option_spec = {
+	Besides the counts of testcases per status and the elapsed time, a testcase's row shows what OSVVM states for it:
+	its OSVVM status - and whether it was expected or is known -, its checks, alerts, disabled and expected alerts,
+	requirements, functional coverage, simulation time and generics. A testsuite's row sums the counts of its
+	testcases.
+	"""
+
+	directiveName: str = "build-summary"  #: Name the directive is invoked by.
+
+	has_content =        False  #: A boolean; ``True`` if content is allowed.
+	required_arguments = 0      #: Number of required directive arguments.
+	optional_arguments = 6      #: Number of optional arguments.
+
+	option_spec: dict[str, Any] = {  # type: ignore[misc]
 		"class":              strip,
 		"reportid":           stripAndNormalize,
 		"build-name":         strip,
 		"show-testcases":     stripAndNormalize,
-		"hide-build-summary": flag
-	}
+		"hide-build-summary": flag,
+		"columns":            stripAndNormalize
+	}  #: Mapping of option names to validator functions.
 
-	directiveName: str = "build-summary"
-	configPrefix:  str = "build_summaries"
-	configValues:  Dict[str, Tuple[Any, str, Any]] = {
-		f"{configPrefix}": ({}, "env", Dict)
-	}  #: A dictionary of all configuration values used by unittest directives.
+	configValues: ClassVar[dict[str, tuple[Any, str, Any]]] = {
+		"build_summaries": ({}, "env", dict)
+	}  #: Values added to :file:`conf.py`, as ``name: (default, rebuild, types)``, prefixed by ``osvvm_``.
 
-	_buildSummaries:       ClassVar[Dict[str, report_DictType]] = {}
+	_CONFIG_VALUE: ClassVar[str] = CONFIG_VALUE     #: Configuration value declaring the build summaries.
+	_REPORT_KEY:   ClassVar[str] = "yaml_report"    #: Key of a build summary's file in its configuration.
+	_REPORT_KIND:  ClassVar[str] = "Build summary"  #: The kind of report, as a message names it.
 
-	_cssClasses:           List[str]
-	_reportID:             str
-	_hideTestsuiteSummary: bool
-	_buildName:            Nullable[str]
-	_showTestcases:        ShowTestcases
-	_yamlReport:           Path
-	_build:                TestsuiteSummary
+	_testSummaries: ClassVar[dict[str, BuildSummaryConfiguration]] = {}  #: Configurations, by report ID.
+	_reports:       ClassVar[dict[str, BuildSummaryDocument]] = {}       #: Build summaries read, by report ID.
+	_readErrors:    ClassVar[dict[str, Exception]] = {}                  #: Why a build summary wasn't read, by ID.
+
+	_columnNames: list[str]  #: Names of the column groups shown, from :data:`COLUMNS`.
 
 	def _CheckOptions(self) -> None:
 		"""
 		Parse all directive options or use default values.
+
+		:raises SphinxExtensionError: If option ``:class:`` isn't a list of CSS class names.
+		:raises SphinxExtensionError: If option ``:show-testcases:`` is neither ``all`` nor ``not-passed``.
+		:raises SphinxExtensionError: If option ``:reportid:`` is missing.
+		:raises ReportExtensionError: If option ``:columns:`` names a column group not in :data:`COLUMNS`. |br|
+		                              The note lists the column groups.
+		:raises ReportExtensionError: If ``osvvm_build_summaries`` has no entry for the report ID.
 		"""
 		cssClasses = self._ParseStringOption("class", "", r"(\w+)?( +\w+)*")
 		showTestcases = self._ParseStringOption("show-testcases", "all", r"all|not-passed")
+		columns = self._ParseStringOption("columns", " ".join(DEFAULT_COLUMNS), r"[a-z\- ,]+")
 
 		self._cssClasses = [] if cssClasses == "" else cssClasses.split(" ")
 		self._reportID = self._ParseStringOption("reportid")
-		self._buildName = self._ParseStringOption("build-name", "", r".+")
+		self._testsuiteSummaryName = self._ParseStringOption("build-name", "", r".+")
 		self._showTestcases = ShowTestcases[showTestcases.replace("-", "_")]
 		self._hideTestsuiteSummary = "hide-build-summary" in self.options
+		self._columnNames = columnNames = []
+
+		for columnName in columns.replace(",", " ").split():
+			if columnName not in COLUMNS:
+				ex = ReportExtensionError(f"{self.directiveName}::columns: Unknown column group '{columnName}'.")
+				ex.add_note(f"Column groups: {', '.join(COLUMNS)}")
+				raise ex
+
+			columnNames.append(columnName)
 
 		try:
-			buildSummary = self._buildSummaries[self._reportID]
+			buildSummary = self._testSummaries[self._reportID]
 		except KeyError as ex:
 			raise ReportExtensionError(f"No build summary configuration item for '{self._reportID}'.") from ex
-		self._yamlReport = buildSummary["yaml_report"]
+		self._reportFile = buildSummary["yaml_report"]
 
 	@classmethod
-	def CheckConfiguration(cls, sphinxApplication: Sphinx, sphinxConfiguration: Config) -> None:
+	def _ReadReport(cls, reportFile: Path) -> BuildSummaryDocument:
 		"""
-		Check configuration fields and load necessary values.
+		Read a build summary, and the settings file of each of its testcases.
 
-		:param sphinxApplication:   Sphinx application instance.
-		:param sphinxConfiguration: Sphinx configuration instance.
+		A warning of the reader is logged as a Sphinx warning. A build summary without its reports directory - e.g. a
+		copy of the file alone - is logged once, and its testcases have no settings.
+
+		:param reportFile: The build summary file.
+		:returns:          The build summary, aggregated.
 		"""
-		cls._CheckConfiguration(sphinxConfiguration)
+		logger = getLogger(__name__)
 
-	@classmethod
-	def ReadReports(cls, sphinxApplication: Sphinx) -> None:
+		with WarningCollector() as collector:
+			document = BuildSummaryDocument(reportFile, analyzeAndConvert=True)
+			reportsDirectory = reportFile.parent / document.Settings.ReportsSubdirectory
+			if reportsDirectory.is_dir():
+				document.ReadTestcaseSettings()
+			else:
+				logger.warning(
+					f"{cls._REPORT_KIND} '{reportFile}': Reports directory '{reportsDirectory}' doesn't exist, so its testcases "
+					f"have no report files.", type="osvvm", subtype="read"
+				)
+
+		for warning in collector:
+			logger.warning(f"{cls._REPORT_KIND} '{reportFile}': {warning}", type="osvvm", subtype="read")
+
+		return document
+
+	def _TableClasses(self) -> list[str]:
 		"""
-		Read build report files.
+		Return the CSS classes of the table: ``report-unittest-table``, ``osvvm-buildsummary-table``,
+		``osvvm-buildsummary-<report ID>`` and the classes of option ``:class:``.
 
-		:param sphinxApplication:   Sphinx application instance.
+		:returns: The CSS classes.
 		"""
-		print("[REPORT] Reading build reports ...")
-
-	@classmethod
-	def _CheckConfiguration(cls, sphinxConfiguration: Config) -> None:
-		from pyEDAA.OSVVM.Sphinx import OSVVMDomain
-
-		variableName = f"{OSVVMDomain.name}_{cls.configPrefix}"
-
-		try:
-			allBuildReports: Dict[str, report_DictType] = sphinxConfiguration[f"{OSVVMDomain.name}_{cls.configPrefix}"]
-		except (KeyError, AttributeError) as ex:
-			raise ReportExtensionError(f"Configuration option '{variableName}' is not configured.") from ex
-
-		# try:
-		# 	testsuiteConfiguration = allBuildReports[self._reportID]
-		# except KeyError as ex:
-		# 	raise ReportExtensionError(f"conf.py: {OSVVMDomain.name}_{self.configPrefix}: No configuration found for '{self._reportID}'.") from ex
-
-		for reportID, buildReport in allBuildReports.items():
-			buildReportName = f"conf.py: {variableName}:[{reportID}]"
-
-			try:
-				yamlReport = Path(buildReport["yaml_report"])
-			except KeyError as ex:
-				raise ReportExtensionError(f"{buildReportName}.yaml_report: Configuration is missing.") from ex
-
-			if not yamlReport.exists():
-				raise ReportExtensionError(f"{buildReportName}.yaml_report: OSVVM Build Report file '{yamlReport}' doesn't exist.") from FileNotFoundError(yamlReport)
-
-			cls._buildSummaries[reportID] = {
-				"yaml_report": yamlReport
-			}
-
-	def _sortedValues(self, d: Mapping[str, Testsuite]) -> Generator[Testsuite, None, None]:
-		for key in sorted(d.keys()):
-			yield d[key]
-
-	def _convertTestcaseStatusToSymbol(self, status: TestcaseStatus) -> str:
-		if status is TestcaseStatus.Passed:
-			return "✅"
-		elif status is TestcaseStatus.Failed:
-			return "❌"
-		elif status is TestcaseStatus.Skipped:
-			return "⚠️"
-		elif status is TestcaseStatus.Aborted:
-			return "🚫"
-		elif status is TestcaseStatus.Excluded:
-			return "➖"
-		elif status is TestcaseStatus.Errored:
-			return "❗"
-		elif status is TestcaseStatus.SetupError:
-			return "⛔"
-		elif status is TestcaseStatus.Unknown:
-			return "❓"
-		else:
-			return "❌"
-
-	def _convertTestsuiteStatusToSymbol(self, status: TestsuiteStatus) -> str:
-		if status is TestsuiteStatus.Passed:
-			return "✅"
-		elif status is TestsuiteStatus.Failed:
-			return "❌"
-		elif status is TestsuiteStatus.Skipped:
-			return "⚠️"
-		elif status is TestsuiteStatus.Aborted:
-			return "🚫"
-		elif status is TestsuiteStatus.Excluded:
-			return "➖"
-		elif status is TestsuiteStatus.Errored:
-			return "❗"
-		elif status is TestsuiteStatus.SetupError:
-			return "⛔"
-		elif status is TestsuiteStatus.Unknown:
-			return "❓"
-		else:
-			return "❌"
-
-	def _formatTimedelta(self, delta: timedelta) -> str:
-		if delta is None:
-			return ""
-
-		# Compute by hand, because timedelta._to_microseconds is not officially documented
-		microseconds = (delta.days * 86_400 + delta.seconds) * 1_000_000 + delta.microseconds
-		milliseconds = (microseconds + 500) // 1000
-		seconds = milliseconds // 1000
-		minutes = seconds // 60
-		hours = minutes // 60
-		return f"{hours:02}:{minutes % 60:02}:{seconds % 60:02}.{milliseconds % 1000:03}"
-
-	def _GenerateBuildSummaryTable(self) -> nodes.Element:
-		columns = [
-			("Testsuite", (
-				("  Testcase", 1),
-			), None),
-			("Testsuite Status", (
-				("Skipped", 1),
-				("Errored", 1),
-				("Failed", 1),
-				("Passed", 1),
-				("Testcases", 1),
-			), None),
-			("Warnings", (
-				("Counted", 1),
-				("Expected", 1),
-			), None),
-			("Errors", (
-				("Counted", 1),
-				("Expected", 1),
-			), None),
-			("Failures", (
-				("Counted", 1),
-				("Expected", 1),
-			), None),
-			("Assertions", (
-				("passed", 1),
-				("Total", 1),
-			), None),
-			("Requirements", (
-				("Passed", 1),
-				("Total", 1),
-			), None),
-			("Coverage", (
-				("Code", 1),
-				("Functional", 1),
-			), None),
-			("Runtime (HH:MM:SS.sss)", None, 2),
+		return [
+			"report-unittest-table", "osvvm-buildsummary-table", f"osvvm-buildsummary-{self._reportID}", *self._cssClasses
 		]
 
-		cssClasses = ["osvvm-buildsummary-table", f"osvvm-buildsummary-{self._reportID}"]
-		cssClasses.extend(self._cssClasses)
+	def _Columns(self) -> list[Column | ColumnGroup]:
+		"""
+		Return the column groups option ``:columns:`` names, in its order.
 
-		tableGroup = self._CreateDoubleRowTableHeader(
-			identifier=self._reportID,
-			columns=columns,
-			classes=cssClasses
-		)
-		tableGroup += (tableBody := nodes.tbody())
+		:returns: The columns and groups of columns.
+		"""
+		def sumOf(count: Callable[[Testcase], int]) -> Callable[[TestsuiteBase[Any]], str]:
+			"""
+			Nested function returning a function, which sums a count of a testsuite's testcases.
 
-		self.renderRoot(tableBody, self._build, not self._hideTestsuiteSummary, self._buildName)
+			:param count: The function returning a testcase's count.
+			:returns:     The function writing the sum of a testsuite or of the build.
+			"""
+			return lambda testsuite: f"{sum(count(testcase) for testcase in testsuite.IterateTestcases())}"
 
-		return tableGroup.parent
+		def alerts(attribute: str, kind: str) -> Column:
+			"""
+			Nested function creating a column of alerts, its cell marked if a testcase's count isn't zero.
 
-	def renderRoot(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary, includeRoot: bool = True, testsuiteSummaryName: Nullable[str] = None) -> None:
-		level = 0
+			OSVVM's alert counts are less the expected alerts, so a count other than zero means the alerts weren't the
+			expected ones.
 
-		if includeRoot:
-			level += 1
-			state = self._convertTestsuiteStatusToSymbol(testsuiteSummary._status)
+			:param attribute: The count's attribute, e.g. ``ErrorCount``.
+			:param kind:      The kind of alert, as the mismatch's CSS class names it: ``failure``, ``error`` or ``warning``.
+			:returns:         The column.
+			"""
+			def testcaseCell(testcase: Testcase) -> nodes.entry:
+				"""
+				Nested function creating the cell of a testcase.
 
-			tableRow = nodes.row("", classes=["osvvm-buildsummary", f"buildsummary-{testsuiteSummary._status.name.lower()}"])
-			tableBody += tableRow
+				:param testcase: The testcase.
+				:returns:        The cell.
+				"""
+				count = getattr(testcase, attribute)
+				classes = [] if count == 0 else [f"osvvm-{kind}-mismatch"]
+				return nodes.entry("", nodes.Text(f"{count}"), classes=classes)
 
-			tableRow += nodes.entry("", nodes.Text(f"{state}{testsuiteSummary.Name if testsuiteSummaryName == '' else testsuiteSummaryName}"))
-			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
-			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
-			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
-			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
-			tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
-			for _ in range(12):
-				tableRow += nodes.entry()
-			tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
+			title = {"failure": "Failures", "error": "Errors", "warning": "Warnings"}[kind]
+			return Column(title, 1, testsuite=sumOf(lambda testcase: getattr(testcase, attribute)), testcase=testcaseCell)
 
-		for ts in self._sortedValues(testsuiteSummary._testsuites):
-			self.renderTestsuite(tableBody, ts, level)
+		def runtime(entity: TestsuiteBase[Any] | Testcase) -> str:
+			"""
+			Nested function formatting the elapsed time of a testsuite, the build or a testcase.
 
-		self.renderSummary(tableBody, testsuiteSummary)
+			:param entity: The testsuite, the build or the testcase.
+			:returns:      The elapsed time.
+			"""
+			return self._FormatTimedelta(entity.TotalDuration)
 
-	def renderTestsuite(self, tableBody: nodes.tbody, testsuite: Testsuite, level: int) -> None:
-		state = self._convertTestsuiteStatusToSymbol(testsuite._status)
+		groups: dict[str, Column | ColumnGroup] = {
+			"status":          Column("Status", 2, testsuite=lambda ts: ts.Status.name.upper(), testcase=self._Status),
+			"testcases":       ColumnGroup("Testcases", [
+				Column("Passed",  1, testsuite=lambda testsuite: f"{testsuite.Passed}"),
+				Column("Failed",  1, testsuite=lambda testsuite: f"{testsuite.Failed}"),
+				Column("Skipped", 1, testsuite=lambda testsuite: f"{testsuite.Skipped}"),
+				Column("Total",   1, testsuite=lambda testsuite: f"{testsuite.TestcaseCount}")
+			]),
+			"checks":          ColumnGroup("Checks", [
+				Column(
+					"Passed", 1, testsuite=sumOf(lambda tc: tc.PassedAssertionCount or 0),
+					testcase=lambda tc: "" if tc._passedAssertionCount is None else f"{tc._passedAssertionCount}"
+				),
+				Column(
+					"Total", 1, testsuite=sumOf(lambda tc: tc.AssertionCount),
+					testcase=lambda tc: "" if tc._assertionCount is None else f"{tc._assertionCount}"
+				)
+			]),
+			"alerts":          ColumnGroup("Alerts", [
+				alerts("FatalCount",   "failure"),
+				alerts("ErrorCount",   "error"),
+				alerts("WarningCount", "warning")
+			]),
+			"expected-alerts": ColumnGroup("Expected Alerts", [
+				Column("Failures", 1, testcase=lambda testcase: f"{testcase.ExpectedFatalCount}"),
+				Column("Errors",   1, testcase=lambda testcase: f"{testcase.ExpectedErrorCount}"),
+				Column("Warnings", 1, testcase=lambda testcase: f"{testcase.ExpectedWarningCount}")
+			]),
+			"disabled-alerts": Column(
+				"Disabled Alerts", 1, testsuite=sumOf(self._DisabledCount), testcase=lambda tc: f"{self._DisabledCount(tc)}"
+			),
+			"requirements":    ColumnGroup("Requirements", [
+				Column(
+					"Passed", 1, testsuite=sumOf(lambda tc: tc.PassedRequirementsCount),
+					testcase=lambda tc: "" if tc.RequirementsGoalCount == 0 else f"{tc.PassedRequirementsCount}"
+				),
+				Column(
+					"Goal", 1, testsuite=sumOf(lambda tc: tc.RequirementsGoalCount),
+					testcase=lambda tc: "" if tc.RequirementsGoalCount == 0 else f"{tc.RequirementsGoalCount}"
+				)
+			]),
+			"coverage":        Column(
+				"Functional Coverage", 1,
+				testcase=lambda tc: "" if tc.FunctionalCoverage is None else f"{tc.FunctionalCoverage * 100:.1f} %"
+			),
+			"simulation-time": Column(
+				"Simulation Time", 2,
+				testcase=lambda tc: "" if tc.SimulationTime is None else formatSimulationTime(tc.SimulationTime)
+			),
+			"runtime":         Column("Elapsed Time (HH:MM:SS.sss)", 2, testsuite=runtime, testcase=runtime),
+			"generics":        Column(
+				"Generics", 3, testcase=lambda tc: ", ".join(f"{name}={value}" for name, value in tc.Generics.items())
+			),
+		}
 
-		tableBody += (tableRow := nodes.row("", classes=["osvvm-testsuite", f"testsuite-{testsuite._status.name.lower()}"]))
-		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testsuite.Name}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuite.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Skipped}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Errored}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Failed}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuite.Passed}"))
-		for _ in range(12):
-			tableRow += nodes.entry()
-		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuite.TotalDuration)}"))
+		return [groups[columnName] for columnName in self._columnNames]
 
-		for ts in self._sortedValues(testsuite._testsuites):
-			self.renderTestsuite(tableBody, ts, level + 1)
+	@staticmethod
+	def _Status(testcase: Testcase) -> nodes.entry:
+		"""
+		Create the cell of a testcase's OSVVM status, marked if the status was expected or is known.
 
-		for testcase in self._sortedValues(testsuite._testcases):
-			# if testcase._status == self._showTestcases:
-				self.renderTestcase(tableBody, testcase, level)
+		:param testcase: The testcase.
+		:returns:        The cell, with the CSS class ``osvvm-status-<status>``.
+		"""
+		if (status := testcase.OSVVMStatus) is None:
+			return nodes.entry("", nodes.Text(""))
 
-	def renderTestcase(self, tableBody: nodes.tbody, testcase: Testcase, level: int) -> None:
-		state = self._convertTestcaseStatusToSymbol(testcase._status)
+		text = status.value
+		if testcase.ExpectedResults is not None:
+			text += " (expected)"
+		elif testcase.KnownStatus is not None:
+			text += " (known)"
 
-		def countVsExpected(count: int, expectedCount: int, kind: str) -> Tuple[nodes.entry, nodes.entry]:
-			classes = []
-			if count == expectedCount == 0:
-				text = "⸻"
-			else:
-				if count != expectedCount:
-					classes = [f"osvvm-{kind}-mismatch"]
+		return nodes.entry("", nodes.Text(text), classes=[f"osvvm-status-{status.value.lower()}"])
 
-			return (
-				nodes.entry("", nodes.paragraph(text=f"{count}"),         classes=classes),
-				nodes.entry("", nodes.paragraph(text=f"{expectedCount}"), classes=classes)
-			)
+	@staticmethod
+	def _DisabledCount(testcase: Testcase) -> int:
+		"""
+		Return the number of a testcase's disabled alerts.
 
-		def functionalCoverage(percent: float, kind: str) -> nodes.entry:
-			classes = []
-			if percent is None:
-				text = "⸻"
-			else:
-				text = f"{percent * 100:.1f}"
+		:param testcase: The testcase.
+		:returns:        The sum of disabled failures, errors and warnings.
+		"""
+		return testcase.DisabledFatalCount + testcase.DisabledErrorCount + testcase.DisabledWarningCount
 
-			return nodes.entry("", nodes.paragraph(text=text), classes=classes)
 
-		warningCell,     expectedWarningCell =     countVsExpected(testcase.WarningCount, testcase.ExpectedWarningCount, "warning")
-		errorCell,       expectedErrorCell =       countVsExpected(testcase.ErrorCount, testcase.ExpectedErrorCount, "error")
-		failureCell,     expectedFailureCell =     countVsExpected(testcase.FatalCount, testcase.ExpectedFatalCount, "failure")
-		assertionCell,   expectedAssertionCell =   countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
-		requirementCell, expectedRequirementCell = countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "requirement")
-		coverageCell, _ =    countVsExpected(testcase.PassedAssertionCount, testcase.AssertionCount, "assertion")
-		# tableRow += countVsExpected(testcase.PassedRequirementsCount, testcase.RequirementsCount, "requirement")
-		# tableRow += functionalCoverage(testcase.FunctionalCoverage)
+@export
+def formatSimulationTime(femtoseconds: int) -> str:
+	"""
+	Write a simulation time in the largest unit of :data:`TIME_UNITS` it reaches, with up to three decimals.
 
-		classes = ["osvvm-testcase", f"testcase-{testcase._status.name.lower()}"]
-		classes.extend(warningCell["classes"])
-		classes.extend(errorCell["classes"])
-		classes.extend(failureCell["classes"])
-		classes.extend(assertionCell["classes"])
-		classes.extend(requirementCell["classes"])
-		classes.extend(coverageCell["classes"])
+	:param femtoseconds: The simulation time in femtoseconds.
+	:returns:            The simulation time, e.g. ``3.53 us``.
+	"""
+	for unit, factor in TIME_UNITS:
+		if femtoseconds >= factor:
+			return f"{femtoseconds / factor:.3f}".rstrip("0").rstrip(".") + f" {unit}"
 
-		tableRow =	nodes.row("", classes=classes)
-		tableBody += tableRow
-
-		tableRow += nodes.entry("", nodes.Text(f"{'  ' * level}{state}{testcase.Name}"))
-		for _ in range(5):
-			tableRow += nodes.entry()
-		tableRow += warningCell
-		tableRow += expectedWarningCell
-		tableRow += errorCell
-		tableRow += expectedErrorCell
-		tableRow += failureCell
-		tableRow += expectedFailureCell
-		tableRow += assertionCell
-		tableRow += expectedAssertionCell
-		tableRow += requirementCell
-		tableRow += expectedRequirementCell
-		tableRow += coverageCell
-		tableRow += coverageCell
-		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testcase.TotalDuration)}"))
-
-	def renderSummary(self, tableBody: nodes.tbody, testsuiteSummary: TestsuiteSummary) -> None:
-		state = self._convertTestsuiteStatusToSymbol(testsuiteSummary._status)
-
-		tableRow = nodes.row("", classes=["osvvm-summary", f"testsuitesummary-{testsuiteSummary._status.name.lower()}"])
-		tableBody += tableRow
-
-		tableRow += nodes.entry("", nodes.Text(f"{state} {testsuiteSummary.Status.name.upper()}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.TestcaseCount}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Skipped}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Errored}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Failed}"))
-		tableRow += nodes.entry("", nodes.Text(f"{testsuiteSummary.Passed}"))
-		for _ in range(12):
-			tableRow += nodes.entry()
-		tableRow += nodes.entry("", nodes.Text(f"{self._formatTimedelta(testsuiteSummary.TotalDuration)}"))
-
-	def run(self) -> List[nodes.Node]:
-		container = Landscape()
-
-		try:
-			self._CheckOptions()
-		except ReportExtensionError as ex:
-			message = f"Caught {ex.__class__.__name__} when checking options for directive '{self.directiveName}'."
-			return self._internalError(container, __name__, message, ex)
-
-		# Assemble a list of Python source files
-		try:
-			self._build = BuildSummaryDocument(self._yamlReport, analyzeAndConvert=True)
-		except Exception as ex:
-			message = f"Caught {ex.__class__.__name__} when reading and parsing '{self._yamlReport}'."
-			return self._internalError(container, __name__, message, ex)
-
-		try:
-			container += self._GenerateBuildSummaryTable()
-		except Exception as ex:
-			message = f"Caught {ex.__class__.__name__} when generating the document structure for JUnit document '{self._yamlReport}'."
-			return self._internalError(container, __name__, message, ex)
-
-		return [container]
+	return "0 fs"
