@@ -32,14 +32,10 @@
 from datetime              import timedelta
 from pathlib               import Path
 
-from ruamel.yaml           import YAML
-
-from pyTooling.Warning     import WarningCollector
 from pyTooling.Testing     import Testcase
 
-from pyEDAA.OSVVM          import UnknownKeyWarning
-from pyEDAA.OSVVM.AlertLog import AlertCount, AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, \
-                                  Document, DuplicateAlertLogItemError
+from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
+                                  DuplicateAlertLogItemError
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -74,70 +70,6 @@ class Status(Testcase):
 		self.assertFalse(AlertLogStatus.Unknown)
 
 
-class Count(Testcase):
-	def test_Default(self) -> None:
-		count = AlertCount()
-
-		self.assertEqual(0, count.FailureCount)
-		self.assertEqual(0, count.ErrorCount)
-		self.assertEqual(0, count.WarningCount)
-
-	def test_Values(self) -> None:
-		count = AlertCount(1, 2, -3)
-
-		self.assertEqual(1, count.FailureCount)
-		self.assertEqual(2, count.ErrorCount)
-		self.assertEqual(-3, count.WarningCount)
-		self.assertEqual("AlertCount(failureCount=1, errorCount=2, warningCount=-3)", repr(count))
-
-	def test_Equality(self) -> None:
-		self.assertEqual(AlertCount(1, 2, 3), AlertCount(1, 2, 3))
-		self.assertNotEqual(AlertCount(1, 2, 3), AlertCount(1, 2, 4))
-		self.assertNotEqual(AlertCount(), 0)
-		self.assertEqual(hash(AlertCount(1, 2, 3)), hash(AlertCount(1, 2, 3)))
-
-	def test_None(self) -> None:
-		with self.assertRaises(ValueError) as context:
-			_ = AlertCount(errorCount=None)
-
-		self.assertEqual("Parameter 'errorCount' is None.", str(context.exception))
-
-	def test_Type(self) -> None:
-		with self.assertRaises(TypeError) as context:
-			_ = AlertCount(warningCount="1")
-
-		self.assertEqual("Parameter 'warningCount' is not of type 'int'.", str(context.exception))
-
-	def test_Parse(self) -> None:
-		count = AlertCount.Parse(YAML().load("{Failure: 1, Error: 2, Warning: 3}"))
-
-		self.assertEqual(AlertCount(1, 2, 3), count)
-
-	def test_Parse_UnknownKey(self) -> None:
-		with WarningCollector() as warnings:
-			count = AlertCount.Parse(YAML().load("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
-
-		self.assertEqual(AlertCount(1, 2, 3), count)
-		self.assertEqual(1, len(warnings))
-		self.assertIsInstance(warnings[0], UnknownKeyWarning)
-		self.assertEqual("Note", warnings[0].Key)
-		self.assertEqual(1, warnings[0].Line)
-
-	def test_Parse_MissingKey(self) -> None:
-		with self.assertRaises(AlertLogError) as context:
-			_ = AlertCount.Parse(YAML().load("{Failure: 1, Warning: 3}"))
-
-		self.assertEqual("Alert count at line 1 has no key 'Error'.", str(context.exception))
-
-	def test_Parse_Type(self) -> None:
-		with self.assertRaises(AlertLogError) as context:
-			_ = AlertCount.Parse(YAML().load("{Failure: 1, Error: two, Warning: 3}"))
-
-		self.assertEqual("Key 'Error' of alert count at line 1 is not an integer.", str(context.exception))
-
-
-
-
 class Instantiation(Testcase):
 	def test_AlertLogItem(self) -> None:
 		item = AlertLogItem("name")
@@ -145,29 +77,35 @@ class Instantiation(Testcase):
 		self.assertIsNone(item.Parent)
 		self.assertIs(AlertLogStatus.Unknown, item.Status)
 		self.assertEqual("name", item.Name)
-		self.assertEqual(0, len(item))
+		self.assertEqual(0, item.ChildCount)
 		self.assertEqual(0, len(item.Children))
 		self.assertEqual(0, item.TotalErrorCount)
-		self.assertEqual(AlertCount(), item.AlertCount)
+		self.assertEqual(0, item.WarningCount)
+		self.assertEqual(0, item.ErrorCount)
+		self.assertEqual(0, item.FailureCount)
 		self.assertEqual(0, item.AffirmCount)
 		self.assertEqual(0, item.PassedCount)
 		self.assertEqual(0, item.RequirementsGoalCount)
 		self.assertEqual(0, item.PassedRequirementsCount)
-		self.assertEqual(AlertCount(), item.DisabledAlertCount)
+		self.assertEqual(0, item.DisabledWarningCount)
+		self.assertEqual(0, item.DisabledErrorCount)
+		self.assertEqual(0, item.DisabledFailureCount)
 
 	def test_AlertLogItem_Values(self) -> None:
-		alertCount =         AlertCount(1, 2, 3)
-		disabledAlertCount = AlertCount(4, 5, 6)
-		item = AlertLogItem("name", AlertLogStatus.Failed, 6, alertCount, 7, 8, 9, 10, disabledAlertCount)
+		item = AlertLogItem("name", AlertLogStatus.Failed, 6, 1, 2, 3, 7, 8, 9, 10, 4, 5, 6)
 
 		self.assertIs(AlertLogStatus.Failed, item.Status)
 		self.assertEqual(6, item.TotalErrorCount)
-		self.assertIs(alertCount, item.AlertCount)
+		self.assertEqual(1, item.WarningCount)
+		self.assertEqual(2, item.ErrorCount)
+		self.assertEqual(3, item.FailureCount)
 		self.assertEqual(7, item.PassedCount)
 		self.assertEqual(8, item.AffirmCount)
 		self.assertEqual(9, item.PassedRequirementsCount)
 		self.assertEqual(10, item.RequirementsGoalCount)
-		self.assertIs(disabledAlertCount, item.DisabledAlertCount)
+		self.assertEqual(4, item.DisabledWarningCount)
+		self.assertEqual(5, item.DisabledErrorCount)
+		self.assertEqual(6, item.DisabledFailureCount)
 
 	def test_AlertLogItem_Name(self) -> None:
 		with self.assertRaises(ValueError) as context:
@@ -203,9 +141,9 @@ class Instantiation(Testcase):
 		self.assertEqual("Parameter 'passedCount' is not of type 'int'.", str(context.exception))
 
 		with self.assertRaises(TypeError) as context:
-			_ = AlertLogItem("name", alertCount=(0, 0, 0))
+			_ = AlertLogItem("name", disabledFailureCount="0")
 
-		self.assertEqual("Parameter 'alertCount' is not of type 'AlertCount'.", str(context.exception))
+		self.assertEqual("Parameter 'disabledFailureCount' is not of type 'int'.", str(context.exception))
 
 	def test_AlertLogItem_Parent(self) -> None:
 		with self.assertRaises(TypeError) as context:
@@ -221,9 +159,9 @@ class Hierarchy(Testcase):
 
 		self.assertIsNone(root.Parent)
 		self.assertIs(item.Parent, root)
-		self.assertEqual(1, len(root))
-		self.assertEqual(0, len(item))
-		self.assertIs(item, root["item1"])
+		self.assertEqual(1, root.ChildCount)
+		self.assertEqual(0, item.ChildCount)
+		self.assertIs(item, root.Children["item1"])
 
 	def test_TopDown_Duplicate(self) -> None:
 		root = AlertLogItem("root")
@@ -234,7 +172,7 @@ class Hierarchy(Testcase):
 
 		self.assertEqual("AlertLog item 'root' has a child 'item1' already.", str(context.exception))
 		self.assertIs(item, context.exception.Item)
-		self.assertIs(item, root["item1"])
+		self.assertIs(item, root.Children["item1"])
 
 	def test_BottomUp(self) -> None:
 		child1 = AlertLogItem("item1")
@@ -243,11 +181,11 @@ class Hierarchy(Testcase):
 		root = AlertLogItem("root", children=children)
 
 		self.assertIsNone(root.Parent)
-		self.assertEqual(2, len(root))
+		self.assertEqual(2, root.ChildCount)
 		for child in children:
 			self.assertIs(child.Parent, root)
-			self.assertEqual(0, len(child))
-			self.assertIs(child, root[child.Name])
+			self.assertEqual(0, child.ChildCount)
+			self.assertIs(child, root.Children[child.Name])
 
 	def test_BottomUp_Duplicate(self) -> None:
 		child1 = AlertLogItem("item1")
@@ -288,8 +226,8 @@ class Hierarchy(Testcase):
 
 		self.assertIsNone(root.Parent)
 		self.assertIs(item.Parent, root)
-		self.assertEqual(1, len(root))
-		self.assertEqual(0, len(item))
+		self.assertEqual(1, root.ChildCount)
+		self.assertEqual(0, item.ChildCount)
 
 	def test_Parent_Move(self) -> None:
 		root1 = AlertLogItem("root1")
@@ -298,8 +236,8 @@ class Hierarchy(Testcase):
 		item.Parent = root2
 
 		self.assertIs(item.Parent, root2)
-		self.assertEqual(0, len(root1))
-		self.assertIs(item, root2["item1"])
+		self.assertEqual(0, root1.ChildCount)
+		self.assertIs(item, root2.Children["item1"])
 
 	def test_Parent_None(self) -> None:
 		root = AlertLogItem("root")
@@ -307,7 +245,7 @@ class Hierarchy(Testcase):
 		item.Parent = None
 
 		self.assertIsNone(item.Parent)
-		self.assertEqual(0, len(root))
+		self.assertEqual(0, root.ChildCount)
 
 	def test_Parent_Duplicate(self) -> None:
 		root = AlertLogItem("root")
@@ -346,7 +284,7 @@ class Iterate(Testcase):
 		children = child1, child2
 		root = AlertLogItem("root", children=children)
 
-		self.assertTupleEqual(children, tuple(root))
+		self.assertTupleEqual(children, tuple(root.Children.values()))
 		self.assertDictEqual({c.Name: c for c in children}, root.Children)
 
 	def test_IterateItems(self) -> None:
@@ -386,7 +324,7 @@ class Parse(Testcase):
 		self.assertEqual(path, document.Path)
 		self.assertEqual("TbAxi4_BasicReadWrite", document.Name)
 		self.assertIs(AlertLogStatus.Passed, document.Status)
-		self.assertEqual(5, len(document))
-		self.assertEqual(40, document["Default"].PassedCount)
+		self.assertEqual(5, document.ChildCount)
+		self.assertEqual(40, document.Children["Default"].PassedCount)
 		self.assertGreater(document.AnalysisDuration, timedelta())
 		self.assertGreater(document.ModelConversionDuration, timedelta())
