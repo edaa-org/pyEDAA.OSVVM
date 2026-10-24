@@ -42,10 +42,9 @@ from pyTooling.Decorators  import export, readonly
 from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
-from pyTooling.Warning     import WarningCollector
 from pyTooling.Tree        import Node
 
-from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
+from pyEDAA.OSVVM          import OSVVMException
 
 
 @export
@@ -376,26 +375,20 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		"""
 		Parse an entry of ``Children``: its name, status and ``Results``, and its children.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:param node:                           The YAML mapping of the entry.
-		:param parent:                         Optional, the parent item; the item is added to its children. Default:
-		                                       ``None``.
-		:returns:                              The AlertLog item.
-		:raises AlertLogError:                 If the mapping or its ``Results`` lack a key the format requires.
-		:raises AlertLogError:                 If a value isn't of the type the format requires.
-		:raises AlertLogError:                 If the status is unknown.
-		:raises DuplicateAlertLogItemError:    If parameter ``parent`` has a child of the same name already.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:param node:                        The YAML mapping of the entry.
+		:param parent:                      Optional, the parent item; the item is added to its children. Default:
+		                                    ``None``.
+		:returns:                           The AlertLog item.
+		:raises AlertLogError:              If the mapping or its ``Results`` lack a key the format requires.
+		:raises AlertLogError:              If a value isn't of the type the format requires.
+		:raises AlertLogError:              If the status is unknown.
+		:raises DuplicateAlertLogItemError: If parameter ``parent`` has a child of the same name already.
+		:raises AlertLogError:              If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
 			if key not in ("Name", "Status", "Results", "Children"):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in AlertLog item at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in AlertLog item at line {node.lc.key(key)[0] + 1}.")
 
 		for key, keyType, typeName in (
 			("Name",    str,          "a string"),
@@ -422,10 +415,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 				"TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal",
 				"DisabledAlertCount"
 			):
-				keyLine = results.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in results at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in results at line {results.lc.key(key)[0] + 1}.")
 
 		for key, keyType, typeName in (
 			("TotalErrors",        int,          "an integer"),
@@ -448,10 +438,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 			mapLine =    alertCount.lc.line + 1
 			for key in alertCount:
 				if key not in ("Failure", "Error", "Warning"):
-					keyLine = alertCount.lc.key(key)[0] + 1
-					WarningCollector.Raise(
-						UnknownKeyWarning(f"Unknown key '{key}' in '{mapKey}' at line {keyLine}.", key=key, line=keyLine)
-					)
+					raise AlertLogError(f"Unknown key '{key}' in '{mapKey}' at line {alertCount.lc.key(key)[0] + 1}.")
 
 			for key in ("Failure", "Error", "Warning"):
 				if key not in alertCount:
@@ -822,26 +809,21 @@ class Settings(metaclass=ExtendedType, slots=True):
 		"""
 		Parse the root's ``Settings``.
 
-		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored. A key the format doesn't define
-		is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored.
 
-		:param node:                           The YAML mapping.
-		:param parent:                         Optional, the document the settings belong to. Default: ``None``.
-		:returns:                              The settings.
-		:raises AlertLogError:                 If the mapping lacks a key the format requires.
-		:raises AlertLogError:                 If a value isn't of the type the format requires.
-		:raises AlertLogError:                 If a flag is neither ``true`` nor ``false``.
-		:raises AlertLogError:                 If parameter ``parent`` has settings already.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:param node:           The YAML mapping.
+		:param parent:         Optional, the document the settings belong to. Default: ``None``.
+		:returns:              The settings.
+		:raises AlertLogError: If the mapping lacks a key the format requires.
+		:raises AlertLogError: If a value isn't of the type the format requires.
+		:raises AlertLogError: If a flag is neither ``true`` nor ``false``.
+		:raises AlertLogError: If parameter ``parent`` has settings already.
+		:raises AlertLogError: If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
 			if key not in ("ExternalErrors", "FailOnDisabledErrors", "FailOnRequirementErrors", "FailOnWarning"):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in settings at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in settings at line {node.lc.key(key)[0] + 1}.")
 
 		if "ExternalErrors" not in node:
 			raise AlertLogError(f"Settings at line {line} have no key 'ExternalErrors'.")
@@ -855,10 +837,7 @@ class Settings(metaclass=ExtendedType, slots=True):
 			mapLine =    alertCount.lc.line + 1
 			for key in alertCount:
 				if key not in ("Failure", "Error", "Warning"):
-					keyLine = alertCount.lc.key(key)[0] + 1
-					WarningCollector.Raise(
-						UnknownKeyWarning(f"Unknown key '{key}' in '{mapKey}' at line {keyLine}.", key=key, line=keyLine)
-					)
+					raise AlertLogError(f"Unknown key '{key}' in '{mapKey}' at line {alertCount.lc.key(key)[0] + 1}.")
 
 			for key in ("Failure", "Error", "Warning"):
 				if key not in alertCount:
@@ -1081,13 +1060,10 @@ class Document(AlertLogItem):
 		"""
 		Convert the YAML data structure to the settings and a hierarchy of :class:`AlertLogItem` instances.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:raises AlertLogError:                 If YAML file was not analyzed.
-		:raises AlertLogError:                 If a mapping lacks a key the format requires.
-		:raises AlertLogError:                 If a value isn't of the type the format requires.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:raises AlertLogError: If YAML file was not analyzed.
+		:raises AlertLogError: If a mapping lacks a key the format requires.
+		:raises AlertLogError: If a value isn't of the type the format requires.
+		:raises AlertLogError: If a mapping has a key the format doesn't define.
 		"""
 		if self._yamlDocument is None:
 			ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")

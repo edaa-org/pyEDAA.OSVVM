@@ -34,10 +34,8 @@ from pathlib               import Path
 
 from ruamel.yaml           import YAML, CommentedMap
 
-from pyTooling.Warning     import UnhandledCriticalWarningError, WarningCollector
 from pyTooling.Testing     import Testcase
 
-from pyEDAA.OSVVM          import UnknownKeyWarning
 from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
                                   DuplicateAlertLogItemError, Settings
 
@@ -366,14 +364,10 @@ class ItemParse(Testcase):
 		self.assertEqual(1, item.FailureCount)
 
 	def test_Parse_UnknownKey(self) -> None:
-		with WarningCollector() as warnings:
-			item = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
 
-		self.assertEqual(3, item.WarningCount)
-		self.assertEqual(1, len(warnings))
-		self.assertIsInstance(warnings[0], UnknownKeyWarning)
-		self.assertEqual("Note", warnings[0].Key)
-		self.assertEqual(3, warnings[0].Line)
+		self.assertEqual("Unknown key 'Note' in 'AlertCount' at line 3.", str(context.exception))
 
 	def test_Parse_MissingKey(self) -> None:
 		with self.assertRaises(AlertLogError) as context:
@@ -442,25 +436,10 @@ class Parse(Testcase):
 		self.assertEqual("TBMODELPARAMETERS\n├─VHDL ASSERTS\n├─DEFAULT\n├─OSVVM\n└─TB\n", tree.Render())
 
 	def test_UnknownKeys(self) -> None:
-		with WarningCollector() as warnings:
-			document = Document(DATA / "UnknownKeys_alerts.yml", analyzeAndConvert=True)
-
-		self.assertEqual("TbUnknownKeys", document.Name)
-		self.assertEqual(1, document.ChildCount)
-		self.assertEqual(2, len(warnings))
-		for warning in warnings:
-			self.assertIsInstance(warning, UnknownKeyWarning)
-
-		self.assertListEqual(
-			[("FailOnVhdlAssertErrors", 5), ("ReportMode", 11)],
-			[(warning.Key, warning.Line) for warning in warnings]
-		)
-
-	def test_UnknownKeys_NoCollector(self) -> None:
-		with self.assertRaises(UnhandledCriticalWarningError) as context:
+		with self.assertRaises(AlertLogError) as context:
 			_ = Document(DATA / "UnknownKeys_alerts.yml", analyzeAndConvert=True)
 
-		self.assertIsInstance(context.exception.__cause__, UnknownKeyWarning)
+		self.assertEqual("Unknown key 'FailOnVhdlAssertErrors' in settings at line 5.", str(context.exception))
 
 	def test_MissingKey(self) -> None:
 		with self.assertRaises(AlertLogError) as context:
