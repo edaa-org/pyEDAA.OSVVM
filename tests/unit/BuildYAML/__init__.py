@@ -195,7 +195,37 @@ class Errors(Testcase):
 			_ = self.read(MINIMAL.replace('Version: "0.1"', 'Version: "0.2"'))
 
 		self.assertIn("states unsupported format version '0.2'.", str(context.exception))
-		self.assertEqual(["Supported format versions: 0.1."], context.exception.__notes__)
+		self.assertEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
+
+	def test_OldVersion(self) -> None:
+		"""OSVVM 2025.06a and older wrote the build summary's version as a date."""
+		with self.assertRaises(BuildSummaryError) as context:
+			_ = self.read(MINIMAL.replace('Version: "0.1"', 'Version: "2025.02"'))
+
+		self.assertIn("states unsupported format version '2025.02'.", str(context.exception))
+		self.assertEqual(
+			"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported.",
+			context.exception.__notes__[1]
+		)
+
+	def test_NoVersion(self) -> None:
+		with self.assertRaises(BuildSummaryError) as context:
+			_ = self.read(MINIMAL.replace('Version: "0.1"\n', ""))
+
+		self.assertIn("states no format version.", str(context.exception))
+		self.assertEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
 
 	def test_MissingKey(self) -> None:
 		with self.assertRaises(BuildSummaryError) as context:

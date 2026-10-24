@@ -76,12 +76,18 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 
 	The schemas are strict: a key a schema doesn't define is an error. A key OSVVM added within a format version is an
 	optional property of the version's schema.
+
+	OSVVM restarted the format versions of its YAML files at ``0.1`` with OSVVM 2026.01. Files of older OSVVM releases
+	state other versions (``1.0``, ``1.1`` or a date) or none, and aren't supported.
 	"""
 
 	_DESCRIPTION:    ClassVar[str]                        #: Name of the file format in messages.
 	_ERROR:          ClassVar[type[OSVVMException]]       #: Exception raised, if the file can't be analyzed.
 	_FORMAT_VERSION: ClassVar[type[StringEnum]]           #: Enumeration of the format's versions.
 	_SCHEMAS:        ClassVar[Mapping[StringEnum, str]]   #: Schema file per format version.
+	_OLD_VERSIONS:   ClassVar[str] = (
+		"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+	)                                                     #: Note explaining an unsupported or missing format version.
 
 	_yamlDocument:   Nullable[CommentedMap]               #: The parsed and validated YAML document.
 	_version:        Nullable[StringEnum]                 #: Format version the file states.
@@ -115,9 +121,11 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 		:raises OSVVMException: If the file isn't valid YAML.
 		:raises OSVVMException: If the file's content isn't a YAML mapping.
 		:raises OSVVMException: If the file states no format version. |br|
-		                        The note lists the supported format versions.
+		                        The notes list the supported format versions and name the OSVVM release, which
+		                        restarted the format versions at ``0.1``.
 		:raises OSVVMException: If the file states an unsupported format version. |br|
-		                        The note lists the supported format versions.
+		                        The notes list the supported format versions and name the OSVVM release, which
+		                        restarted the format versions at ``0.1``.
 		:raises OSVVMException: If the JSON Schema can't be read.
 		:raises OSVVMException: If the file isn't valid according to the JSON Schema. |br|
 		                        A note per violation names its path and line.
@@ -192,11 +200,13 @@ class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", ))
 		except (TypeError, ValueError) as cause:
 			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states unsupported format version '{version}'.")
 			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			ex.add_note(self._OLD_VERSIONS)
 			raise ex from cause
 
 		if formatVersion is None:
 			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states no format version.")
 			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			ex.add_note(self._OLD_VERSIONS)
 			raise ex
 
 		schemaFile = self._SCHEMAS[formatVersion]
