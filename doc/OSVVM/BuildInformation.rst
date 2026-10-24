@@ -5,8 +5,8 @@ Build Information
 
 The directive ``osvvm:build-information`` renders what a build summary states about the build, as OSVVM's HTML build
 summary shows it: the build's name and status, the testcases per status, the start and finish time, the elapsed time,
-the simulator, OSVVM's version, the build's error code, the analysis and simulation errors, and links to the build's
-log files, which Sphinx copies into the build as downloads. A log file the build summary names, but which doesn't
+the simulator, OSVVM's version, the build's error code, the analysis and simulation errors, and a link to the build's
+simulation log, which Sphinx copies into the build as a download. A log file the build summary names, but which doesn't
 exist, is warned about.
 
 .. code-block:: ReST

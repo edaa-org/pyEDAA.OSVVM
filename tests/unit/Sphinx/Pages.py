@@ -87,10 +87,11 @@ class Pages(Project):
 		self.assertEqual("43.8 %", fields["Functional Coverage"])
 		self.assertEqual("Demo", fields["Testsuite"])
 		self.assertEqual(
-			["HTML", "settings", "AlertLog", "scoreboard int", "transcript"],
+			["settings", "AlertLog", "scoreboard int", "transcript"],
 			[sub(r" \(.*\)$", "", link) for link in fields["Reports"].split(", ")]
 		)
-		self.assertEqual(5, html.count("reference download internal"))
+		self.assertEqual(4, html.count("reference download internal"))
+		self.assertNotIn(".html\" download", html)
 		for title in ("AlertLog", "Scoreboards"):
 			with self.subTest(section=title):
 				self.assertIn(f"<h2>{title}", html)
@@ -209,8 +210,8 @@ class BuildInformation(Project):
 		self.assertEqual("NVC 1.23.0", fields["Simulator"])
 		self.assertEqual("2026.09", fields["OSVVM Version"])
 		self.assertEqual("2", fields["Simulate Errors"])
-		self.assertEqual(["log", "HTML log"], [sub(r" \(.*\)$", "", link) for link in fields["Logs"].split(", ")])
-		self.assertEqual(2, html.count("reference download internal"))
+		self.assertEqual("log", sub(r" \(.*\)$", "", fields["Log"]))
+		self.assertEqual(1, html.count("reference download internal"))
 
 	def test_UnknownReport(self) -> None:
 		self._build("Index\n#####\n\n.. osvvm:build-information::\n   :reportid: other\n")

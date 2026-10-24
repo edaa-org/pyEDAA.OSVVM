@@ -37,9 +37,9 @@ pages are pyTooling.Sphinx' unit test pages (:class:`~pyTooling.Sphinx.UnittestP
 OSVVM states:
 
 * A testcase's page shows its status, OSVVM status, elapsed and simulation time, checks, alerts, requirements,
-  functional coverage, generics and links to its report files; then the reason of a skipped testcase or of an expected
-  or known status, and its AlertLog, functional coverage and scoreboards as the directives ``osvvm:alert-log``,
-  ``osvvm:functional-coverage`` and ``osvvm:scoreboards`` show them.
+  functional coverage, generics and links to its YAML reports and transcripts; then the reason of a skipped testcase or
+  of an expected or known status, and its AlertLog, functional coverage and scoreboards as the directives
+  ``osvvm:alert-log``, ``osvvm:functional-coverage`` and ``osvvm:scoreboards`` show them.
 * A testsuite's page shows its counts, and a table of its testcases with their checks, alerts, requirements, functional
   coverage and simulation time, each linked to its page.
 
@@ -201,8 +201,8 @@ class BuildReportPages(UnittestReportPages):
 		"""
 		Create the links to a testcase's report files, which Sphinx copies into the build as downloads.
 
-		The files are OSVVM's HTML report, the settings file, the AlertLog, coverage and scoreboard reports and the
-		transcripts. A file the settings name, but which doesn't exist, is logged as a warning.
+		The files are the YAML reports the page is built from - the settings file, the AlertLog, coverage and scoreboard
+		reports -, and the transcripts. A file the settings name, but which doesn't exist, is logged as a warning.
 
 		:param docName:  Name of the testcase page's document.
 		:param testcase: The testcase.
@@ -213,8 +213,7 @@ class BuildReportPages(UnittestReportPages):
 
 		buildDirectory = TestcaseReports.BuildDirectory(testcase)
 		files: list[tuple[str, Path]] = [
-			("HTML", settings.ReportsTestsuiteDirectory / f"{testcase._name}.html"),
-			("settings", settings.ReportsTestsuiteDirectory / f"{testcase._name}_run.yml"),
+			("settings", settings.ReportsTestsuiteDirectory / f"{testcase._name}_run.yml")
 		]
 		if settings.AlertLogFile is not None:
 			files.append(("AlertLog", settings.AlertLogFile))

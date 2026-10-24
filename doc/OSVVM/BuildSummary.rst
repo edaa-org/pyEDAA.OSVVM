@@ -118,9 +118,9 @@ and ``<pages>/<testsuite>/<testcase>``, e.g. ``osvvm/demo/Axi4Full/TbAxi4_BasicR
 :external+pyToolSphinx:ref:`unit test pages <DIR/UnittestSummary/Pages>`, with what OSVVM states:
 
 * A **testcase's page** shows its status and OSVVM status, its elapsed and simulation time, its checks, alerts,
-  expected and disabled alerts, requirements, functional coverage, generics and testsuite, and links to its report
-  files - OSVVM's HTML report, the settings, AlertLog, coverage and scoreboard reports and the transcripts -, which
-  Sphinx copies into the build as downloads; a file the settings name, but which doesn't exist, is warned about. The
+  expected and disabled alerts, requirements, functional coverage, generics and testsuite, and links to the YAML
+  reports the page is built from (settings, AlertLog, coverage, scoreboards) and to the transcripts, which Sphinx copies
+  into the build as downloads; a file the settings name, but which doesn't exist, is warned about. The
   reason of a skipped testcase or of an expected or known status follows as *Message*. Then the testcase's AlertLog,
   functional coverage and scoreboards, as the directives :ref:`osvvm:alert-log <DIR/AlertLog>`,
   :ref:`osvvm:functional-coverage <DIR/FunctionalCoverage>` and :ref:`osvvm:scoreboards <DIR/Scoreboards>` show them.

@@ -424,7 +424,7 @@ class BuildInformation(BaseDirective):
 
 	A field per fact: the build's name and status, the testcases per status, the start and finish time, the elapsed
 	time, the simulator, OSVVM's version, the build's error code, the analysis and simulation errors, and links to the
-	build's log files, which Sphinx copies into the build as downloads.
+	build's simulation log, which Sphinx copies into the build as a download.
 	"""
 
 	directiveName: str = "build-information"  #: Name the directive is invoked by.
@@ -471,8 +471,8 @@ class BuildInformation(BaseDirective):
 			("Analyze Errors",   f"{information.AnalyzeErrorCount}"),
 			("Simulate Errors",  f"{information.SimulateErrorCount}"),
 		]
-		if len(logs := self._LogLinks(build)) > 0:
-			fields.append(("Logs", logs))
+		if len(log := self._LogLink(build)) > 0:
+			fields.append(("Log", log))
 
 		for name, value in fields:
 			content = [nodes.Text(value)] if isinstance(value, str) else value
@@ -481,36 +481,28 @@ class BuildInformation(BaseDirective):
 
 		return [fieldList]
 
-	def _LogLinks(self, build: BuildSummaryDocument) -> list[nodes.Node]:
+	def _LogLink(self, build: BuildSummaryDocument) -> list[nodes.Node]:
 		"""
-		Create the links to the build's log files: the simulation log and its HTML form.
+		Create the link to the build's simulation log, which Sphinx copies into the build as a download.
 
 		A log file the build summary names, but which doesn't exist, is logged as a warning.
 
 		:param build: The build summary.
-		:returns:     The links, separated by commas.
+		:returns:     The link, or nothing if the build summary names no log file or the file doesn't exist.
 		"""
-		settings = build.Settings
-		links: list[nodes.Node] = []
-		for title, file in (("log", settings.SimulationLogFile), ("HTML log", settings.SimulationHtmlLogFile)):
-			if file is None:
-				continue
-			elif not (path := build.Path.parent / file).exists():
-				getLogger(__name__).warning(
-					f"Log file '{path}' of build '{build.Name}' doesn't exist.", location=self.get_location(), type="osvvm",
-					subtype="read"
-				)
-				continue
+		if (file := build.Settings.SimulationLogFile) is None:
+			return []
+		elif not (path := build.Path.parent / file).exists():
+			getLogger(__name__).warning(
+				f"Log file '{path}' of build '{build.Name}' doesn't exist.", location=self.get_location(), type="osvvm",
+				subtype="read"
+			)
+			return []
 
-			if len(links) > 0:
-				links.append(nodes.Text(", "))
-
-			target = "/" + relpath(path, self.env.srcdir).replace("\\", "/")
-			links.append(addnodes.download_reference(
-				"", "", nodes.literal(title, title), reftarget=target, refdoc=self.env.docname, refexplicit=True
-			))
-
-		return links
+		target = "/" + relpath(path, self.env.srcdir).replace("\\", "/")
+		return [addnodes.download_reference(
+			"", "", nodes.literal("log", "log"), reftarget=target, refdoc=self.env.docname, refexplicit=True
+		)]
 
 
 @export
