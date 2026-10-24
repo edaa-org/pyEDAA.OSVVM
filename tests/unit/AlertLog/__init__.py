@@ -430,7 +430,9 @@ class ItemParse(Testcase):
 		with self.assertRaises(AlertLogError) as context:
 			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Error: two, Warning: 3}"))
 
-		self.assertEqual("Key 'Error' of 'AlertCount' of AlertLog item at line 3 is not an integer.", str(context.exception))
+		self.assertEqual(
+			"Key 'Error' of 'AlertCount' of AlertLog item at line 3 is not an integer.", str(context.exception)
+		)
 
 
 class Parse(Testcase):
