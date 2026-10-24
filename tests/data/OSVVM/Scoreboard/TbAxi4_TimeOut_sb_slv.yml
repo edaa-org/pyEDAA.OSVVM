@@ -1,0 +1,107 @@
+Version: "0.1"
+TestCase: "TbAxi4_TimeOut"
+Scoreboards: 
+  - Name:         "WriteAddrFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    15
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteDataFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    15
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteRespFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    15
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadAddrFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadByteAddrFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadDataFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteResp SB"
+    ParentName:   "manager_1"
+    ItemCount:    15
+    ErrorCount:   2
+    ItemsChecked: 15
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadResp SB"
+    ParentName:   "manager_1"
+    ItemCount:    10
+    ErrorCount:   2
+    ItemsChecked: 10
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteAddrFifo"
+    ParentName:   "manager_1"
+    ItemCount:    15
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteDataFifo"
+    ParentName:   "manager_1"
+    ItemCount:    15
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  15
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadAddrFifo"
+    ParentName:   "manager_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadByteAddrFifo"
+    ParentName:   "manager_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadDataFifo"
+    ParentName:   "manager_1"
+    ItemCount:    10
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  10
+    ItemsDropped: 0
+    FifoCount:    0

@@ -1,0 +1,10 @@
+Version: "0.1"
+TestCase: "TbMissingKey"
+Scoreboards: 
+  - Name:         "WriteFifo"
+    ParentName:   "manager_1"
+    ItemCount:    1
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsDropped: 0
+    FifoCount:    0

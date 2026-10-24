@@ -1,0 +1,59 @@
+Version: "0.1"
+TestCase: "Tb_BasicReadWrite"
+Scoreboards: 
+  - Name:         "DmaFifo"
+    ParentName:   "subordinate_1"
+    ItemCount:    0
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  0
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "StartTransactionFifo"
+    ParentName:   "manager_1"
+    ItemCount:    34
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  34
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadAddressTransactionFifo"
+    ParentName:   "manager_1"
+    ItemCount:    21
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  21
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadDataFifo"
+    ParentName:   "manager_1"
+    ItemCount:    21
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  21
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "StartTransactionFifo"
+    ParentName:   "manager_1"
+    ItemCount:    34
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  34
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "WriteBurstFifo"
+    ParentName:   "manager_1"
+    ItemCount:    0
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  0
+    ItemsDropped: 0
+    FifoCount:    0
+  - Name:         "ReadBurstFifo"
+    ParentName:   "manager_1"
+    ItemCount:    0
+    ErrorCount:   0
+    ItemsChecked: 0
+    ItemsPopped:  0
+    ItemsDropped: 0
+    FifoCount:    0
