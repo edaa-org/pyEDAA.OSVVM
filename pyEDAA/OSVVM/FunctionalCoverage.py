@@ -67,10 +67,10 @@ class FormatVersion(StringEnum):
 	Version of OSVVM's functional coverage YAML format, as a file's ``Version`` states it.
 
 	OSVVM's ``CoveragePkg`` writes the version of ``COVERAGE_YAML_VERSION`` (``OsvvmScriptSettingsPkg``), since OSVVM
-	2026.02. Before, from OSVVM 2021.10 on, it wrote version ``1.0``.
+	2026.01. Before, from OSVVM 2021.10 to 2025.06a, it wrote version ``1.0``, which isn't supported.
 	"""
 
-	Version0_1 = "0.1"  #: Format 0.1, written by OSVVM 2026.02 and later.
+	Version0_1 = "0.1"  #: Format 0.1, written by OSVVM 2026.01 and later.
 
 
 @export
