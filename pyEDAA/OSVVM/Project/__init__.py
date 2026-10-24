@@ -32,7 +32,8 @@
 Data model for OSVVM's ``*.pro`` files.
 """
 from pathlib               import Path
-from typing                import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator, NoReturn
+from typing                import Optional as Nullable, List, Dict, Mapping, Iterable, TypeVar, Generic, Generator, \
+                                  NoReturn
 
 from pyTooling.Decorators  import readonly, export
 from pyTooling.MetaClasses import ExtendedType
