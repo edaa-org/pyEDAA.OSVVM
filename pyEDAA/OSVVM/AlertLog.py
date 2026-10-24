@@ -33,7 +33,7 @@ from __future__            import annotations
 
 from datetime              import timedelta
 from pathlib               import Path
-from typing                import Callable, Dict, Iterable, Iterator, Optional as Nullable, Self
+from typing                import Any, Callable, Generator, Iterable, Iterator, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
 
@@ -43,8 +43,9 @@ from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
+from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException
+from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
 
 
 @export
@@ -171,134 +172,363 @@ class AlertLogStatus(StringEnum):
 
 
 @export
+class AlertCount(metaclass=ExtendedType, slots=True):
+	"""
+	An alert count: the number of failures, errors and warnings, as OSVVM's ``AlertCountType`` holds it.
+
+	An alert count is a value, like a number: it belongs to no element, and two alert counts are equal, if their counts
+	are equal.
+	"""
+
+	_failureCount: int  #: Number of failures.
+	_errorCount:   int  #: Number of errors.
+	_warningCount: int  #: Number of warnings.
+
+	def __init__(self, failureCount: int = 0, errorCount: int = 0, warningCount: int = 0) -> None:
+		"""
+		Initializes an alert count.
+
+		A count may be negative: the settings' external errors subtract the alerts a test expects.
+
+		:param failureCount: Optional, number of failures. Default: ``0``.
+		:param errorCount:   Optional, number of errors. Default: ``0``.
+		:param warningCount: Optional, number of warnings. Default: ``0``.
+		:raises ValueError:  If parameter ``failureCount``, ``errorCount`` or ``warningCount`` is ``None``.
+		:raises TypeError:   If parameter ``failureCount``, ``errorCount`` or ``warningCount`` isn't of type :class:`int`.
+		"""
+		for parameterName, count in (
+			("failureCount", failureCount),
+			("errorCount",   errorCount),
+			("warningCount", warningCount)
+		):
+			if count is None:
+				raise ValueError(f"Parameter '{parameterName}' is None.")
+			elif not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		self._failureCount = failureCount
+		self._errorCount =   errorCount
+		self._warningCount = warningCount
+
+	@classmethod
+	def Parse(cls, node: CommentedMap) -> Self:
+		"""
+		Parse an alert count.
+
+		OSVVM writes an alert count as a flow mapping, e.g. ``AlertCount: {Failure: 0, Error: 2, Warning: 1}``. A key
+		the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+
+		:param node:                           The YAML mapping.
+		:returns:                              The alert count.
+		:raises AlertLogError:                 If the mapping has no key ``Failure``, ``Error`` or ``Warning``.
+		:raises AlertLogError:                 If the value of key ``Failure``, ``Error`` or ``Warning`` isn't an integer.
+		:raises UnhandledCriticalWarningError: If the mapping has an unknown key, and no warning collector collects the
+		                                       warning.
+		"""
+		line = node.lc.line + 1
+		for key in node:
+			if key not in ("Failure", "Error", "Warning"):
+				keyLine = node.lc.key(key)[0] + 1
+				WarningCollector.Raise(
+					UnknownKeyWarning(f"Unknown key '{key}' in alert count at line {keyLine}.", key=key, line=keyLine)
+				)
+
+		for key in ("Failure", "Error", "Warning"):
+			if key not in node:
+				raise AlertLogError(f"Alert count at line {line} has no key '{key}'.")
+			elif not isinstance(node[key], int):
+				ex = AlertLogError(f"Key '{key}' of alert count at line {line} is not an integer.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(node[key])}'.")
+				raise ex
+
+		return cls(node["Failure"], node["Error"], node["Warning"])
+
+	@readonly
+	def FailureCount(self) -> int:
+		"""
+		Read-only property to access the number of failures (:attr:`_failureCount`).
+
+		:returns: Number of failures.
+		"""
+		return self._failureCount
+
+	@readonly
+	def ErrorCount(self) -> int:
+		"""
+		Read-only property to access the number of errors (:attr:`_errorCount`).
+
+		:returns: Number of errors.
+		"""
+		return self._errorCount
+
+	@readonly
+	def WarningCount(self) -> int:
+		"""
+		Read-only property to access the number of warnings (:attr:`_warningCount`).
+
+		:returns: Number of warnings.
+		"""
+		return self._warningCount
+
+	def __eq__(self, other: Any) -> bool:
+		"""
+		Compare two alert counts.
+
+		:param other: The other alert count.
+		:returns:     ``True``, if the numbers of failures, errors and warnings are equal.
+		"""
+		if not isinstance(other, AlertCount):
+			return NotImplemented
+
+		return (
+			self._failureCount == other._failureCount and
+			self._errorCount == other._errorCount and
+			self._warningCount == other._warningCount
+		)
+
+	def __hash__(self) -> int:
+		"""
+		Return a hash of the alert count, consistent with :meth:`__eq__`.
+
+		:returns: The hash of the numbers of failures, errors and warnings.
+		"""
+		return hash((self._failureCount, self._errorCount, self._warningCount))
+
+	def __repr__(self) -> str:
+		"""
+		Return a representation of the alert count.
+
+		:returns: The numbers of failures, errors and warnings.
+		"""
+		return (
+			f"AlertCount(failureCount={self._failureCount}, errorCount={self._errorCount}, "
+			f"warningCount={self._warningCount})"
+		)
+
+
+# A class with a property named like a class - ``AlertCount`` - can't name that class in the annotation of a field:
+# the class body's namespace, where annotations are evaluated, binds the name to the property.
+_AlertCount = AlertCount
+
+
+@export
 def _format(node: Node) -> str:
 	"""
-	User-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function for nodes referencing :class:`AlertLogItems <AlertLogItem>`.
+	User-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function for nodes referencing
+	:class:`AlertLogItems <AlertLogItem>`.
 
 	:param node: Node to format.
 	:returns:    String representation (one-liner) describing an AlertLogItem.
 	"""
-	return f"{node['Name']}: {node['TotalErrors']}={node['AlertCountFailures']}/{node['AlertCountErrors']}/{node['AlertCountWarnings']} {node['PassedCount']}/{node['AffirmCount']}"
+	return (
+		f"{node['Name']}: {node['TotalErrorCount']}="
+		f"{node['FailureCount']}/{node['ErrorCount']}/{node['WarningCount']} {node['PassedCount']}/{node['AffirmCount']}"
+	)
 
 
 @export
 class AlertLogItem(metaclass=ExtendedType, slots=True):
 	"""
-	An *AlertLogItem* represents an AlertLog hierarchy item.
+	An *AlertLogItem* represents an item of OSVVM's AlertLog hierarchy: an AlertLog ID with its alert counts.
 
 	An item has a reference to its parent item in the AlertLog hierarchy. If the item is the top-most element (root
-	element), the parent reference is ``None``.
-
-	An item can contain further child items.
+	element), the parent reference is ``None``. An item can contain further child items, which are unique by name.
 	"""
-	_parent:                     "AlertLogItem"             #: Reference to the parent item.
-	_name:                       str                        #: Name of the AlertLog item.
-	_children:                   Dict[str, "AlertLogItem"]  #: Dictionary of child items.
 
-	_status:                     AlertLogStatus             #: AlertLog item's status
-	_totalErrors:                int                        #: Total number of warnings, errors and failures.
-	_alertCountWarnings:         int                        #: Warning count.
-	_alertCountErrors:           int                        #: Error count.
-	_alertCountFailures:         int                        #: Failure count.
-	_passedCount:                int                        #: Passed affirmation count.
-	_affirmCount:                int                        #: Overall affirmation count (incl. failed affirmations).
-	_requirementsPassed:         int                        #: Count of passed requirements.
-	_requirementsGoal:           int                        #: Overall expected requirements.
-	_disabledAlertCountWarnings: int                        #: Count of disabled warnings.
-	_disabledAlertCountErrors:   int                        #: Count of disabled errors.
-	_disabledAlertCountFailures: int                        #: Count of disabled failures.
+	_parent:                  Nullable[AlertLogItem]   #: Reference to the parent item.
+	_name:                    str                      #: Name of the AlertLog item.
+	_children:                dict[str, AlertLogItem]  #: Child items, by name.
+
+	_status:                  AlertLogStatus           #: AlertLog item's status.
+	_totalErrorCount:         int                      #: Total number of errors, as OSVVM computed it.
+	_alertCount:              _AlertCount              #: Number of failures, errors and warnings.
+	_passedCount:             int                      #: Number of passed affirmations.
+	_affirmCount:             int                      #: Number of affirmations (incl. failed affirmations).
+	_passedRequirementsCount: int                      #: Number of passed requirements.
+	_requirementsGoalCount:   int                      #: Number of requirements to pass.
+	_disabledAlertCount:      _AlertCount              #: Number of disabled failures, errors and warnings.
 
 	def __init__(
 		self,
-		name: str,
-		status: AlertLogStatus = AlertLogStatus.Unknown,
-		totalErrors: int = 0,
-		alertCountWarnings: int = 0,
-		alertCountErrors: int = 0,
-		alertCountFailures: int = 0,
-		passedCount: int = 0,
-		affirmCount: int = 0,
-		requirementsPassed: int = 0,
-		requirementsGoal: int = 0,
-		disabledAlertCountWarnings: int = 0,
-		disabledAlertCountErrors: int = 0,
-		disabledAlertCountFailures: int = 0,
-		children: Iterable["AlertLogItem"] = None,
-		parent: Nullable["AlertLogItem"] = None
+		name:                    str,
+		status:                  AlertLogStatus = AlertLogStatus.Unknown,
+		totalErrorCount:         int = 0,
+		alertCount:              Nullable[AlertCount] = None,
+		passedCount:             int = 0,
+		affirmCount:             int = 0,
+		passedRequirementsCount: int = 0,
+		requirementsGoalCount:   int = 0,
+		disabledAlertCount:      Nullable[AlertCount] = None,
+		children:                Nullable[Iterable[AlertLogItem]] = None,
+		*,
+		parent:                  Nullable[AlertLogItem] = None
 	) -> None:
-		self._name = name
-		self._parent = parent
+		"""
+		Initializes an AlertLog item, and adds it to the children of its parent.
+
+		:param name:                        Name of the AlertLog item.
+		:param status:                      Optional, the item's status. Default: :attr:`AlertLogStatus.Unknown`.
+		:param totalErrorCount:             Optional, total number of errors. Default: ``0``.
+		:param alertCount:                  Optional, number of failures, errors and warnings. Default: ``None``, no
+		                                    alerts.
+		:param passedCount:                 Optional, number of passed affirmations. Default: ``0``.
+		:param affirmCount:                 Optional, number of affirmations. Default: ``0``.
+		:param passedRequirementsCount:     Optional, number of passed requirements. Default: ``0``.
+		:param requirementsGoalCount:       Optional, number of requirements to pass. Default: ``0``.
+		:param disabledAlertCount:          Optional, number of disabled failures, errors and warnings. Default: ``None``,
+		                                    no disabled alerts.
+		:param children:                    Optional, child items. Default: ``None``.
+		:param parent:                      Optional, the parent item; the item is added to its children. Default:
+		                                    ``None``.
+		:raises ValueError:                 If parameter ``name`` is ``None``.
+		:raises TypeError:                  If parameter ``name`` isn't of type :class:`str`.
+		:raises ValueError:                 If parameter ``status`` is ``None``.
+		:raises TypeError:                  If parameter ``status`` isn't of type :class:`AlertLogStatus`.
+		:raises ValueError:                 If parameter ``totalErrorCount``, ``passedCount``, ``affirmCount``,
+		                                    ``passedRequirementsCount`` or ``requirementsGoalCount`` is ``None``.
+		:raises TypeError:                  If parameter ``totalErrorCount``, ``passedCount``, ``affirmCount``,
+		                                    ``passedRequirementsCount`` or ``requirementsGoalCount`` isn't of type
+		                                    :class:`int`.
+		:raises TypeError:                  If parameter ``alertCount`` or ``disabledAlertCount`` isn't of type
+		                                    :class:`AlertCount`.
+		:raises TypeError:                  If parameter ``children`` isn't iterable.
+		:raises TypeError:                  If parameter ``children`` contains an element not of type
+		                                    :class:`AlertLogItem`.
+		:raises DuplicateAlertLogItemError: If parameter ``children`` contains two items of the same name.
+		:raises AlreadyInAlertLogError:     If parameter ``children`` contains an item, which has a parent already.
+		:raises TypeError:                  If parameter ``parent`` isn't of type :class:`AlertLogItem`.
+		:raises DuplicateAlertLogItemError: If parameter ``parent`` has a child of the same name already.
+		"""
+		if name is None:
+			raise ValueError("Parameter 'name' is None.")
+		elif not isinstance(name, str):
+			ex = TypeError("Parameter 'name' is not of type 'str'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		if status is None:
+			raise ValueError("Parameter 'status' is None.")
+		elif not isinstance(status, AlertLogStatus):
+			ex = TypeError("Parameter 'status' is not of type 'AlertLogStatus'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(status)}'.")
+			raise ex
+
+		for parameterName, count in (
+			("totalErrorCount",         totalErrorCount),
+			("passedCount",             passedCount),
+			("affirmCount",             affirmCount),
+			("passedRequirementsCount", passedRequirementsCount),
+			("requirementsGoalCount",   requirementsGoalCount)
+		):
+			if count is None:
+				raise ValueError(f"Parameter '{parameterName}' is None.")
+			elif not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		for parameterName, value in (
+			("alertCount",         alertCount),
+			("disabledAlertCount", disabledAlertCount)
+		):
+			if value is not None and not isinstance(value, AlertCount):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'AlertCount'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+				raise ex
+
 		if parent is not None:
 			if not isinstance(parent, AlertLogItem):
-				ex = TypeError("Parameter 'parent' is not an AlertLogItem.")
+				ex = TypeError("Parameter 'parent' is not of type 'AlertLogItem'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
 				raise ex
 			elif name in parent._children:
 				raise DuplicateAlertLogItemError(
-					f"AlertLogItem '{name}' already exists in '{parent._name}'.", item=parent._children[name]
+					f"AlertLog item '{parent._name}' has a child '{name}' already.", item=parent._children[name]
 				)
 
-			parent._children[name] = self
+		self._parent =                  parent
+		self._name =                    name
+		self._status =                  status
+		self._totalErrorCount =         totalErrorCount
+		self._alertCount =              AlertCount() if alertCount is None else alertCount
+		self._passedCount =             passedCount
+		self._affirmCount =             affirmCount
+		self._passedRequirementsCount = passedRequirementsCount
+		self._requirementsGoalCount =   requirementsGoalCount
+		self._disabledAlertCount =      AlertCount() if disabledAlertCount is None else disabledAlertCount
 
-		self._children = {}
+		self._children = childDict = {}
+
 		if children is not None:
+			if not isinstance(children, Iterable):
+				ex = TypeError("Parameter 'children' is not iterable.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(children)}'.")
+				raise ex
+
 			for child in children:
 				if not isinstance(child, AlertLogItem):
-					ex = TypeError("Item in parameter 'children' is not an AlertLogItem.")
+					ex = TypeError("Parameter 'children' contains an element not of type 'AlertLogItem'.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
 					raise ex
-				elif child._name in self._children:
+				elif child._name in childDict:
 					raise DuplicateAlertLogItemError(
-						f"AlertLogItem '{child._name}' already exists in '{self._name}'.", item=self._children[child._name]
+						f"AlertLog item '{name}' has a child '{child._name}' already.", item=childDict[child._name]
 					)
 				elif child._parent is not None:
 					raise AlreadyInAlertLogError(
-						f"AlertLogItem '{child._name}' is already part of another AlertLog hierarchy ({child._parent._name}).",
-						item=child
+						f"AlertLog item '{child._name}' is a child of '{child._parent._name}' already.", item=child
 					)
 
-				self._children[child._name] = child
+				childDict[child._name] = child
 				child._parent = self
 
-		self._status = status
-		self._totalErrors = totalErrors
-		self._alertCountWarnings = alertCountWarnings
-		self._alertCountErrors = alertCountErrors
-		self._alertCountFailures = alertCountFailures
-		self._passedCount = passedCount
-		self._affirmCount = affirmCount
-		self._requirementsPassed = requirementsPassed
-		self._requirementsGoal = requirementsGoal
-		self._disabledAlertCountWarnings = disabledAlertCountWarnings
-		self._disabledAlertCountErrors = disabledAlertCountErrors
-		self._disabledAlertCountFailures = disabledAlertCountFailures
+		if parent is not None:
+			parent._children[name] = self
 
 	@property
-	def Parent(self) -> Nullable["AlertLogItem"]:
+	def Parent(self) -> Nullable[AlertLogItem]:
 		"""
 		Property to access the parent item of this item (:attr:`_parent`).
 
-		:returns: The item's parent item. ``None``, if it's the top-most item (root).
+		Assigning an item moves this item, with its children, from its previous parent to the children of the new parent.
+		Assigning ``None`` removes it from its previous parent.
+
+		:returns:                           The item's parent item. ``None``, if it's the top-most item (root).
+		:raises TypeError:                  If the assigned value isn't of type :class:`AlertLogItem`.
+		:raises DuplicateAlertLogItemError: If the assigned item has a child of the same name already.
+		:raises AlertLogError:              If the assigned item is this item or one of its descendants.
 		"""
 		return self._parent
 
 	@Parent.setter
-	def Parent(self, value: Nullable["AlertLogItem"]) -> None:
-		if value is None:
-			del self._parent._children[self._name]
-		else:
+	def Parent(self, value: Nullable[AlertLogItem]) -> None:
+		if value is self._parent:
+			return
+		elif value is not None:
 			if not isinstance(value, AlertLogItem):
-				ex = TypeError("Parameter 'value' is not an AlertLogItem.")
+				ex = TypeError("Parameter 'value' is not of type 'AlertLogItem'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 				raise ex
 			elif self._name in value._children:
 				raise DuplicateAlertLogItemError(
-					f"AlertLogItem '{self._name}' already exists in '{value._name}'.", item=value._children[self._name]
+					f"AlertLog item '{value._name}' has a child '{self._name}' already.", item=value._children[self._name]
 				)
 
-			value._children[self._name] = self
+			ancestor = value
+			while ancestor is not None:
+				if ancestor is self:
+					raise AlertLogError(f"AlertLog item '{self._name}' can't be a child of itself or of its descendants.")
+
+				ancestor = ancestor._parent
+
+		if self._parent is not None:
+			del self._parent._children[self._name]
 
 		self._parent = value
+		if value is not None:
+			value._children[self._name] = self
 
 	@readonly
 	def Name(self) -> str:
@@ -319,99 +549,104 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		return self._status
 
 	@readonly
-	def TotalErrors(self) -> int:
+	def TotalErrorCount(self) -> int:
 		"""
-		Read-only property to access the AlertLog item's total error count (:attr:`_totalErrors`).
+		Read-only property to access the AlertLog item's total number of errors (:attr:`_totalErrorCount`).
 
-		:returns: AlertLog item's total errors.
-		"""
-		return self._totalErrors
+		OSVVM computes it from the item's alerts and those of its children, its failed requirements and, for the root, the
+		expected alerts and the settings.
 
-	@readonly
-	def AlertCountWarnings(self) -> int:
+		:returns: AlertLog item's total number of errors.
 		"""
-		Read-only property to access the AlertLog item's warning count (:attr:`_alertCountWarnings`).
-
-		:returns: AlertLog item's warning count.
-		"""
-		return self._alertCountWarnings
+		return self._totalErrorCount
 
 	@readonly
-	def AlertCountErrors(self) -> int:
+	def AlertCount(self) -> AlertCount:
 		"""
-		Read-only property to access the AlertLog item's error count (:attr:`_alertCountErrors`).
+		Read-only property to access the AlertLog item's number of failures, errors and warnings (:attr:`_alertCount`).
 
-		:returns: AlertLog item's error count.
+		:returns: AlertLog item's alert count.
 		"""
-		return self._alertCountErrors
-
-	@readonly
-	def AlertCountFailures(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's failure count (:attr:`_alertCountFailures`).
-
-		:returns: AlertLog item's failure count.
-		"""
-		return self._alertCountFailures
+		return self._alertCount
 
 	@readonly
 	def PassedCount(self) -> int:
 		"""
-		Read-only property to access the AlertLog item's passed affirmation count (:attr:`_alertCountFailures`).
+		Read-only property to access the AlertLog item's number of passed affirmations (:attr:`_passedCount`).
 
-		:returns: AlertLog item's passed affirmations.
+		:returns: AlertLog item's number of passed affirmations.
 		"""
 		return self._passedCount
 
 	@readonly
 	def AffirmCount(self) -> int:
 		"""
-		Read-only property to access the AlertLog item's overall affirmation count (:attr:`_affirmCount`).
+		Read-only property to access the AlertLog item's number of affirmations (:attr:`_affirmCount`).
 
-		:returns: AlertLog item's overall affirmations.
+		:returns: AlertLog item's number of affirmations, passed and failed.
 		"""
 		return self._affirmCount
 
 	@readonly
-	def RequirementsPassed(self) -> int:
-		return self._requirementsPassed
+	def PassedRequirementsCount(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's number of passed requirements (:attr:`_passedRequirementsCount`).
+
+		:returns: AlertLog item's number of passed requirements.
+		"""
+		return self._passedRequirementsCount
 
 	@readonly
-	def RequirementsGoal(self) -> int:
-		return self._requirementsGoal
+	def RequirementsGoalCount(self) -> int:
+		"""
+		Read-only property to access the AlertLog item's number of requirements to pass (:attr:`_requirementsGoalCount`).
+
+		:returns: AlertLog item's number of requirements to pass.
+		"""
+		return self._requirementsGoalCount
 
 	@readonly
-	def DisabledAlertCountWarnings(self) -> int:
+	def DisabledAlertCount(self) -> AlertCount:
 		"""
-		Read-only property to access the AlertLog item's count of disabled warnings (:attr:`_disabledAlertCountWarnings`).
+		Read-only property to access the AlertLog item's number of disabled failures, errors and warnings
+		(:attr:`_disabledAlertCount`).
 
-		:returns: AlertLog item's count of disabled warnings.
+		:returns: AlertLog item's alert count of disabled alerts.
 		"""
-		return self._disabledAlertCountWarnings
-
-	@readonly
-	def DisabledAlertCountErrors(self) -> int:
-		"""
-		Read-only property to access the AlertLog item's count of disabled errors (:attr:`_disabledAlertCountErrors`).
-
-		:returns: AlertLog item's count of disabled errors.
-		"""
-		return self._disabledAlertCountErrors
+		return self._disabledAlertCount
 
 	@readonly
-	def DisabledAlertCountFailures(self) -> int:
+	def Children(self) -> dict[str, AlertLogItem]:
 		"""
-		Read-only property to access the AlertLog item's count of disabled failures (:attr:`_disabledAlertCountFailures`).
+		Read-only property to access the child items (:attr:`_children`).
 
-		:returns: AlertLog item's count of disabled failures.
+		:returns: The child items, by name, in the order of the AlertLog file.
 		"""
-		return self._disabledAlertCountFailures
-
-	@readonly
-	def Children(self) -> Dict[str, "AlertLogItem"]:
 		return self._children
 
-	def __iter__(self) -> Iterator["AlertLogItem"]:
+	def IterateItems(
+		self,
+		predicate: Nullable[Callable[[AlertLogItem], bool]] = None
+	) -> Generator[AlertLogItem, None, None]:
+		"""
+		Iterate all items below this item: each child, followed by the items below it, in the order of the AlertLog file.
+
+		:param predicate: Optional, a filter function; only items it returns ``True`` for are yielded. Default:
+		                  ``None``, all items.
+		:returns:         A generator of the items below this item.
+		"""
+		if predicate is None:
+			for child in self._children.values():
+				yield child
+				yield from child.IterateItems()
+		else:
+			for child in self._children.values():
+				if predicate(child):
+					yield child
+
+				yield from child.IterateItems(predicate)
+
+	def __iter__(self) -> Iterator[AlertLogItem]:
 		"""
 		Iterate all child AlertLog items.
 
@@ -421,14 +656,15 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	def __len__(self) -> int:
 		"""
-		Returns number of child AlertLog items.
+		Returns the number of child AlertLog items.
 
-		:returns: The number of nested AlertLog items.
+		:returns: The number of child items.
 		"""
 		return len(self._children)
 
-	def __getitem__(self, name: str) -> "AlertLogItem":
-		"""Index access for returning child AlertLog items.
+	def __getitem__(self, name: str) -> AlertLogItem:
+		"""
+		Index access for returning child AlertLog items.
 
 		:param name:      The child's name.
 		:returns:         The referenced child.
@@ -438,27 +674,27 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 
 	def ToTree(self, format: Callable[[Node], str] = _format) -> Node:
 		"""
-		Convert the AlertLog hierarchy starting from this AlertLog item to a :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>`.
+		Convert the AlertLog hierarchy starting from this AlertLog item to a :external+pyTool:ref:`pyTooling Tree
+		<STRUCT/Tree>`.
 
-		:params format: A user-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function.
-		:returns:       A tree of nodes referencing an AlertLog item.
+		:param format: Optional, a user-defined :external+pyTool:ref:`pyTooling Tree <STRUCT/Tree>` formatting function
+		               for all nodes. Default: ``_format``.
+		:returns:      A tree of nodes referencing an AlertLog item.
 		"""
-		node = Node(
+		return Node(
 			value=self,
 			keyValuePairs={
-				"Name": self._name,
-				"TotalErrors": self._totalErrors,
-				"AlertCountFailures":  self._alertCountFailures,
-				"AlertCountErrors": self._alertCountErrors,
-				"AlertCountWarnings": self._alertCountWarnings,
-				"PassedCount": self._passedCount,
-				"AffirmCount": self._affirmCount
+				"Name":            self._name,
+				"TotalErrorCount": self._totalErrorCount,
+				"FailureCount":    self._alertCount._failureCount,
+				"ErrorCount":      self._alertCount._errorCount,
+				"WarningCount":    self._alertCount._warningCount,
+				"PassedCount":     self._passedCount,
+				"AffirmCount":     self._affirmCount
 			},
-			children=(child.ToTree() for child in self._children.values()),
+			children=[child.ToTree(format) for child in self._children.values()],
 			format=format
 		)
-
-		return node
 
 
 @export
@@ -675,16 +911,20 @@ class Document(AlertLogItem, Settings):
 			self._ParseStrFieldFromYAML(child, "Name"),
 			AlertLogStatus.Parse(self._ParseStrFieldFromYAML(child, "Status")),
 			self._ParseIntFieldFromYAML(results, "TotalErrors"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Warning"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Error"),
-			self._ParseIntFieldFromYAML(yamlAlertCount, "Failure"),
+			AlertCount(
+				self._ParseIntFieldFromYAML(yamlAlertCount, "Failure"),
+				self._ParseIntFieldFromYAML(yamlAlertCount, "Error"),
+				self._ParseIntFieldFromYAML(yamlAlertCount, "Warning")
+			),
 			self._ParseIntFieldFromYAML(results, "PassedCount"),
 			self._ParseIntFieldFromYAML(results, "AffirmCount"),
 			self._ParseIntFieldFromYAML(results, "RequirementsPassed"),
 			self._ParseIntFieldFromYAML(results, "RequirementsGoal"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error"),
-			self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure"),
+			AlertCount(
+				self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure"),
+				self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error"),
+				self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning")
+			),
 			children=(self._ParseAlertLogItem(ch) for ch in self._ParseSequenceFromYAML(child, "Children")),
 			parent=parent
 		)

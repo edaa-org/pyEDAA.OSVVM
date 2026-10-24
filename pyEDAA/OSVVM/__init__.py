@@ -54,6 +54,7 @@ from pyTooling.Common      import getFullyQualifiedName, readResourceFile, Strin
 from pyTooling.Decorators  import export, readonly
 from pyTooling.Exceptions  import ExceptionBase, ToolingException
 from pyTooling.MetaClasses import ExtendedType
+from pyTooling.Warning     import CriticalWarning
 
 if TYPE_CHECKING:
 	from ruamel.yaml         import CommentedMap
@@ -62,6 +63,54 @@ if TYPE_CHECKING:
 @export
 class OSVVMException(ExceptionBase):
 	"""Base-class for all pyEDAA.OSVVM specific exceptions."""
+
+
+@export
+class UnknownKeyWarning(CriticalWarning):
+	"""
+	A YAML mapping of an OSVVM report file has a key the file format doesn't define.
+
+	The parser skips the key and its value, and continues. A newer OSVVM version may have added the key.
+
+	.. important::
+
+	   This warning is critical: it must be collected by a :class:`~pyTooling.Warning.WarningCollector` up the
+	   call-hierarchy, otherwise :meth:`~pyTooling.Warning.WarningCollector.Raise` raises an
+	   :exc:`~pyTooling.Warning.UnhandledCriticalWarningError`.
+	"""
+
+	_key:  str  #: The unknown key.
+	_line: int  #: The line of the key in the YAML file, 1-based.
+
+	def __init__(self, message: str, /, *, key: str, line: int) -> None:
+		"""
+		Initializes the warning with the unknown key and its line.
+
+		:param message: The warning's message.
+		:param key:     The unknown key.
+		:param line:    The line of the key in the YAML file, 1-based.
+		"""
+		super().__init__(message)
+		self._key =  key
+		self._line = line
+
+	@readonly
+	def Key(self) -> str:
+		"""
+		Read-only property to access the unknown key (:attr:`_key`).
+
+		:returns: The key.
+		"""
+		return self._key
+
+	@readonly
+	def Line(self) -> int:
+		"""
+		Read-only property to access the line of the key in the YAML file (:attr:`_line`).
+
+		:returns: The line, 1-based.
+		"""
+		return self._line
 
 
 @export
