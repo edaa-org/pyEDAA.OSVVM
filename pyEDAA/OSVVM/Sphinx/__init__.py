@@ -103,8 +103,6 @@ class OSVVMDomain(Domain):
 		# LibraryIndex,
 	]  #: A list of all indices in this domain.
 
-	from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
-
 	configValues: Dict[str, Tuple[Any, str, Any]] = {
 		**BuildSummary.configValues,
 	}  #: A dictionary of all configuration values used by this domain. (name: (default, rebuilt, type))
