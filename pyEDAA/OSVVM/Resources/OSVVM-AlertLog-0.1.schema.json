@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-AlertLog-0.1.schema.json",
-	"title": "OSVVM AlertLog YAML file, format version 0.1",
+	"title": "OSVVM AlertLog, format version 0.1",
 	"description": "The file '<test>_alerts.yml' OSVVM's AlertLogPkg writes by WriteAlertYaml, format version 0.1 (ALERT_YAML_VERSION). Derived from the writer 'osvvm/AlertLogPkg.vhd' (WriteTopAlertYaml, WriteOneAlertYaml, WriteVhdlAssertYaml, WriteSettingsYaml) and the reader 'Scripts/ReportAlert2Html.tcl'. Keys OSVVM added within the version are optional: the root's ExpectedCount (OSVVM 2025.06) and ExternalErrors (OSVVM 2026.08).",
 	"type": "object",
 	"required": ["Version", "Name", "Status", "Results", "Settings", "Children"],

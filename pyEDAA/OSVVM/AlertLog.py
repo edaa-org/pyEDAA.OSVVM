@@ -39,9 +39,8 @@ test expected, the external errors and the settings deciding whether the test fa
 A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and validates
 it against the JSON Schema of the format version it states (:class:`FormatVersion`, :data:`SCHEMAS`), so a key the
 format doesn't define is a validation error. :meth:`Document.Convert` converts the content to the model. Each element
-below the root is parsed by its ``Parse`` classmethod, e.g. :meth:`AlertLogItem.Parse`. Used on a mapping no schema
-validated, a ``Parse`` classmethod reports a key the format doesn't define as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`,
-which must be collected by a :class:`~pyTooling.Warning.WarningCollector`.
+below the root is parsed by its ``Parse`` classmethod, e.g. :meth:`AlertLogItem.Parse`, which checks a mapping no
+schema validated the same way.
 
 .. rubric:: Example
 
@@ -58,22 +57,21 @@ which must be collected by a :class:`~pyTooling.Warning.WarningCollector`.
 """
 from __future__            import annotations
 
-from datetime              import timedelta
+from datetime              import datetime, timedelta
 from json                  import JSONDecodeError, loads
 from pathlib               import Path
-from typing                import Callable, Generator, Iterable, Optional as Nullable, Self
+from typing                import Any, Callable, ClassVar, Generator, Iterable, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq, YAMLError
 
-from pyTooling.Common      import getFullyQualifiedName, getResourceFile, StringEnum
+from pyTooling.Common      import getFullyQualifiedName, readResourceFile, StringEnum
 from pyTooling.Decorators  import export, readonly
 from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError, ToolingException
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
-from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException, Resources, UnknownKeyWarning
+from pyEDAA.OSVVM          import OSVVMException, Resources
 
 
 __all__ = ["SCHEMAS"]
@@ -412,8 +410,6 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		"""
 		Parse an entry of ``Children``: its name, status and ``Results``, and its children.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
 		:param node:                           The YAML mapping of the entry.
 		:param parent:                         Optional, the parent item; the item is added to its children. Default:
 		                                       ``None``.
@@ -422,16 +418,12 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		:raises AlertLogError:                 If a value isn't of the type the format requires.
 		:raises AlertLogError:                 If the status is unknown.
 		:raises DuplicateAlertLogItemError:    If parameter ``parent`` has a child of the same name already.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:raises AlertLogError:                 If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
 			if key not in ("Name", "Status", "Results", "Children"):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in AlertLog item at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in AlertLog item at line {node.lc.key(key)[0] + 1}.")
 
 		for key, keyType, typeName in (
 			("Name",    str,          "a string"),
@@ -458,10 +450,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 				"TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal",
 				"DisabledAlertCount"
 			):
-				keyLine = results.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in results at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in results at line {results.lc.key(key)[0] + 1}.")
 
 		for key, keyType, typeName in (
 			("TotalErrors",        int,          "an integer"),
@@ -484,10 +473,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 			mapLine =    alertCount.lc.line + 1
 			for key in alertCount:
 				if key not in ("Failure", "Error", "Warning"):
-					keyLine = alertCount.lc.key(key)[0] + 1
-					WarningCollector.Raise(
-						UnknownKeyWarning(f"Unknown key '{key}' in '{mapKey}' at line {keyLine}.", key=key, line=keyLine)
-					)
+					raise AlertLogError(f"Unknown key '{key}' in '{mapKey}' at line {alertCount.lc.key(key)[0] + 1}.")
 
 			for key in ("Failure", "Error", "Warning"):
 				if key not in alertCount:
@@ -858,8 +844,7 @@ class Settings(metaclass=ExtendedType, slots=True):
 		"""
 		Parse the root's ``Settings``.
 
-		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored. A key the format doesn't define
-		is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
+		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored.
 
 		:param node:                           The YAML mapping.
 		:param parent:                         Optional, the document the settings belong to. Default: ``None``.
@@ -868,16 +853,12 @@ class Settings(metaclass=ExtendedType, slots=True):
 		:raises AlertLogError:                 If a value isn't of the type the format requires.
 		:raises AlertLogError:                 If a flag is neither ``true`` nor ``false``.
 		:raises AlertLogError:                 If parameter ``parent`` has settings already.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:raises AlertLogError:                 If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
 			if key not in ("ExternalErrors", "FailOnDisabledErrors", "FailOnRequirementErrors", "FailOnWarning"):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in settings at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise AlertLogError(f"Unknown key '{key}' in settings at line {node.lc.key(key)[0] + 1}.")
 
 		if "ExternalErrors" not in node:
 			raise AlertLogError(f"Settings at line {line} have no key 'ExternalErrors'.")
@@ -891,10 +872,7 @@ class Settings(metaclass=ExtendedType, slots=True):
 			mapLine =    alertCount.lc.line + 1
 			for key in alertCount:
 				if key not in ("Failure", "Error", "Warning"):
-					keyLine = alertCount.lc.key(key)[0] + 1
-					WarningCollector.Raise(
-						UnknownKeyWarning(f"Unknown key '{key}' in '{mapKey}' at line {keyLine}.", key=key, line=keyLine)
-					)
+					raise AlertLogError(f"Unknown key '{key}' in '{mapKey}' at line {alertCount.lc.key(key)[0] + 1}.")
 
 			for key in ("Failure", "Error", "Warning"):
 				if key not in alertCount:
@@ -1023,6 +1001,11 @@ class Document(AlertLogItem):
 	When analyzing and converting the document, the YAML analysis duration as well as the model conversion duration gets
 	captured.
 	"""
+
+	_DESCRIPTION:    ClassVar[str] =                      "OSVVM AlertLog YAML file"  #: Format's name in messages.
+	_ERROR:          ClassVar[type[AlertLogError]] =      AlertLogError               #: Exception of the reader.
+	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =      FormatVersion               #: The format's versions.
+	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                     #: Schema per version.
 
 	_path:                    _Path                    #: Path to the YAML file.
 	_yamlDocument:            Nullable[CommentedMap]   #: The parsed YAML document, after :meth:`Analyze`.
@@ -1216,186 +1199,156 @@ class Document(AlertLogItem):
 		Read the YAML file (specified by :attr:`_path`), validate it against the JSON Schema of the format version it states
 		(:data:`SCHEMAS`), and store the YAML document in :attr:`_yamlDocument`.
 
-		:raises AlertLogError: If the YAML file doesn't exist.
-		:raises AlertLogError: If the YAML file can't be read.
-		:raises AlertLogError: If the YAML file isn't valid YAML.
-		:raises AlertLogError: If the YAML file's content isn't a mapping.
-		:raises AlertLogError: If the YAML file states no format version. |br|
-		                       The note lists the supported format versions.
-		:raises AlertLogError: If the YAML file states an unsupported format version. |br|
-		                       The note lists the supported format versions.
-		:raises AlertLogError: If the JSON Schema can't be read.
-		:raises AlertLogError: If the YAML file isn't valid according to the JSON Schema, e.g. has an unknown key. |br|
-		                       A note per violation names its path.
+		:raises AlertLogError: If the YAML file can't be read, isn't valid YAML, or isn't valid according to the JSON Schema
+		                       of its format version; see :meth:`_AnalyzeYAML`.
 		"""
-		if not self._path.exists():
-			raise AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
 		with Stopwatch() as sw:
-			try:
-				yamlDocument = YAML().load(self._path)
-			except OSError as ex:
-				raise AlertLogError(f"Couldn't read OSVVM AlertLog YAML file '{self._path}'.") from ex
-			except YAMLError as ex:
-				raise AlertLogError(f"YAML syntax error in OSVVM AlertLog YAML file '{self._path}'.") from ex
-
-			if not isinstance(yamlDocument, CommentedMap):
-				ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' is not a YAML mapping.")
-				ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
-				raise ex
-
-			version = yamlDocument.get("Version", None)
-			try:
-				formatVersion = FormatVersion.Parse(version)
-			except (TypeError, ValueError) as cause:
-				ex = AlertLogError(
-					f"OSVVM AlertLog YAML file '{self._path}' states unsupported format version '{version}'."
-				)
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex from cause
-
-			if formatVersion is None:
-				ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' states no format version.")
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex
-
-			schemaFile = SCHEMAS[formatVersion]
-			try:
-				schema = loads(getResourceFile(Resources, schemaFile).read_text(encoding="utf-8"))
-			except (ToolingException, OSError, JSONDecodeError) as ex:
-				raise AlertLogError(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
-
-			from jsonschema import Draft202012Validator
-
-			errors = sorted(Draft202012Validator(schema).iter_errors(yamlDocument), key=lambda error: list(error.path))
-			if len(errors) > 0:
-				ex = AlertLogError(f"Validation error for '{self._path}' using JSON Schema '{schemaFile}'.")
-				for error in errors:
-					ex.add_note(f"/{'/'.join(str(part) for part in error.path)}: {error.message}")
-				raise ex
-
-			self._yamlDocument = yamlDocument
+			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
 
+	def _AnalyzeYAML(self) -> None:
+		"""
+		Read the YAML file, read the format version it states and validate it against the version's JSON Schema.
+
+		YAML timestamps, which ruamel.yaml reads as :class:`~datetime.datetime`, are validated as ISO 8601 strings. A
+		violation of an alternative (``oneOf``, ``anyOf``) is reported by its most relevant cause.
+
+		:raises AlertLogError: If the file doesn't exist.
+		:raises AlertLogError: If the file can't be read.
+		:raises AlertLogError: If the file isn't UTF-8 encoded.
+		:raises AlertLogError: If the file isn't valid YAML.
+		:raises AlertLogError: If the file's content isn't a YAML mapping.
+		:raises AlertLogError: If the file states no format version. |br|
+		                         The note lists the supported format versions.
+		:raises AlertLogError: If the file states an unsupported format version. |br|
+		                         The note lists the supported format versions.
+		:raises AlertLogError: If the JSON Schema can't be read.
+		:raises AlertLogError: If the file isn't valid according to the JSON Schema, e.g. has a key the format doesn't
+		                         define. |br|
+		                         A note per violation names its path and line.
+		"""
+		from jsonschema            import Draft202012Validator
+		from jsonschema.exceptions import best_match
+
+		def toJSON(node: Any) -> Any:
+			"""
+			Nested function for recursion, copying YAML data to JSON data: timestamps become ISO 8601 strings.
+
+			:param node: The YAML data.
+			:returns:    The JSON data.
+			"""
+			if isinstance(node, dict):
+				return {key: toJSON(value) for key, value in node.items()}
+			elif isinstance(node, list):
+				return [toJSON(value) for value in node]
+			elif isinstance(node, datetime):
+				return node.isoformat()
+
+			return node
+
+		def lineOf(path: Any) -> int:
+			"""
+			Nested function finding the line of a value in the YAML file.
+
+			:param path: The path of the value, as a sequence of keys and indices.
+			:returns:    The line of the value, or of the innermost mapping or sequence of its path, 1-based.
+			"""
+			node = yamlDocument
+			line = 1
+			for part in path:
+				if isinstance(node, CommentedMap) and part in node:
+					line = node.lc.key(part)[0] + 1
+				elif isinstance(node, CommentedSeq) and isinstance(part, int) and part < len(node):
+					line = node.lc.item(part)[0] + 1
+				else:
+					break
+
+				node = node[part]
+
+			return line
+
+		if not self._path.exists():
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' does not exist.") \
+				from FileNotFoundError(f"File '{self._path}' not found.")
+
+		try:
+			content = self._path.read_text(encoding="utf-8")
+		except OSError as ex:
+			raise self._ERROR(f"Couldn't read {self._DESCRIPTION} '{self._path}'.") from ex
+		except UnicodeDecodeError as ex:
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not UTF-8 encoded.") from ex
+
+		try:
+			yamlDocument = YAML().load(content)
+		except YAMLError as ex:
+			raise self._ERROR(f"YAML syntax error in {self._DESCRIPTION} '{self._path}'.") from ex
+
+		if not isinstance(yamlDocument, CommentedMap):
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not a YAML mapping.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
+			raise ex
+
+		version = yamlDocument.get("Version", None)
+		try:
+			formatVersion = self._FORMAT_VERSION.Parse(version)
+		except (TypeError, ValueError) as cause:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states unsupported format version '{version}'.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex from cause
+
+		if formatVersion is None:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states no format version.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex
+
+		schemaFile = self._SCHEMAS[formatVersion]
+		try:
+			schema = loads(readResourceFile(Resources, schemaFile))
+		except (ToolingException, JSONDecodeError) as ex:
+			raise self._ERROR(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
+
+		validator = Draft202012Validator(schema)
+		errors =    sorted(validator.iter_errors(toJSON(yamlDocument)), key=lambda error: list(error.absolute_path))
+		if len(errors) > 0:
+			ex = self._ERROR(f"Validation error for {self._DESCRIPTION} '{self._path}' using JSON Schema '{schemaFile}'.")
+			for error in errors:
+				error = best_match((error, ))
+				path = error.absolute_path
+				ex.add_note(f"/{'/'.join(str(part) for part in path)} (line {lineOf(path)}): {error.message}")
+			raise ex
+
+		self._yamlDocument = yamlDocument
+		self._version =      formatVersion
+
 	def Convert(self) -> None:
 		"""
-		Convert the YAML document to the AlertLog model: the root's fields, its settings and its hierarchy of
+		Convert the validated YAML document to the AlertLog model: the root's fields, its settings and its hierarchy of
 		:class:`AlertLogItem` instances.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:raises AlertLogError:                 If the YAML file was not analyzed before. |br|
-		                                       Call 'Document.Analyze()' or create the document using
-		                                       'Document(path, analyzeAndConvert=True)'.
-		:raises AlertLogError:                 If a mapping lacks a key the format requires. |br|
-		                                       The note names the YAML file.
-		:raises AlertLogError:                 If a value isn't of the type the format requires. |br|
-		                                       The note names the YAML file.
-		:raises AlertLogError:                 If a status is unknown. |br|
-		                                       The note names the YAML file.
-		:raises DuplicateAlertLogItemError:    If an item has two children of the same name. |br|
-		                                       The note names the YAML file.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:raises AlertLogError:              If the YAML file was not analyzed before. |br|
+		                                    Call 'Document.Analyze()' or create the document using
+		                                    'Document(path, analyzeAndConvert=True)'.
+		:raises AlertLogError:              If a status is unknown. |br|
+		                                    The note names the YAML file.
+		:raises DuplicateAlertLogItemError: If an item has two children of the same name. |br|
+		                                    The note names the YAML file.
 		"""
 		if self._yamlDocument is None:
 			ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
 			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
 			raise ex
 
-		root = self._yamlDocument
+		root =    self._yamlDocument
+		results = root["Results"]
 		with Stopwatch() as sw:
 			try:
-				for key in root:
-					if key not in ("Version", "Name", "Status", "Results", "Settings", "Children"):
-						keyLine = root.lc.key(key)[0] + 1
-						WarningCollector.Raise(
-							UnknownKeyWarning(f"Unknown key '{key}' in AlertLog root at line {keyLine}.", key=key, line=keyLine)
-						)
-
-				for key, keyType, typeName in (
-					("Name",     str,          "a string"),
-					("Status",   str,          "a string"),
-					("Results",  CommentedMap, "a mapping"),
-					("Settings", CommentedMap, "a mapping")
-				):
-					if key not in root:
-						raise AlertLogError(f"AlertLog root has no key '{key}'.")
-					elif not isinstance(root[key], keyType):
-						ex = AlertLogError(f"Key '{key}' of AlertLog root is not {typeName}.")
-						ex.add_note(f"Got type '{getFullyQualifiedName(root[key])}'.")
-						raise ex
-
-				if "Children" not in root:
-					raise AlertLogError("AlertLog root has no key 'Children'.")
-				elif root["Children"] is not None and not isinstance(root["Children"], CommentedSeq):
-					ex = AlertLogError("Key 'Children' of AlertLog root is not a sequence.")
-					ex.add_note(f"Got type '{getFullyQualifiedName(root['Children'])}'.")
-					raise ex
-
-				results = root["Results"]
-				for key in results:
-					if key not in (
-						"TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal",
-						"DisabledAlertCount", "ExpectedCount", "ExternalErrors"
-					):
-						keyLine = results.lc.key(key)[0] + 1
-						WarningCollector.Raise(
-							UnknownKeyWarning(f"Unknown key '{key}' in results at line {keyLine}.", key=key, line=keyLine)
-						)
-
-				for key, keyType, typeName in (
-					("TotalErrors",        int,          "an integer"),
-					("AlertCount",         CommentedMap, "a mapping"),
-					("PassedCount",        int,          "an integer"),
-					("AffirmCount",        int,          "an integer"),
-					("RequirementsPassed", int,          "an integer"),
-					("RequirementsGoal",   int,          "an integer"),
-					("DisabledAlertCount", CommentedMap, "a mapping")
-				):
-					if key not in results:
-						raise AlertLogError(f"Results of AlertLog root have no key '{key}'.")
-					elif not isinstance(results[key], keyType):
-						ex = AlertLogError(f"Key '{key}' of results of AlertLog root is not {typeName}.")
-						ex.add_note(f"Got type '{getFullyQualifiedName(results[key])}'.")
-						raise ex
-
-				for key in ("ExpectedCount", "ExternalErrors"):
-					if key in results and not isinstance(results[key], CommentedMap):
-						ex = AlertLogError(f"Key '{key}' of results of AlertLog root is not a mapping.")
-						ex.add_note(f"Got type '{getFullyQualifiedName(results[key])}'.")
-						raise ex
-
-				for mapKey in ("AlertCount", "DisabledAlertCount", "ExpectedCount", "ExternalErrors"):
-					if mapKey not in results:
-						continue
-
-					alertCount = results[mapKey]
-					mapLine =    alertCount.lc.line + 1
-					for key in alertCount:
-						if key not in ("Failure", "Error", "Warning"):
-							keyLine = alertCount.lc.key(key)[0] + 1
-							WarningCollector.Raise(
-								UnknownKeyWarning(f"Unknown key '{key}' in '{mapKey}' at line {keyLine}.", key=key, line=keyLine)
-							)
-
-					for key in ("Failure", "Error", "Warning"):
-						if key not in alertCount:
-							raise AlertLogError(f"'{mapKey}' of AlertLog root at line {mapLine} has no key '{key}'.")
-						elif not isinstance(alertCount[key], int):
-							ex = AlertLogError(f"Key '{key}' of '{mapKey}' of AlertLog root at line {mapLine} is not an integer.")
-							ex.add_note(f"Got type '{getFullyQualifiedName(alertCount[key])}'.")
-							raise ex
-
 				try:
 					status = AlertLogStatus.Parse(root["Status"])
 				except AlertLogError as ex:
 					ex.add_note("Status of AlertLog root.")
 					raise
 
-				self._version =                 FormatVersion.Parse(root["Version"])
 				self._name =                    root["Name"]
 				self._status =                  status
 				self._totalErrorCount =         results["TotalErrors"]
@@ -1424,11 +1377,6 @@ class Document(AlertLogItem):
 				Settings.Parse(root["Settings"], parent=self)
 
 				for child in () if root["Children"] is None else root["Children"]:
-					if not isinstance(child, CommentedMap):
-						ex = AlertLogError(f"Child of AlertLog root '{self._name}' is not a mapping.")
-						ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
-						raise ex
-
 					AlertLogItem.Parse(child, parent=self)
 			except AlertLogError as ex:
 				ex.add_note(f"In OSVVM AlertLog YAML file '{self._path}'.")

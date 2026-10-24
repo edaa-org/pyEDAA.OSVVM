@@ -34,10 +34,8 @@ from pathlib               import Path
 
 from ruamel.yaml           import YAML, CommentedMap
 
-from pyTooling.Warning     import UnhandledCriticalWarningError, WarningCollector
 from pyTooling.Testing     import Testcase
 
-from pyEDAA.OSVVM          import UnknownKeyWarning
 from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
                                   DuplicateAlertLogItemError, FormatVersion, Settings
 
@@ -405,20 +403,10 @@ class ItemParse(Testcase):
 		self.assertEqual(1, item.FailureCount)
 
 	def test_Parse_UnknownKey(self) -> None:
-		with WarningCollector() as warnings:
-			item = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
-
-		self.assertEqual(3, item.WarningCount)
-		self.assertEqual(1, len(warnings))
-		self.assertIsInstance(warnings[0], UnknownKeyWarning)
-		self.assertEqual("Note", warnings[0].Key)
-		self.assertEqual(3, warnings[0].Line)
-
-	def test_Parse_UnknownKey_NoCollector(self) -> None:
-		with self.assertRaises(UnhandledCriticalWarningError) as context:
+		with self.assertRaises(AlertLogError) as context:
 			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
 
-		self.assertIsInstance(context.exception.__cause__, UnknownKeyWarning)
+		self.assertEqual("Unknown key 'Note' in 'AlertCount' at line 3.", str(context.exception))
 
 	def test_Parse_MissingKey(self) -> None:
 		with self.assertRaises(AlertLogError) as context:
@@ -538,15 +526,16 @@ class Parse(Testcase):
 			_ = Document(path, analyzeAndConvert=True)
 
 		self.assertEqual(
-			f"Validation error for '{path}' using JSON Schema 'OSVVM-AlertLog-0.1.schema.json'.", str(context.exception)
+			f"Validation error for OSVVM AlertLog YAML file '{path}' using JSON Schema 'OSVVM-AlertLog-0.1.schema.json'.",
+			str(context.exception)
 		)
 		self.assertListEqual(
 			[
-				"/: Additional properties are not allowed ('Timestamp' was unexpected)",
-				"/Children/0: Additional properties are not allowed ('ReportMode' was unexpected)",
-				"/Results: Additional properties are not allowed ('StopCount' was unexpected)",
-				"/Results/AlertCount: Additional properties are not allowed ('Note' was unexpected)",
-				"/Settings: Additional properties are not allowed ('FailOnVhdlAssertErrors' was unexpected)"
+				"/ (line 1): Additional properties are not allowed ('Timestamp' was unexpected)",
+				"/Children/0 (line 8): Additional properties are not allowed ('ReportMode' was unexpected)",
+				"/Results (line 4): Additional properties are not allowed ('StopCount' was unexpected)",
+				"/Results/AlertCount (line 4): Additional properties are not allowed ('Note' was unexpected)",
+				"/Settings (line 5): Additional properties are not allowed ('FailOnVhdlAssertErrors' was unexpected)"
 			],
 			context.exception.__notes__
 		)
@@ -557,10 +546,15 @@ class Parse(Testcase):
 		with self.assertRaises(AlertLogError) as context:
 			_ = Document(path, analyzeAndConvert=True)
 
-		self.assertEqual(
-			f"Validation error for '{path}' using JSON Schema 'OSVVM-AlertLog-0.1.schema.json'.", str(context.exception)
-		)
-		self.assertListEqual(["/Children/0: 'Status' is a required property"], context.exception.__notes__)
+		self.assertListEqual(["/Children/0 (line 7): 'Status' is a required property"], context.exception.__notes__)
+
+	def test_MissingKey_Unvalidated(self) -> None:
+		node = YAML().load(DATA.joinpath("MissingStatus_alerts.yml").read_text())["Children"][0]
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(node)
+
+		self.assertEqual("AlertLog item at line 7 has no key 'Status'.", str(context.exception))
 
 	def test_UnsupportedVersion(self) -> None:
 		path = DATA / "UnsupportedVersion_alerts.yml"
