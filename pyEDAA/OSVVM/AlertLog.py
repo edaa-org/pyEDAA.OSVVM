@@ -410,15 +410,15 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		"""
 		Parse an entry of ``Children``: its name, status and ``Results``, and its children.
 
-		:param node:                           The YAML mapping of the entry.
-		:param parent:                         Optional, the parent item; the item is added to its children. Default:
-		                                       ``None``.
-		:returns:                              The AlertLog item.
-		:raises AlertLogError:                 If the mapping or its ``Results`` lack a key the format requires.
-		:raises AlertLogError:                 If a value isn't of the type the format requires.
-		:raises AlertLogError:                 If the status is unknown.
-		:raises DuplicateAlertLogItemError:    If parameter ``parent`` has a child of the same name already.
-		:raises AlertLogError:                 If a mapping has a key the format doesn't define.
+		:param node:                        The YAML mapping of the entry.
+		:param parent:                      Optional, the parent item; the item is added to its children. Default:
+		                                    ``None``.
+		:returns:                           The AlertLog item.
+		:raises AlertLogError:              If the mapping or its ``Results`` lack a key the format requires.
+		:raises AlertLogError:              If a value isn't of the type the format requires.
+		:raises AlertLogError:              If the status is unknown.
+		:raises DuplicateAlertLogItemError: If parameter ``parent`` has a child of the same name already.
+		:raises AlertLogError:              If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
@@ -846,14 +846,14 @@ class Settings(metaclass=ExtendedType, slots=True):
 
 		OSVVM writes the flags as strings ``"true"`` or ``"false"``; their case is ignored.
 
-		:param node:                           The YAML mapping.
-		:param parent:                         Optional, the document the settings belong to. Default: ``None``.
-		:returns:                              The settings.
-		:raises AlertLogError:                 If the mapping lacks a key the format requires.
-		:raises AlertLogError:                 If a value isn't of the type the format requires.
-		:raises AlertLogError:                 If a flag is neither ``true`` nor ``false``.
-		:raises AlertLogError:                 If parameter ``parent`` has settings already.
-		:raises AlertLogError:                 If a mapping has a key the format doesn't define.
+		:param node:           The YAML mapping.
+		:param parent:         Optional, the document the settings belong to. Default: ``None``.
+		:returns:              The settings.
+		:raises AlertLogError: If the mapping lacks a key the format requires.
+		:raises AlertLogError: If a value isn't of the type the format requires.
+		:raises AlertLogError: If a flag is neither ``true`` nor ``false``.
+		:raises AlertLogError: If parameter ``parent`` has settings already.
+		:raises AlertLogError: If a mapping has a key the format doesn't define.
 		"""
 		line = node.lc.line + 1
 		for key in node:
@@ -1220,13 +1220,13 @@ class Document(AlertLogItem):
 		:raises AlertLogError: If the file isn't valid YAML.
 		:raises AlertLogError: If the file's content isn't a YAML mapping.
 		:raises AlertLogError: If the file states no format version. |br|
-		                         The note lists the supported format versions.
+		                       The note lists the supported format versions.
 		:raises AlertLogError: If the file states an unsupported format version. |br|
-		                         The note lists the supported format versions.
+		                       The note lists the supported format versions.
 		:raises AlertLogError: If the JSON Schema can't be read.
 		:raises AlertLogError: If the file isn't valid according to the JSON Schema, e.g. has a key the format doesn't
-		                         define. |br|
-		                         A note per violation names its path and line.
+		                       define. |br|
+		                       A note per violation names its path and line.
 		"""
 		from jsonschema            import Draft202012Validator
 		from jsonschema.exceptions import best_match
