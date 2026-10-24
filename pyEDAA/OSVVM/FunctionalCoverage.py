@@ -61,22 +61,19 @@ dimension, a :class:`~pyEDAA.Reports.FunctionalCoverage.Cross` of the field name
 """
 from __future__                        import annotations
 
-from json                              import JSONDecodeError, loads
 from pathlib                           import Path
 from typing                            import Any, ClassVar, Generic, Iterable, Mapping, Optional as Nullable, Self, \
                                               TypeVar
 
-from ruamel.yaml                       import YAML, YAMLError
-from pyTooling.Common                  import getFullyQualifiedName, getResourceFile, StringEnum
+from pyTooling.Common                  import getFullyQualifiedName, StringEnum
 from pyTooling.Decorators              import export, readonly
-from pyTooling.Exceptions              import ToolingException
 from pyTooling.MetaClasses             import ExtendedType
 from pyTooling.Stopwatch               import Stopwatch
 
 from pyEDAA.Reports.FunctionalCoverage import BinKind, Covergroup, Coverpoint, CoverpointBin, Cross, CrossBin, \
                                               Document as fc_Document, FunctionalCoverageReport, ValueRange
 
-from pyEDAA.OSVVM                      import OSVVMException, Resources
+from pyEDAA.OSVVM                      import OSVVMException, YAMLDocumentMixin
 
 
 __all__ = ["SCHEMAS", "ParentType"]
@@ -840,21 +837,20 @@ Bin._PARENT_TYPE = (CoverageModel, )
 @export
 class Report(metaclass=ExtendedType, mixin=True):
 	"""
-	The root of OSVVM's functional coverage YAML file: its format version, the testcase's coverage, its setting, and
-	the coverage models.
+	The root of OSVVM's functional coverage YAML file: the testcase's coverage, its setting, and the coverage models.
+
+	The format version the file states is a property of the :class:`Document`.
 
 	It is the root of every element below it.
 	"""
 
 	_root:          Report                   #: The report's root: the report itself.
-	_version:       Nullable[FormatVersion]  #: Version of the file format; ``None`` before the file was read.
 	_coverage:      Nullable[float]          #: The testcase's coverage in percent, as the file states it.
 	_writePassFail: bool                     #: Whether OSVVM's HTML report states pass or fail per bin.
 	_models:        list[CoverageModel]      #: The coverage models.
 
 	def __init__(
 		self,
-		version: Nullable[FormatVersion] = None,
 		coverage: Nullable[float] = None,
 		writePassFail: bool = False
 	) -> None:
@@ -863,18 +859,11 @@ class Report(metaclass=ExtendedType, mixin=True):
 
 		Its coverage models are added by creating them with this report as their parent.
 
-		:param version:       Optional, version of the file format. Default: ``None``.
 		:param coverage:      Optional, the testcase's coverage in percent, as the file states it. Default: ``None``.
 		:param writePassFail: Optional, whether OSVVM's HTML report states pass or fail per bin. Default: ``False``.
-		:raises TypeError:    If parameter ``version`` isn't of type :class:`FormatVersion`.
 		:raises TypeError:    If parameter ``coverage`` isn't of type :class:`float`.
 		:raises TypeError:    If parameter ``writePassFail`` isn't of type :class:`bool`.
 		"""
-		if version is not None and not isinstance(version, FormatVersion):
-			ex = TypeError("Parameter 'version' is not of type 'FormatVersion'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(version)}'.")
-			raise ex
-
 		if coverage is not None and not isinstance(coverage, float):
 			ex = TypeError("Parameter 'coverage' is not of type 'float'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(coverage)}'.")
@@ -886,19 +875,9 @@ class Report(metaclass=ExtendedType, mixin=True):
 			raise ex
 
 		self._root =          self
-		self._version =       version
 		self._coverage =      coverage
 		self._writePassFail = writePassFail
 		self._models =        []
-
-	@readonly
-	def Version(self) -> Nullable[FormatVersion]:
-		"""
-		Read-only property to access the version of the file format (:attr:`_version`).
-
-		:returns: The format version, or ``None`` before the file was read.
-		"""
-		return self._version
 
 	@readonly
 	def Coverage(self) -> Nullable[float]:
@@ -935,13 +914,20 @@ CoverageModel._PARENT_TYPE = (Report, )
 
 
 @export
-class Document(fc_Document, Report):
+class Document(fc_Document, Report, YAMLDocumentMixin):
 	"""
 	OSVVM's functional coverage YAML file: read into the format's model, and converted to the functional coverage model
 	of pyEDAA.Reports.
+
+	:meth:`Analyze` validates the file against the schema of the format version it states (:data:`SCHEMAS`) by
+	:class:`~pyEDAA.OSVVM.YAMLDocumentMixin`, :meth:`Convert` converts it by the ``Parse`` classmethods, e.g.
+	:meth:`CoverageModel.Parse`.
 	"""
 
-	_yamlDocument: Nullable[Mapping[str, Any]]  #: The parsed YAML document, after :meth:`Analyze`.
+	_DESCRIPTION:    ClassVar[str] =                      "OSVVM functional coverage YAML file"  #: Name in messages.
+	_ERROR:          ClassVar[type[CoverageError]] =      CoverageError                          #: Reader's exception.
+	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =      FormatVersion                          #: Format's versions.
+	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                                #: Schema per version.
 
 	def __init__(self, yamlReportFile: Path, analyzeAndConvert: bool = False) -> None:
 		"""
@@ -955,8 +941,7 @@ class Document(fc_Document, Report):
 		"""
 		super().__init__(yamlReportFile)
 		Report.__init__(self)
-
-		self._yamlDocument = None
+		YAMLDocumentMixin.__init__(self)
 
 		if analyzeAndConvert:
 			self.Analyze()
@@ -968,46 +953,20 @@ class Document(fc_Document, Report):
 		:data:`SCHEMAS`.
 
 		:raises CoverageError: If the file doesn't exist.
+		:raises CoverageError: If the file can't be read.
+		:raises CoverageError: If the file isn't UTF-8 encoded.
 		:raises CoverageError: If the file isn't valid YAML.
-		:raises CoverageError: If the file states no or an unsupported format version. |br|
-		                       The note lists the supported format versions.
+		:raises CoverageError: If the file's content isn't a YAML mapping.
+		:raises CoverageError: If the file states no format version. |br|
+		                       The notes list the supported format versions.
+		:raises CoverageError: If the file states an unsupported format version. |br|
+		                       The notes list the supported format versions.
 		:raises CoverageError: If the JSON Schema can't be read.
 		:raises CoverageError: If the file isn't valid according to the JSON Schema. |br|
-		                       A note per error names its path in the file.
+		                       A note per violation names its path and line.
 		"""
-		if not self._path.exists():
-			raise CoverageError(f"OSVVM coverage file '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
-		from jsonschema import Draft202012Validator
-
 		with Stopwatch() as sw:
-			try:
-				yamlDocument = YAML(typ="safe", pure=True).load(self._path)
-			except YAMLError as ex:
-				raise CoverageError(f"YAML syntax error in OSVVM coverage file '{self._path}'.") from ex
-
-			version = yamlDocument.get("Version", None) if isinstance(yamlDocument, Mapping) else None
-			if version not in [member.value for member in FormatVersion]:
-				ex = CoverageError(f"OSVVM coverage file '{self._path}' states an unsupported format version.")
-				ex.add_note(f"Got version '{version}'." if version is not None else "Got no version.")
-				ex.add_note(f"Supported format versions: {', '.join(member.value for member in FormatVersion)}.")
-				raise ex
-
-			schemaFile = SCHEMAS[FormatVersion(version)]
-			try:
-				schema = loads(getResourceFile(Resources, schemaFile).read_text(encoding="utf-8"))
-			except (ToolingException, OSError, JSONDecodeError) as ex:
-				raise CoverageError(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
-
-			errors = sorted(Draft202012Validator(schema).iter_errors(yamlDocument), key=lambda error: list(error.path))
-			if len(errors) > 0:
-				ex = CoverageError(f"Validation error for '{self._path}' using JSON Schema '{schemaFile}'.")
-				for error in errors:
-					ex.add_note(f"/{'/'.join(str(part) for part in error.path)}: {error.message}")
-				raise ex
-
-			self._yamlDocument = yamlDocument
+			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
 
@@ -1028,7 +987,6 @@ class Document(fc_Document, Report):
 
 		with Stopwatch() as sw:
 			try:
-				self._version =       FormatVersion.Parse(self._yamlDocument["Version"])
 				self._coverage =      float(self._yamlDocument["Coverage"])
 				self._writePassFail = {0: False, 1: True}[self._yamlDocument["Settings"]["WritePassFail"]]
 				self._models =        []

@@ -290,7 +290,33 @@ class Documents(Testcase):
 
 			with self.assertRaises(CoverageError) as context:
 				_ = Document(path, analyzeAndConvert=True)
-		self.assertEqual(["Got version '9.9'.", "Supported format versions: 0.1."], context.exception.__notes__)
+		self.assertEqual(
+			f"OSVVM functional coverage YAML file '{path}' states unsupported format version '9.9'.",
+			str(context.exception)
+		)
+		self.assertEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
+
+	def test_OldVersion(self) -> None:
+		"""OSVVM 2021.10 to 2025.06a wrote format version 1.0."""
+		text = (DIRECTORY / "TbStream_SendGetRandom1_cov.yml").read_text(encoding="utf-8")
+		text = text.replace('Version: "0.1"', 'Version: "1.0"', 1)
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text(text, encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertEqual(
+			f"OSVVM functional coverage YAML file '{path}' states unsupported format version '1.0'.",
+			str(context.exception)
+		)
 
 	def test_Syntax(self) -> None:
 		with TemporaryDirectory() as directory:
@@ -299,7 +325,7 @@ class Documents(Testcase):
 
 			with self.assertRaises(CoverageError) as context:
 				_ = Document(path, analyzeAndConvert=True)
-		self.assertTrue(str(context.exception).startswith("YAML syntax error in OSVVM coverage file"))
+		self.assertEqual(f"YAML syntax error in OSVVM functional coverage YAML file '{path}'.", str(context.exception))
 
 	def test_Schema_MissingKey(self) -> None:
 		with TemporaryDirectory() as directory:
@@ -309,10 +335,11 @@ class Documents(Testcase):
 			with self.assertRaises(CoverageError) as context:
 				_ = Document(path, analyzeAndConvert=True)
 		self.assertEqual(
-			f"Validation error for '{path}' using JSON Schema 'OSVVM-FunctionalCoverage-0.1.schema.json'.",
+			f"Validation error for OSVVM functional coverage YAML file '{path}' using JSON Schema "
+			"'OSVVM-FunctionalCoverage-0.1.schema.json'.",
 			str(context.exception)
 		)
-		self.assertEqual(["/: 'Models' is a required property"], context.exception.__notes__)
+		self.assertEqual(["/ (line 1): 'Models' is a required property"], context.exception.__notes__)
 
 	def test_Schema_UnknownKey(self) -> None:
 		"""A key the format version doesn't have is rejected."""
@@ -326,7 +353,7 @@ class Documents(Testcase):
 			with self.assertRaises(CoverageError) as context:
 				_ = Document(path, analyzeAndConvert=True)
 		self.assertEqual(
-			["/Models/0/Settings: Additional properties are not allowed ('ParentName' was unexpected)"],
+			["/Models/0/Settings (line 10): Additional properties are not allowed ('ParentName' was unexpected)"],
 			context.exception.__notes__
 		)
 
@@ -343,8 +370,8 @@ class Documents(Testcase):
 				_ = Document(path, analyzeAndConvert=True)
 		self.assertEqual(
 			[
-				"/Models/0/Bins/0/Count: -1 is less than the minimum of 0",
-				"/Models/0/Bins/0/Type: 'AUTO' is not one of ['COUNT', 'IGNORE', 'ILLEGAL']"
+				"/Models/0/Bins/0/Count (line 32): -1 is less than the minimum of 0",
+				"/Models/0/Bins/0/Type (line 29): 'AUTO' is not one of ['COUNT', 'IGNORE', 'ILLEGAL']"
 			],
 			context.exception.__notes__
 		)

@@ -62,9 +62,9 @@ The model of the format keeps what the file states.
 
 .. py:currentmodule:: pyEDAA.OSVVM.FunctionalCoverage
 
-* :class:`Document` - the file: its :class:`FormatVersion` (``Version``), the testcase's coverage in percent
-  (``Coverage``), the setting ``WritePassFail``, and the coverage models (``Models``). OSVVM lists the models of weight
-  0 last.
+* :class:`Document` - the file: its :class:`FormatVersion` (``Version``) and, as :class:`Report`, the testcase's
+  coverage in percent (``Coverage``), the setting ``WritePassFail``, and the coverage models (``Models``). OSVVM lists
+  the models of weight 0 last.
 * :class:`CoverageModel` - an item of ``Models``: its name, the testcases, which sampled it (``TestCases``), its
   coverage in percent, its settings, the names of its fields - one per dimension (``BinInfo.FieldNames``) -, and its
   bins. The names of models needn't be unique.
@@ -79,8 +79,9 @@ The model of the format keeps what the file states.
 The file's format version ``0.1`` is the one OSVVM writes since OSVVM 2026.01; the file doesn't state the OSVVM version.
 A file of another version is rejected. :meth:`Document.Analyze` validates the file against the JSON Schema of its
 format version, :file:`OSVVM-FunctionalCoverage-0.1.schema.json` in :mod:`pyEDAA.OSVVM.Resources`, derived from OSVVM's
-writer: every key is required, a key the schema doesn't name is rejected, and so is a value of another type or out of
-the values OSVVM writes - each error is a note of the :exc:`CoverageError`. ``BinInfo.Dimensions`` and
+writer, as every document of OSVVM's YAML files does by :class:`~pyEDAA.OSVVM.YAMLDocumentMixin`: every key is
+required, a key the schema doesn't name is rejected, and so is a value of another type or out of the values OSVVM
+writes. Each error is a note of the :exc:`CoverageError`, naming its path and line. ``BinInfo.Dimensions`` and
 ``BinInfo.NumBins`` are checked against the field names and the bins.
 
 
