@@ -532,13 +532,13 @@ class Document(metaclass=ExtendedType, slots=True):
 		:raises ScoreboardError: If the file isn't valid YAML.
 		:raises ScoreboardError: If the file's content isn't a YAML mapping.
 		:raises ScoreboardError: If the file states no format version. |br|
-		                           The note lists the supported format versions.
+		                         The note lists the supported format versions.
 		:raises ScoreboardError: If the file states an unsupported format version. |br|
-		                           The note lists the supported format versions.
+		                         The note lists the supported format versions.
 		:raises ScoreboardError: If the JSON Schema can't be read.
 		:raises ScoreboardError: If the file isn't valid according to the JSON Schema, e.g. has a key the format doesn't
-		                           define. |br|
-		                           A note per violation names its path and line.
+		                         define. |br|
+		                         A note per violation names its path and line.
 		"""
 		from jsonschema            import Draft202012Validator
 		from jsonschema.exceptions import best_match
