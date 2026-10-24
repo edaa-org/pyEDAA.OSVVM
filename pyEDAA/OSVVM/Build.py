@@ -54,9 +54,10 @@ from __future__                 import annotations
 
 from datetime                   import datetime, timedelta
 from pathlib                    import Path
+from re                         import fullmatch
 from typing                     import Any, ClassVar, Iterable, Mapping, Optional as Nullable
 
-from ruamel.yaml                import YAML, CommentedMap, CommentedSeq
+from ruamel.yaml                import CommentedMap
 from pyTooling.Common           import getFullyQualifiedName, StringEnum
 from pyTooling.Decorators       import export, readonly
 from pyTooling.MetaClasses      import ExtendedType
@@ -64,11 +65,15 @@ from pyTooling.Stopwatch        import Stopwatch
 from pyTooling.Versioning       import YearMonthVersion
 
 from pyEDAA.Reports.Unittesting import UnittestError, TestcaseStatus, TestsuiteStatus, TestcaseAggregateReturnType
+from pyEDAA.Reports.Unittesting import DuplicateTestsuiteError as ut_DuplicateTestsuiteError
+from pyEDAA.Reports.Unittesting import DuplicateTestcaseError as ut_DuplicateTestcaseError
 from pyEDAA.Reports.Unittesting import Document as ut_Document, TestsuiteSummary as ut_TestsuiteSummary
 from pyEDAA.Reports.Unittesting import Testsuite as ut_Testsuite, Testcase as ut_Testcase
 
-from pyEDAA.OSVVM               import OSVVMException
+from pyEDAA.OSVVM               import OSVVMException, YAMLDocumentMixin
 
+
+__all__ = ["SCHEMAS"]
 
 # A class with a property named like a class - ``Path`` - can't name that class in the annotation of a field: the class
 # body's namespace, where annotations are evaluated, binds the name to the property.
@@ -82,6 +87,23 @@ class BuildSummaryError(OSVVMException, UnittestError):
 
 	It's an :exc:`~pyEDAA.Reports.Unittesting.UnittestError` too, so code handling errors of the unified test entity
 	model handles it as well.
+	"""
+
+
+@export
+class DuplicateTestsuiteError(BuildSummaryError, ut_DuplicateTestsuiteError):
+	"""
+	The exception raised, if a build summary states a test suite twice.
+	"""
+
+
+@export
+class DuplicateTestcaseError(BuildSummaryError, ut_DuplicateTestcaseError):
+	"""
+	The exception raised, if a test suite of a build summary states a test case twice.
+
+	A test case is identified by its report files' base name (``TestCaseFileName``). OSVVM overwrites the reports of a
+	test simulated twice with the same generics in one test suite.
 	"""
 
 
@@ -155,13 +177,25 @@ class Testcase(ut_Testcase):
 	test cases. OSVVM's JUnit XML report names test cases the same way.
 
 	Besides the fields of the unified test case, an OSVVM test case states the test's name (``TestCaseName``), the name
-	the VHDL code gives it (``Name``), the status OSVVM determined, the disabled alerts, the requirements and the
-	functional coverage. The unified status (:data:`~pyEDAA.Reports.Unittesting.Testcase.Status`) is computed from the
-	OSVVM status by :meth:`Aggregate`.
+	the VHDL code gives it (``Name``), the status OSVVM determined, the disabled alerts, the requirements, the
+	functional coverage, the simulated time and the generics. The unified status
+	(:data:`~pyEDAA.Reports.Unittesting.Testcase.Status`) is computed from the OSVVM status by :meth:`Aggregate`.
 
 	OSVVM's alerts *failure*, *error* and *warning* are the unified *fatal errors*, *errors* and *warnings*; its
-	affirmations are the unified assertions.
+	affirmations are the unified assertions. The reason of a skipped test case is the test case's
+	:data:`~pyEDAA.Reports.Unittesting.TestcaseOutputMixin.Message`.
 	"""
+
+	_TIME_UNITS: ClassVar[dict[str, int]] = {
+		"fs":  1,
+		"ps":  1_000,
+		"ns":  1_000_000,
+		"us":  1_000_000_000,
+		"ms":  1_000_000_000_000,
+		"sec": 1_000_000_000_000_000,
+		"min": 60_000_000_000_000_000,
+		"hr":  3_600_000_000_000_000_000,
+	}  #: Femtoseconds per unit of VHDL's type ``time``.
 
 	_vhdlName:                Nullable[str]           #: Name of the test case, as its VHDL code states it.
 	_testName:                Nullable[str]           #: Name of the test, without the generics' values.
@@ -173,6 +207,8 @@ class Testcase(ut_Testcase):
 	_requirementsGoalCount:   int                     #: Number of passed checks the requirements need.
 	_passedRequirementsCount: int                     #: Number of passed requirement checks.
 	_functionalCoverage:      Nullable[float]         #: Functional coverage in range 0.0..1.0.
+	_simulationTime:          Nullable[int]           #: Simulated time in femtoseconds.
+	_generics:                dict[str, str]          #: Generics the test case was simulated with.
 
 	def __init__(
 		self,
@@ -199,6 +235,9 @@ class Testcase(ut_Testcase):
 		requirementsGoalCount: int = 0,
 		passedRequirementsCount: int = 0,
 		functionalCoverage: Nullable[float] = None,
+		simulationTime: Nullable[int] = None,
+		generics: Nullable[Mapping[str, str]] = None,
+		reason: Nullable[str] = None,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
 		*,
 		parent: Nullable[Testsuite] = None
@@ -231,16 +270,20 @@ class Testcase(ut_Testcase):
 		:param passedRequirementsCount: Optional, number of passed requirement checks (``RequirementsPassed``).
 		                                Default: ``0``.
 		:param functionalCoverage:      Optional, functional coverage in range 0.0..1.0 (``FunctionalCoverage``).
+		:param simulationTime:          Optional, simulated time in femtoseconds (``SimulationTime``).
+		:param generics:                Optional, generics the test case was simulated with (``Generics``).
+		:param reason:                  Optional, reason of a skipped test case (``Reason``).
 		:param keyValuePairs:           Optional, mapping of key-value pairs to initialize the test case with.
 		:param parent:                  Optional, reference to the parent test suite.
 		:raises TypeError:              If parameter 'testName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'vhdlName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
-		:raises TypeError:              If parameter 'totalErrorCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'totalErrorCount' or 'simulationTime' is not of type :class:`int`.
 		:raises TypeError:              If a parameter of the disabled alert counts or of the requirements is not of type
 		                                :class:`int`.
 		:raises TypeError:              If parameter 'functionalCoverage' is not of type :class:`float`.
 		:raises ValueError:             If parameter 'functionalCoverage' is out of range 0.0..1.0.
+		:raises TypeError:              If parameter 'generics' is not a mapping.
 		"""
 		super().__init__(
 			name,
@@ -251,6 +294,7 @@ class Testcase(ut_Testcase):
 			warningCount, errorCount, fatalCount,
 			expectedWarningCount, expectedErrorCount, expectedFatalCount,
 			keyValuePairs,
+			reason,
 			parent=parent
 		)
 
@@ -268,10 +312,11 @@ class Testcase(ut_Testcase):
 			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmStatus)}'.")
 			raise ex
 
-		if totalErrorCount is not None and not isinstance(totalErrorCount, int):
-			ex = TypeError("Parameter 'totalErrorCount' is not of type 'int'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(totalErrorCount)}'.")
-			raise ex
+		for parameterName, count in (("totalErrorCount", totalErrorCount), ("simulationTime", simulationTime)):
+			if count is not None and not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
 
 		for parameterName, count in (
 			("disabledWarningCount",    disabledWarningCount),
@@ -295,6 +340,11 @@ class Testcase(ut_Testcase):
 				ex.add_note(f"Got value '{functionalCoverage}'.")
 				raise ex
 
+		if generics is not None and not isinstance(generics, Mapping):
+			ex = TypeError("Parameter 'generics' is not a mapping.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
+			raise ex
+
 		self._testName =                testName
 		self._vhdlName =                vhdlName
 		self._osvvmStatus =             osvvmStatus
@@ -305,6 +355,8 @@ class Testcase(ut_Testcase):
 		self._requirementsGoalCount =   requirementsGoalCount
 		self._passedRequirementsCount = passedRequirementsCount
 		self._functionalCoverage =      functionalCoverage
+		self._simulationTime =          simulationTime
+		self._generics =                {} if generics is None else dict(generics)
 
 	@readonly
 	def TestName(self) -> Nullable[str]:
@@ -404,6 +456,125 @@ class Testcase(ut_Testcase):
 		"""
 		return self._functionalCoverage
 
+	@readonly
+	def SimulationTime(self) -> Nullable[int]:
+		"""
+		Read-only property to access the simulated time (:attr:`_simulationTime`).
+
+		:returns: The simulated time in femtoseconds, or ``None`` if it wasn't recorded.
+		"""
+		return self._simulationTime
+
+	@readonly
+	def Generics(self) -> dict[str, str]:
+		"""
+		Read-only property to access the generics the test case was simulated with (:attr:`_generics`).
+
+		:returns: Dictionary of generic names and values.
+		"""
+		return self._generics
+
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[Testsuite] = None) -> Testcase:
+		"""
+		Parse a test case of a build summary (an element of a test suite's ``TestCases``).
+
+		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`). A test case without
+		``TestCaseFileName`` - a skipped one, or one that failed to analyze - is named after its ``TestCaseName``. A test
+		case without ``Status`` reported no results: its OSVVM status is :attr:`OSVVMStatus.NoReports`, as OSVVM's reader
+		decides. A test case without ``Results`` has no counts.
+
+		:param node:                    The YAML mapping of the test case.
+		:param parent:                  Optional, reference to the parent test suite.
+		:returns:                       The test case.
+		:raises BuildSummaryError:      If the status is unknown. |br|
+		                                The note lists the allowed values.
+		:raises BuildSummaryError:      If the functional coverage is out of range 0..100.
+		:raises BuildSummaryError:      If the simulation time isn't a VHDL time value.
+		:raises DuplicateTestcaseError: If parameter 'parent' has a test case of the same name already.
+		"""
+		def counts(key: str) -> tuple[int, int, int]:
+			"""
+			Nested function reading an alert count of the results.
+
+			:param key: The key of the alert count, e.g. ``DisabledAlertCount``.
+			:returns:   The numbers of warnings, errors and failures; zeros, if the results have no such alert count.
+			"""
+			if results is None or (alertCount := results.get(key, None)) is None:
+				return 0, 0, 0
+
+			return int(alertCount["Warning"]), int(alertCount["Error"]), int(alertCount["Failure"])
+
+		line =     node.lc.line + 1
+		testName = node["TestCaseName"]
+		name =     node.get("TestCaseFileName", testName)
+		if parent is not None and name in parent._testcases:
+			raise DuplicateTestcaseError(f"Test suite '{parent._name}' has test case '{name}' twice (line {line}).")
+
+		if (status := node.get("Status", None)) is None:
+			osvvmStatus = OSVVMStatus.NoReports
+		else:
+			try:
+				osvvmStatus = OSVVMStatus.Parse(status)
+			except ValueError as cause:
+				ex = BuildSummaryError(f"Test case '{name}' at line {line} has unknown status '{status}'.")
+				ex.add_note(f"Allowed values: {', '.join(OSVVMStatus)}.")
+				raise ex from cause
+
+		if (coverage := node.get("FunctionalCoverage", "")) == "":
+			functionalCoverage = None
+		elif 0.0 <= coverage <= 100.0:
+			functionalCoverage = float(coverage) / 100.0
+		else:
+			ex = BuildSummaryError(f"Functional coverage of test case '{name}' at line {line} is out of range 0..100.")
+			ex.add_note(f"Got value '{coverage}'.")
+			raise ex
+
+		if (simulationTime := node.get("SimulationTime", None)) is None:
+			femtoseconds = None
+		else:
+			value, _, unit = simulationTime.partition(" ")
+			if not value.isdigit() or unit not in cls._TIME_UNITS:
+				ex = BuildSummaryError(f"Simulation time of test case '{name}' at line {line} is not a VHDL time.")
+				ex.add_note(f"Got value '{simulationTime}'.")
+				raise ex
+
+			femtoseconds = int(value) * cls._TIME_UNITS[unit]
+
+		results = node.get("Results", None)
+		warningCount, errorCount, fatalCount = counts("AlertCount")
+		expectedWarningCount, expectedErrorCount, expectedFatalCount = counts("ExpectedCount")
+		disabledWarningCount, disabledErrorCount, disabledFatalCount = counts("DisabledAlertCount")
+		generics = node.get("Generics", None)
+		elapsedTime = node.get("ElapsedTime", None)
+
+		return cls(
+			str(name),
+			testName=str(testName),
+			vhdlName=None if (vhdlName := node.get("Name", None)) is None else str(vhdlName),
+			osvvmStatus=osvvmStatus,
+			totalDuration=None if elapsedTime is None else timedelta(seconds=float(elapsedTime)),
+			assertionCount=None if results is None else int(results["AffirmCount"]),
+			passedAssertionCount=None if results is None else int(results["PassedCount"]),
+			totalErrorCount=None if results is None else int(results["TotalErrors"]),
+			warningCount=warningCount,
+			errorCount=errorCount,
+			fatalCount=fatalCount,
+			expectedWarningCount=expectedWarningCount,
+			expectedErrorCount=expectedErrorCount,
+			expectedFatalCount=expectedFatalCount,
+			disabledWarningCount=disabledWarningCount,
+			disabledErrorCount=disabledErrorCount,
+			disabledFatalCount=disabledFatalCount,
+			requirementsGoalCount=0 if results is None else int(results["RequirementsGoal"]),
+			passedRequirementsCount=0 if results is None else int(results["RequirementsPassed"]),
+			functionalCoverage=functionalCoverage,
+			simulationTime=femtoseconds,
+			generics=None if generics is None else {str(key): str(value) for key, value in generics.items()},
+			reason=None if (reason := node.get("Reason", None)) is None else str(reason),
+			parent=parent
+		)
+
 	def Copy(self) -> Testcase:
 		"""
 		Copy the test case without its parent.
@@ -426,6 +597,9 @@ class Testcase(ut_Testcase):
 			self._requirementsGoalCount,
 			self._passedRequirementsCount,
 			self._functionalCoverage,
+			self._simulationTime,
+			self._generics,
+			self._message,
 			self._dict
 		)
 
@@ -476,6 +650,34 @@ class Testsuite(ut_Testsuite):
 	OSVVM states a test suite's name and the duration of its simulations (``ElapsedTime``). OSVVM's test suites don't
 	nest.
 	"""
+
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[TestsuiteSummary] = None) -> Testsuite:
+		"""
+		Parse a test suite of a build summary (an element of ``TestSuites``) and its test cases.
+
+		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`).
+
+		:param node:                     The YAML mapping of the test suite.
+		:param parent:                   Optional, reference to the build.
+		:returns:                        The test suite.
+		:raises DuplicateTestsuiteError: If parameter 'parent' has a test suite of the same name already.
+		"""
+		name = str(node["Name"])
+		if parent is not None and name in parent._testsuites:
+			raise DuplicateTestsuiteError(f"Build '{parent._name}' has test suite '{name}' twice (line {node.lc.line + 1}).")
+
+		elapsedTime = node.get("ElapsedTime", None)
+		testsuite = cls(
+			name,
+			totalDuration=None if elapsedTime is None else timedelta(seconds=float(elapsedTime)),
+			parent=parent
+		)
+
+		for testcaseNode in node["TestCases"] or ():
+			Testcase.Parse(testcaseNode, parent=testsuite)
+
+		return testsuite
 
 	def ToTestsuite(self) -> ut_Testsuite:
 		"""
@@ -604,6 +806,37 @@ class BuildInformation(metaclass=ExtendedType, slots=True):
 
 		if parent is not None:
 			parent._buildInformation = self
+
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[TestsuiteSummary] = None) -> BuildInformation:
+		"""
+		Parse the information about a build (``BuildInfo``).
+
+		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`). The build's start time and
+		duration are read by :meth:`BuildSummaryDocument.Convert`.
+
+		:param node:               The YAML mapping of the build information.
+		:param parent:             Optional, the build the information belongs to.
+		:returns:                  The build information.
+		:raises BuildSummaryError: If the OSVVM version isn't a version ``YYYY.MM``, optionally followed by a revision
+		                           letter.
+		"""
+		osvvmVersion = node["OsvvmVersion"]
+		if (match := fullmatch(r"(\d{4})\.(\d{1,2})([a-z]?)", osvvmVersion)) is None:
+			ex = BuildSummaryError(f"OSVVM version at line {node.lc.key('OsvvmVersion')[0] + 1} is not a version YYYY.MM.")
+			ex.add_note(f"Got value '{osvvmVersion}'.")
+			raise ex
+
+		return cls(
+			str(node["Simulator"]),
+			str(node["SimulatorVersion"]),
+			YearMonthVersion(int(match[1]), int(match[2]), postfix=None if match[3] == "" else match[3]),
+			finishTime=datetime.fromisoformat(node["FinishTime"].isoformat()),
+			buildErrorCode=int(node["BuildErrorCode"]),
+			analyzeErrorCount=int(node["AnalyzeErrorCount"]),
+			simulateErrorCount=int(node["SimulateErrorCount"]),
+			parent=parent
+		)
 
 	@readonly
 	def Parent(self) -> Nullable[TestsuiteSummary]:
@@ -786,6 +1019,30 @@ class Settings(metaclass=ExtendedType, slots=True):
 		if parent is not None:
 			parent._settings = self
 
+	@classmethod
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[TestsuiteSummary] = None) -> Settings:
+		"""
+		Parse OSVVM's settings of a build (``OsvvmSettingsInfo``).
+
+		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`).
+
+		:param node:   The YAML mapping of the settings.
+		:param parent: Optional, the build the settings belong to.
+		:returns:      The settings.
+		"""
+		cssFiles = node["Report2CssFiles"]
+
+		return cls(
+			Path(node["ReportsSubdirectory"]),
+			simulationLogFile=None if (path := node["SimulationLogFile"]) == "" else Path(path),
+			simulationHtmlLogFile=None if (path := node["SimulationHtmlLogFile"]) == "" else Path(path),
+			requirementsSubdirectory=None if (path := node["RequirementsSubdirectory"]) == "" else Path(path),
+			codeCoverageFile=None if (path := node["CoverageSubdirectory"]) == "" else Path(path),
+			cssFiles=None if cssFiles == "" else (Path(cssFile) for cssFile in cssFiles),
+			logoFile=None if (path := node["Report2PngFile"]) == "" else Path(path),
+			parent=parent
+		)
+
 	@readonly
 	def Parent(self) -> Nullable[TestsuiteSummary]:
 		"""
@@ -954,15 +1211,26 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		)
 
 
+SCHEMAS: dict[FormatVersion, str] = {
+	FormatVersion.Version0_1: "OSVVM-BuildSummary-0.1.schema.json",
+}  #: The JSON Schema of :mod:`pyEDAA.OSVVM.Resources` a build summary is validated against, per format version.
+
+
 @export
-class BuildSummaryDocument(TestsuiteSummary, ut_Document):
+class BuildSummaryDocument(TestsuiteSummary, ut_Document, YAMLDocumentMixin):
 	"""
 	An OSVVM build summary file :file:`<build>.yml`: read and converted to the build's test entity hierarchy.
+
+	:meth:`Analyze` validates the file against the schema of the format version it states (:data:`SCHEMAS`),
+	:meth:`Convert` converts it by the ``Parse`` classmethods of the model's classes, e.g. :meth:`Testsuite.Parse`.
 	"""
 
-	_yamlDocument: Nullable[CommentedMap]   #: The parsed YAML document, after :meth:`Analyze`.
-	_version:      Nullable[FormatVersion]  #: Format version the file states.
-	_date:         Nullable[datetime]       #: Time when OSVVM started to write the file (``Date``).
+	_DESCRIPTION:    ClassVar[str] =                                "OSVVM build summary"  #: Format's name in messages.
+	_ERROR:          ClassVar[type[BuildSummaryError]] =            BuildSummaryError      #: Exception of the reader.
+	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =                FormatVersion          #: The format's versions.
+	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] =           SCHEMAS                #: Schema per version.
+
+	_date:           Nullable[datetime]  #: Time when OSVVM started to write the file (``Date``).
 
 	def __init__(self, yamlReportFile: Path, analyzeAndConvert: bool = False) -> None:
 		"""
@@ -972,21 +1240,11 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 		:param analyzeAndConvert: Optional, if true, analyze the file and convert its content. Default: ``False``.
 		"""
 		super().__init__("Unprocessed OSVVM YAML file")
+		YAMLDocumentMixin.__init__(self)
 
-		self._yamlDocument = None
-		self._version =      None
-		self._date =         None
+		self._date = None
 
 		ut_Document.__init__(self, yamlReportFile, analyzeAndConvert)
-
-	@readonly
-	def Version(self) -> Nullable[FormatVersion]:
-		"""
-		Read-only property to access the format version the file states (:attr:`_version`).
-
-		:returns: The format version, or ``None`` if the file wasn't converted yet.
-		"""
-		return self._version
 
 	@readonly
 	def Date(self) -> Nullable[datetime]:
@@ -999,262 +1257,68 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 
 	def Analyze(self) -> None:
 		"""
-		Analyze the YAML file: parse its content into a YAML data structure.
+		Analyze the YAML file: parse it, read its format version and validate it against the version's JSON Schema.
+
+		The schema is chosen from :data:`SCHEMAS` by the format version the file states. A key the schema doesn't define
+		is an error.
 
 		.. hint::
 
 		   The time spend for analysis will be made available via property :data:`AnalysisDuration`.
 
 		:raises BuildSummaryError: If the file doesn't exist.
-		:raises BuildSummaryError: If the file can't be read or isn't valid YAML.
+		:raises BuildSummaryError: If the file can't be read.
+		:raises BuildSummaryError: If the file isn't UTF-8 encoded.
+		:raises BuildSummaryError: If the file isn't valid YAML.
+		:raises BuildSummaryError: If the file's content isn't a YAML mapping.
+		:raises BuildSummaryError: If the file states no format version. |br|
+		                           The note lists the supported format versions.
+		:raises BuildSummaryError: If the file states an unsupported format version. |br|
+		                           The note lists the supported format versions.
+		:raises BuildSummaryError: If the JSON Schema can't be read.
+		:raises BuildSummaryError: If the file isn't valid according to the JSON Schema. |br|
+		                           A note per violation names its path and line.
 		"""
-		if not self._path.exists():
-			raise BuildSummaryError(f"OSVVM YAML file '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
 		with Stopwatch() as sw:
-			try:
-				self._yamlDocument = YAML().load(self._path)
-			except Exception as ex:
-				raise BuildSummaryError(f"Couldn't open '{self._path}'.") from ex
+			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
 
-	@staticmethod
-	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(f"Sequence field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if value is None:
-			return ()
-		elif not isinstance(value, CommentedSeq):
-			line = node._yaml_line_col.data[fieldName][0] + 1
-			ex = BuildSummaryError(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
-			ex.add_note(f"Found type {value.__class__.__name__} at line {line}.")
-			raise ex
-
-		return value
-
-	@staticmethod
-	def _ParseMapFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedMap]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(
-				f"Dictionary field '{fieldName}' not found in node starting at line {node.lc.line + 1}."
-			)
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if value is None:
-			return {}
-		elif not isinstance(value, CommentedMap):
-			line = node._yaml_line_col.data[fieldName][0] + 1
-			ex = BuildSummaryError(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
-			ex.add_note(f"Type mismatch found for line {line}.")
-			raise ex
-		return value
-
-	@staticmethod
-	def _ParseStrFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[str]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(f"String field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, str):
-			raise BuildSummaryError(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
-
-		return value
-
-	@staticmethod
-	def _ParseIntFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[int]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(f"Integer field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, int):
-			raise BuildSummaryError(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
-
-		return value
-
-	@staticmethod
-	def _ParseDateFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[datetime]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(f"Date field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, datetime):
-			raise BuildSummaryError(f"Field '{fieldName}' is not of type datetime.")  # TODO: from TypeError??
-
-		return value
-
-	@staticmethod
-	def _ParseDurationFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[timedelta]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = BuildSummaryError(f"Duration field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, float):
-			raise BuildSummaryError(f"Field '{fieldName}' is not of type float.")  # TODO: from TypeError??
-
-		return timedelta(seconds=value)
-
 	def Convert(self) -> None:
 		"""
-		Convert the parsed YAML data structure into a test entity hierarchy.
-
-		This method converts the root element.
+		Convert the analyzed YAML data structure into the build's test entity hierarchy, and aggregate it.
 
 		.. hint::
 
 		   The time spend for model conversion will be made available via property :data:`ModelConversionDuration`.
 
-		:raises BuildSummaryError: If the YAML file was not analyzed before. |br|
-		                           Call 'Document.Analyze()' or create the document using
-		                           'Document(path, analyzeAndConvert=True)'.
-		:raises BuildSummaryError: If the file states an unsupported format version.
+		:raises BuildSummaryError:       If the YAML file was not analyzed before. |br|
+		                                 Call 'Document.Analyze()' or create the document using
+		                                 'Document(path, analyzeAndConvert=True)'.
+		:raises BuildSummaryError:       If a value can't be converted, e.g. an unknown test case status.
+		:raises DuplicateTestsuiteError: If the file states a test suite twice.
+		:raises DuplicateTestcaseError:  If a test suite states a test case twice.
 		"""
 		if self._yamlDocument is None:
-			ex = BuildSummaryError(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
+			ex = BuildSummaryError(f"OSVVM build summary '{self._path}' needs to be read and analyzed by a YAML parser.")
 			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
-			version = self._ParseStrFieldFromYAML(self._yamlDocument, "Version")
-			try:
-				self._version = FormatVersion.Parse(version)
-			except ValueError as cause:
-				ex = BuildSummaryError(f"Unsupported format version '{version}' in OSVVM YAML file '{self._path}'.")
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex from cause
+			root =      self._yamlDocument
+			buildInfo = root["BuildInfo"]
 
-			self._date = self._ParseDateFieldFromYAML(self._yamlDocument, "Date")
-			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
+			self._date =          datetime.fromisoformat(root["Date"].isoformat())
+			self._name =          str(root["Name"])
+			self._startTime =     datetime.fromisoformat(buildInfo["StartTime"].isoformat())
+			self._totalDuration = timedelta(seconds=float(buildInfo["ElapsedTime"]))
 
-			buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
-			self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
-			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "ElapsedTime")
-			BuildInformation(
-				self._ParseStrFieldFromYAML(buildInfo, "Simulator"),
-				self._ParseStrFieldFromYAML(buildInfo, "SimulatorVersion"),
-				YearMonthVersion.Parse(self._ParseStrFieldFromYAML(buildInfo, "OsvvmVersion")),
-				finishTime=self._ParseDateFieldFromYAML(buildInfo, "FinishTime"),
-				buildErrorCode=self._ParseIntFieldFromYAML(buildInfo, "BuildErrorCode"),
-				analyzeErrorCount=self._ParseIntFieldFromYAML(buildInfo, "AnalyzeErrorCount"),
-				simulateErrorCount=self._ParseIntFieldFromYAML(buildInfo, "SimulateErrorCount"),
-				parent=self
-			)
+			BuildInformation.Parse(buildInfo, parent=self)
+			Settings.Parse(root["OsvvmSettingsInfo"], parent=self)
 
-			settingsInfo = self._ParseMapFromYAML(self._yamlDocument, "OsvvmSettingsInfo")
-			files = {}
-			for key in (
-				"SimulationLogFile",
-				"SimulationHtmlLogFile",
-				"RequirementsSubdirectory",
-				"CoverageSubdirectory",
-				"Report2PngFile"
-			):
-				path = self._ParseStrFieldFromYAML(settingsInfo, key)
-				files[key] = None if path == "" else Path(path)
-
-			cssFiles = settingsInfo["Report2CssFiles"]
-			Settings(
-				Path(self._ParseStrFieldFromYAML(settingsInfo, "ReportsSubdirectory")),
-				simulationLogFile=files["SimulationLogFile"],
-				simulationHtmlLogFile=files["SimulationHtmlLogFile"],
-				requirementsSubdirectory=files["RequirementsSubdirectory"],
-				codeCoverageFile=files["CoverageSubdirectory"],
-				cssFiles=None if cssFiles == "" else (Path(cssFile) for cssFile in cssFiles),
-				logoFile=files["Report2PngFile"],
-				parent=self
-			)
-
-			if "TestSuites" in self._yamlDocument:
-				for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):
-					self._ConvertTestsuite(self, yamlTestsuite)
+			for testsuiteNode in root.get("TestSuites", None) or ():
+				Testsuite.Parse(testsuiteNode, parent=self)
 
 			self.Aggregate()
 
 		self._modelConversion = sw.Duration
-
-	def _ConvertTestsuite(self, parentTestsuite: Testsuite, yamlTestsuite: CommentedMap) -> None:
-		testsuiteName = self._ParseStrFieldFromYAML(yamlTestsuite, "Name")
-		totalDuration = self._ParseDurationFieldFromYAML(yamlTestsuite, "ElapsedTime")
-
-		testsuite = Testsuite(
-			testsuiteName,
-			totalDuration=totalDuration,
-			parent=parentTestsuite
-		)
-
-		# if yamlTestsuite['TestCases'] is not None:
-		for yamlTestcase in self._ParseSequenceFromYAML(yamlTestsuite, 'TestCases'):
-			self._ConvertTestcase(testsuite, yamlTestcase)
-
-	def _ConvertTestcase(self, parentTestsuite: Testsuite, yamlTestcase: CommentedMap) -> None:
-		testName = self._ParseStrFieldFromYAML(yamlTestcase, "TestCaseName")
-		totalDuration = self._ParseDurationFieldFromYAML(yamlTestcase, "ElapsedTime")
-		osvvmStatus = OSVVMStatus.Parse(self._ParseStrFieldFromYAML(yamlTestcase, "Status").upper())
-		yamlResults = self._ParseMapFromYAML(yamlTestcase, "Results")
-		assertionCount = self._ParseIntFieldFromYAML(yamlResults, "AffirmCount")
-		passedAssertionCount = self._ParseIntFieldFromYAML(yamlResults, "PassedCount")
-		totalErrorCount = self._ParseIntFieldFromYAML(yamlResults, "TotalErrors")
-		requirementsGoalCount = self._ParseIntFieldFromYAML(yamlResults, "RequirementsGoal")
-		passedRequirementsCount = self._ParseIntFieldFromYAML(yamlResults, "RequirementsPassed")
-
-		yamlAlertCount = self._ParseMapFromYAML(yamlResults, "AlertCount")
-		warningCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Warning")
-		errorCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Error")
-		failureCount = self._ParseIntFieldFromYAML(yamlAlertCount, "Failure")
-
-		yamlDisabledAlertCount = self._ParseMapFromYAML(yamlResults, "DisabledAlertCount")
-		disabledWarningCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Warning")
-		disabledErrorCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Error")
-		disabledFailureCount = self._ParseIntFieldFromYAML(yamlDisabledAlertCount, "Failure")
-
-		yamlExpectedAlertCount = self._ParseMapFromYAML(yamlResults, "ExpectedCount")
-		expectedWarningCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Warning")
-		expectedErrorCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Error")
-		expectedFailureCount = self._ParseIntFieldFromYAML(yamlExpectedAlertCount, "Failure")
-
-		functionalCoverage = yamlTestcase.get("FunctionalCoverage", "")
-
-		_ = Testcase(
-			self._ParseStrFieldFromYAML(yamlTestcase, "TestCaseFileName"),
-			testName=testName,
-			vhdlName=self._ParseStrFieldFromYAML(yamlTestcase, "Name"),
-			osvvmStatus=osvvmStatus,
-			totalDuration=totalDuration,
-			assertionCount=assertionCount,
-			passedAssertionCount=passedAssertionCount,
-			totalErrorCount=totalErrorCount,
-			warningCount=warningCount,
-			errorCount=errorCount,
-			fatalCount=failureCount,
-			expectedWarningCount=expectedWarningCount,
-			expectedErrorCount=expectedErrorCount,
-			expectedFatalCount=expectedFailureCount,
-			disabledWarningCount=disabledWarningCount,
-			disabledErrorCount=disabledErrorCount,
-			disabledFatalCount=disabledFailureCount,
-			requirementsGoalCount=requirementsGoalCount,
-			passedRequirementsCount=passedRequirementsCount,
-			functionalCoverage=None if functionalCoverage == "" else float(functionalCoverage) / 100.0,
-			parent=parentTestsuite
-		)

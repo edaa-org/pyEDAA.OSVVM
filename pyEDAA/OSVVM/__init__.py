@@ -28,7 +28,14 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Parser and converters for OSVVM-specific data models and report formats."""
+"""
+Parser and converters for OSVVM-specific data models and report formats.
+
+OSVVM's YAML files are read by documents derived from :class:`YAMLDocumentMixin`: it reads a file, parses the format
+version the file states, and validates the file against the version's JSON Schema from :mod:`pyEDAA.OSVVM.Resources`.
+"""
+from __future__            import annotations
+
 __author__ =            "Patrick Lehmann"
 __email__ =             "Paebbels@gmail.com"
 __copyright__ =         "2025-2026, Patrick Lehmann"
@@ -39,10 +46,174 @@ __project_url__ =       "https://github.com/edaa-org/pyEDAA.OSVVM"
 __documentation_url__ = "https://edaa-org.github.io/pyEDAA.OSVVM"
 __issue_tracker_url__ = "https://GitHub.com/edaa-org/pyEDAA.OSVVM/issues"
 
-from pyTooling.Decorators import export
-from pyTooling.Exceptions import ExceptionBase
+from datetime              import datetime
+from json                  import JSONDecodeError, loads
+from typing                import TYPE_CHECKING, Any, ClassVar, Mapping, Optional as Nullable
+
+from pyTooling.Common      import getFullyQualifiedName, readResourceFile, StringEnum
+from pyTooling.Decorators  import export, readonly
+from pyTooling.Exceptions  import ExceptionBase, ToolingException
+from pyTooling.MetaClasses import ExtendedType
+
+if TYPE_CHECKING:
+	from ruamel.yaml         import CommentedMap
 
 
 @export
 class OSVVMException(ExceptionBase):
 	"""Base-class for all pyEDAA.OSVVM specific exceptions."""
+
+
+@export
+class YAMLDocumentMixin(metaclass=ExtendedType, mixin=True, expects=("_path", )):
+	"""
+	A mixin-class for a document of an OSVVM YAML file: reads the file and validates it against its JSON Schema.
+
+	The host class names its file format (:attr:`_DESCRIPTION`), the exception to raise (:attr:`_ERROR`), the format's
+	version enumeration (:attr:`_FORMAT_VERSION`) and the schema file per format version (:attr:`_SCHEMAS`), a file of
+	the resource package :mod:`pyEDAA.OSVVM.Resources` named :file:`OSVVM-<Format>-<FormatVersion>.schema.json`. It
+	provides the file's path as field ``_path`` and calls :meth:`_AnalyzeYAML` from its ``Analyze`` method.
+
+	The schemas are strict: a key a schema doesn't define is an error. A key OSVVM added within a format version is an
+	optional property of the version's schema.
+	"""
+
+	_DESCRIPTION:    ClassVar[str]                        #: Name of the file format in messages.
+	_ERROR:          ClassVar[type[OSVVMException]]       #: Exception raised, if the file can't be analyzed.
+	_FORMAT_VERSION: ClassVar[type[StringEnum]]           #: Enumeration of the format's versions.
+	_SCHEMAS:        ClassVar[Mapping[StringEnum, str]]   #: Schema file per format version.
+
+	_yamlDocument:   Nullable[CommentedMap]               #: The parsed and validated YAML document.
+	_version:        Nullable[StringEnum]                 #: Format version the file states.
+
+	def __init__(self) -> None:
+		"""
+		Initializes the mixin-class: the file wasn't analyzed yet.
+		"""
+		self._yamlDocument = None
+		self._version =      None
+
+	@readonly
+	def Version(self) -> Nullable[StringEnum]:
+		"""
+		Read-only property to access the format version the file states (:attr:`_version`).
+
+		:returns: The format version, or ``None`` if the file wasn't analyzed yet.
+		"""
+		return self._version
+
+	def _AnalyzeYAML(self) -> None:
+		"""
+		Read the YAML file, read the format version it states and validate it against the version's JSON Schema.
+
+		YAML timestamps, which ruamel.yaml reads as :class:`~datetime.datetime`, are validated as ISO 8601 strings. A
+		violation of an alternative (``oneOf``, ``anyOf``) is reported by its most relevant cause.
+
+		:raises OSVVMException: If the file doesn't exist. The exception is of type :attr:`_ERROR`, as all below.
+		:raises OSVVMException: If the file can't be read.
+		:raises OSVVMException: If the file isn't UTF-8 encoded.
+		:raises OSVVMException: If the file isn't valid YAML.
+		:raises OSVVMException: If the file's content isn't a YAML mapping.
+		:raises OSVVMException: If the file states no format version. |br|
+		                        The note lists the supported format versions.
+		:raises OSVVMException: If the file states an unsupported format version. |br|
+		                        The note lists the supported format versions.
+		:raises OSVVMException: If the JSON Schema can't be read.
+		:raises OSVVMException: If the file isn't valid according to the JSON Schema. |br|
+		                        A note per violation names its path and line.
+		"""
+		from jsonschema            import Draft202012Validator
+		from jsonschema.exceptions import best_match
+		from ruamel.yaml           import YAML, CommentedMap, CommentedSeq, YAMLError
+
+		from pyEDAA.OSVVM          import Resources
+
+		def toJSON(node: Any) -> Any:
+			"""
+			Nested function for recursion, copying YAML data to JSON data: timestamps become ISO 8601 strings.
+
+			:param node: The YAML data.
+			:returns:    The JSON data.
+			"""
+			if isinstance(node, dict):
+				return {key: toJSON(value) for key, value in node.items()}
+			elif isinstance(node, list):
+				return [toJSON(value) for value in node]
+			elif isinstance(node, datetime):
+				return node.isoformat()
+
+			return node
+
+		def lineOf(path: Any) -> int:
+			"""
+			Nested function finding the line of a value in the YAML file.
+
+			:param path: The path of the value, as a sequence of keys and indices.
+			:returns:    The line of the value, or of the innermost mapping or sequence of its path, 1-based.
+			"""
+			node = yamlDocument
+			line = 1
+			for part in path:
+				if isinstance(node, CommentedMap) and part in node:
+					line = node.lc.key(part)[0] + 1
+				elif isinstance(node, CommentedSeq) and isinstance(part, int) and part < len(node):
+					line = node.lc.item(part)[0] + 1
+				else:
+					break
+
+				node = node[part]
+
+			return line
+
+		if not self._path.exists():
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' does not exist.") \
+				from FileNotFoundError(f"File '{self._path}' not found.")
+
+		try:
+			content = self._path.read_text(encoding="utf-8")
+		except OSError as ex:
+			raise self._ERROR(f"Couldn't read {self._DESCRIPTION} '{self._path}'.") from ex
+		except UnicodeDecodeError as ex:
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not UTF-8 encoded.") from ex
+
+		try:
+			yamlDocument = YAML().load(content)
+		except YAMLError as ex:
+			raise self._ERROR(f"YAML syntax error in {self._DESCRIPTION} '{self._path}'.") from ex
+
+		if not isinstance(yamlDocument, CommentedMap):
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not a YAML mapping.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
+			raise ex
+
+		version = yamlDocument.get("Version", None)
+		try:
+			formatVersion = self._FORMAT_VERSION.Parse(version)
+		except (TypeError, ValueError) as cause:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states unsupported format version '{version}'.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex from cause
+
+		if formatVersion is None:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states no format version.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex
+
+		schemaFile = self._SCHEMAS[formatVersion]
+		try:
+			schema = loads(readResourceFile(Resources, schemaFile))
+		except (ToolingException, JSONDecodeError) as ex:
+			raise self._ERROR(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
+
+		validator = Draft202012Validator(schema)
+		errors =    sorted(validator.iter_errors(toJSON(yamlDocument)), key=lambda error: list(error.absolute_path))
+		if len(errors) > 0:
+			ex = self._ERROR(f"Validation error for {self._DESCRIPTION} '{self._path}' using JSON Schema '{schemaFile}'.")
+			for error in errors:
+				error = best_match((error, ))
+				path = error.absolute_path
+				ex.add_note(f"/{'/'.join(str(part) for part in path)} (line {lineOf(path)}): {error.message}")
+			raise ex
+
+		self._yamlDocument = yamlDocument
+		self._version =      formatVersion
