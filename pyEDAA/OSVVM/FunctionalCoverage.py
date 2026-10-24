@@ -29,26 +29,48 @@
 # ==================================================================================================================== #
 #
 """
-A data model of OSVVM's functional coverage YAML file (:file:`<testcase>_cov.yml`): its enumerations, the settings of a
-coverage model, and the bins.
+A data model of OSVVM's functional coverage YAML file (:file:`<testcase>_cov.yml`), and its conversion to the
+functional coverage model of pyEDAA.Reports.
 
-OSVVM's ``CoveragePkg`` writes the file (``WriteCovYaml``), OSVVM's script ``ReportCov2Html.tcl`` reads it.
+OSVVM's ``CoveragePkg`` writes the file (``WriteCovYaml``), OSVVM's script ``ReportCov2Html.tcl`` reads it. The file
+states its format version, the total coverage of the testcase, a setting, and the coverage models:
 
-* A coverage model states its :class:`ModelSettings`: its weight and goal, its :class:`WeightMode`, :class:`CountMode`
-  and :class:`IllegalMode`, the seeds of its randomization, its threshold, and its total counts.
+* A :class:`CoverageModel` has a name, the testcases, which sampled it, its coverage, its :class:`ModelSettings`,
+  the names of its fields - one per dimension -, and its bins.
 * A :class:`Bin` has a name - empty, if unnamed -, a :class:`BinType`, one range of values per dimension, a count,
   its *at least* count and its percentage of coverage.
+
+:meth:`Document.ConvertToFunctionalCoverageReport` converts a coverage model to a
+:class:`~pyEDAA.Reports.FunctionalCoverage.Covergroup` with one coverage item, named as the model: a
+:class:`~pyEDAA.Reports.FunctionalCoverage.Coverpoint` - its expression is the model's field name - for a model of one
+dimension, a :class:`~pyEDAA.Reports.FunctionalCoverage.Cross` of the field names for a model of more dimensions.
+
+.. rubric:: Example
+
+.. code-block:: Python
+
+   from pathlib import Path
+   from pyEDAA.OSVVM.FunctionalCoverage import Document
+
+   document = Document(Path("TbStream_SendGetRandom1_cov.yml"), analyzeAndConvert=True)
+   report = document.ConvertToFunctionalCoverageReport()
+   for covergroup in report.IterateCovergroups():
+     print(f"{covergroup.Name}: {covergroup.HitCoverage:.1%}")
 """
 from __future__                        import annotations
 
+from pathlib                           import Path
 from typing                            import Any, ClassVar, Generic, Iterable, Mapping, Optional as Nullable, Self, \
                                               TypeVar
 
+from ruamel.yaml                       import YAML, YAMLError
 from pyTooling.Common                  import getFullyQualifiedName, StringEnum
 from pyTooling.Decorators              import export, readonly
 from pyTooling.MetaClasses             import ExtendedType
+from pyTooling.Stopwatch               import Stopwatch
 
-from pyEDAA.Reports.FunctionalCoverage import ValueRange
+from pyEDAA.Reports.FunctionalCoverage import BinKind, Covergroup, Coverpoint, CoverpointBin, Cross, CrossBin, \
+                                              Document as fc_Document, FunctionalCoverageReport, ValueRange
 
 from pyEDAA.OSVVM                      import OSVVMException
 
@@ -111,9 +133,9 @@ class IllegalMode(StringEnum):
 	IllegalOff =     "ILLEGAL_OFF"      #: No alert.
 
 
-# A class with a property named like a class - ``WeightMode``, ``CountMode``, ``IllegalMode`` - can't name that class in
-# the annotation of a field: the class body's namespace, where annotations are evaluated, binds the name to the
-# property.
+# A class with a property named like a class - ``WeightMode``, ``CountMode``, ``IllegalMode``, ``Settings`` - can't name
+# that class in the annotation of a field: the class body's namespace, where annotations are evaluated, binds the name
+# to the property.
 _WeightMode =  WeightMode
 _CountMode =   CountMode
 _IllegalMode = IllegalMode
@@ -368,6 +390,9 @@ class ModelSettings(metaclass=ExtendedType, slots=True):
 		return self._totalGoal
 
 
+_ModelSettings = ModelSettings
+
+
 @export
 class Element(Generic[ParentType], metaclass=ExtendedType, slots=True):
 	"""
@@ -428,6 +453,8 @@ class Bin(Element["CoverageModel"]):
 
 	Its parent is the :class:`CoverageModel`.
 	"""
+
+	_PARENT_TYPE: ClassVar[tuple[type, ...]]  #: A bin is in a coverage model; assigned below that class.
 
 	_name:            str               #: Name of the bin; empty, if unnamed.
 	_type:            BinType           #: Type of the bin.
@@ -597,3 +624,454 @@ class Bin(Element["CoverageModel"]):
 		:returns: The percentage, as the file states it; above 100, if the bin was hit more often than required.
 		"""
 		return self._percentCoverage
+
+
+@export
+class CoverageModel(Element["Report"]):
+	"""
+	A coverage model: its name, the testcases, which sampled it, its coverage, its settings, the names of its fields -
+	one per dimension -, and its bins.
+
+	Its parent is the :class:`Report`.
+	"""
+
+	_PARENT_TYPE: ClassVar[tuple[type, ...]]  #: A coverage model is in a report; assigned below that class.
+
+	_name:       str             #: Name of the coverage model.
+	_testcases:  list[str]       #: The names of the testcases, which sampled the model.
+	_coverage:   float           #: The model's coverage in percent, as the file states it.
+	_settings:   _ModelSettings  #: The model's settings.
+	_fieldNames: list[str]       #: The names of the model's fields, one per dimension.
+	_bins:       list[Bin]       #: The bins.
+
+	def __init__(
+		self,
+		name: str,
+		testcases: Iterable[str],
+		coverage: float,
+		settings: ModelSettings,
+		fieldNames: Iterable[str],
+		*,
+		parent: Nullable[Report] = None
+	) -> None:
+		"""
+		Initializes a coverage model, and adds it to its report.
+
+		Its bins are added by creating them with this model as their parent.
+
+		:param name:        Name of the coverage model.
+		:param testcases:   The names of the testcases, which sampled the model.
+		:param coverage:    The model's coverage in percent, as the file states it.
+		:param settings:    The model's settings.
+		:param fieldNames:  The names of the model's fields, one per dimension.
+		:param parent:      Optional, the report containing the model. Default: ``None``.
+		:raises TypeError:  If parameter ``parent`` isn't of type :class:`Report`.
+		:raises TypeError:  If parameter ``name`` isn't of type :class:`str`.
+		:raises TypeError:  If parameter ``testcases`` or ``fieldNames`` isn't iterable, or contains an element not of
+		                    type :class:`str`.
+		:raises TypeError:  If parameter ``coverage`` isn't of type :class:`float`.
+		:raises TypeError:  If parameter ``settings`` isn't of type :class:`ModelSettings`.
+		:raises ValueError: If parameter ``fieldNames`` is empty.
+		"""
+		super().__init__(parent=parent)
+
+		if not isinstance(name, str):
+			ex = TypeError("Parameter 'name' is not of type 'str'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(name)}'.")
+			raise ex
+
+		if not isinstance(coverage, float):
+			ex = TypeError("Parameter 'coverage' is not of type 'float'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(coverage)}'.")
+			raise ex
+
+		if not isinstance(settings, ModelSettings):
+			ex = TypeError("Parameter 'settings' is not of type 'ModelSettings'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(settings)}'.")
+			raise ex
+
+		self._name =       name
+		self._testcases =  testcaseList = []
+		self._coverage =   coverage
+		self._settings =   settings
+		self._fieldNames = fieldNameList = []
+		self._bins =       []
+
+		for parameterName, values, valueList in (
+			("testcases",  testcases,  testcaseList),
+			("fieldNames", fieldNames, fieldNameList)
+		):
+			if not isinstance(values, Iterable):
+				ex = TypeError(f"Parameter '{parameterName}' is not iterable.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(values)}'.")
+				raise ex
+
+			for value in values:
+				if not isinstance(value, str):
+					ex = TypeError(f"Parameter '{parameterName}' contains an element not of type 'str'.")
+					ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+					raise ex
+
+				valueList.append(value)
+
+		if len(fieldNameList) == 0:
+			raise ValueError("Parameter 'fieldNames' is empty.")
+
+		if parent is not None:
+			parent._models.append(self)
+
+	@classmethod
+	def Parse(cls, model: Mapping[str, Any], *, parent: Nullable[Report] = None) -> Self:
+		"""
+		Parse a coverage model and its bins from an item of ``Models``.
+
+		:param model:          The coverage model's mapping.
+		:param parent:         Optional, the report containing the model. Default: ``None``.
+		:returns:              The coverage model.
+		:raises KeyError:      If a key is missing.
+		:raises CoverageError: If ``BinInfo.Dimensions`` isn't the number of field names, or ``BinInfo.NumBins`` isn't
+		                       the number of bins.
+		"""
+		binInfo = model["BinInfo"]
+		coverageModel = cls(
+			model["Name"],
+			model["TestCases"],
+			model["Coverage"],
+			ModelSettings.Parse(model["Settings"]),
+			binInfo["FieldNames"],
+			parent=parent
+		)
+
+		if binInfo["Dimensions"] != len(coverageModel._fieldNames):
+			ex = CoverageError(f"Coverage model '{coverageModel._name}' states another number of dimensions than fields.")
+			ex.add_note(f"Got {binInfo['Dimensions']} dimensions for {len(coverageModel._fieldNames)} field names.")
+			raise ex
+
+		for coverageBin in model["Bins"]:
+			Bin.Parse(coverageBin, parent=coverageModel)
+
+		if binInfo["NumBins"] != len(coverageModel._bins):
+			ex = CoverageError(f"Coverage model '{coverageModel._name}' states another number of bins than it has.")
+			ex.add_note(f"Got {binInfo['NumBins']} stated for {len(coverageModel._bins)} bins.")
+			raise ex
+
+		return coverageModel
+
+	@readonly
+	def Name(self) -> str:
+		"""
+		Read-only property to access the name of the coverage model (:attr:`_name`).
+
+		:returns: The name.
+		"""
+		return self._name
+
+	@readonly
+	def Testcases(self) -> list[str]:
+		"""
+		Read-only property to access the names of the testcases, which sampled the model (:attr:`_testcases`).
+
+		:returns: The names of the testcases.
+		"""
+		return self._testcases
+
+	@readonly
+	def Coverage(self) -> float:
+		"""
+		Read-only property to access the model's coverage, as the file states it (:attr:`_coverage`).
+
+		:returns: The coverage, in percent, relative to the goal.
+		"""
+		return self._coverage
+
+	@readonly
+	def Settings(self) -> ModelSettings:
+		"""
+		Read-only property to access the model's settings (:attr:`_settings`).
+
+		:returns: The settings.
+		"""
+		return self._settings
+
+	@readonly
+	def FieldNames(self) -> list[str]:
+		"""
+		Read-only property to access the names of the model's fields (:attr:`_fieldNames`).
+
+		OSVVM names an unnamed field ``Bin<n>``, counting from 1.
+
+		:returns: The names, one per dimension.
+		"""
+		return self._fieldNames
+
+	@readonly
+	def Dimensions(self) -> int:
+		"""
+		Read-only property to return the number of the model's dimensions.
+
+		:returns: The number of field names.
+		"""
+		return len(self._fieldNames)
+
+	@readonly
+	def Bins(self) -> list[Bin]:
+		"""
+		Read-only property to access the bins (:attr:`_bins`).
+
+		:returns: The bins, in the order the file lists them.
+		"""
+		return self._bins
+
+
+Bin._PARENT_TYPE = (CoverageModel, )
+
+
+@export
+class Report(metaclass=ExtendedType, mixin=True):
+	"""
+	The root of OSVVM's functional coverage YAML file: its format version, the testcase's coverage, its setting, and
+	the coverage models.
+
+	It is the root of every element below it.
+	"""
+
+	_root:          Report                   #: The report's root: the report itself.
+	_version:       Nullable[FormatVersion]  #: Version of the file format; ``None`` before the file was read.
+	_coverage:      Nullable[float]          #: The testcase's coverage in percent, as the file states it.
+	_writePassFail: bool                     #: Whether OSVVM's HTML report states pass or fail per bin.
+	_models:        list[CoverageModel]      #: The coverage models.
+
+	def __init__(
+		self,
+		version: Nullable[FormatVersion] = None,
+		coverage: Nullable[float] = None,
+		writePassFail: bool = False
+	) -> None:
+		"""
+		Initializes a report; empty, without parameters.
+
+		Its coverage models are added by creating them with this report as their parent.
+
+		:param version:       Optional, version of the file format. Default: ``None``.
+		:param coverage:      Optional, the testcase's coverage in percent, as the file states it. Default: ``None``.
+		:param writePassFail: Optional, whether OSVVM's HTML report states pass or fail per bin. Default: ``False``.
+		:raises TypeError:    If parameter ``version`` isn't of type :class:`FormatVersion`.
+		:raises TypeError:    If parameter ``coverage`` isn't of type :class:`float`.
+		:raises TypeError:    If parameter ``writePassFail`` isn't of type :class:`bool`.
+		"""
+		if version is not None and not isinstance(version, FormatVersion):
+			ex = TypeError("Parameter 'version' is not of type 'FormatVersion'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(version)}'.")
+			raise ex
+
+		if coverage is not None and not isinstance(coverage, float):
+			ex = TypeError("Parameter 'coverage' is not of type 'float'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(coverage)}'.")
+			raise ex
+
+		if not isinstance(writePassFail, bool):
+			ex = TypeError("Parameter 'writePassFail' is not of type 'bool'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(writePassFail)}'.")
+			raise ex
+
+		self._root =          self
+		self._version =       version
+		self._coverage =      coverage
+		self._writePassFail = writePassFail
+		self._models =        []
+
+	@readonly
+	def Version(self) -> Nullable[FormatVersion]:
+		"""
+		Read-only property to access the version of the file format (:attr:`_version`).
+
+		:returns: The format version, or ``None`` before the file was read.
+		"""
+		return self._version
+
+	@readonly
+	def Coverage(self) -> Nullable[float]:
+		"""
+		Read-only property to access the testcase's coverage, as the file states it (:attr:`_coverage`).
+
+		:returns: The coverage in percent, or ``None`` before the file was read.
+		"""
+		return self._coverage
+
+	@readonly
+	def WritePassFail(self) -> bool:
+		"""
+		Read-only property to access whether OSVVM's HTML report states pass or fail per bin (:attr:`_writePassFail`).
+
+		:returns: ``True``, if OSVVM's settings ``WritePassFail`` or ``ErrorIfNotCovered`` were set.
+		"""
+		return self._writePassFail
+
+	@readonly
+	def Models(self) -> list[CoverageModel]:
+		"""
+		Read-only property to access the coverage models (:attr:`_models`).
+
+		OSVVM lists the models of weight ``0`` last. The names needn't be unique: several instances of a model may share
+		a name.
+
+		:returns: The coverage models, in the order the file lists them.
+		"""
+		return self._models
+
+
+CoverageModel._PARENT_TYPE = (Report, )
+
+
+@export
+class Document(fc_Document, Report):
+	"""
+	OSVVM's functional coverage YAML file: read into the format's model, and converted to the functional coverage model
+	of pyEDAA.Reports.
+	"""
+
+	_yamlDocument: Nullable[Mapping[str, Any]]  #: The parsed YAML document, after :meth:`Analyze`.
+
+	def __init__(self, yamlReportFile: Path, analyzeAndConvert: bool = False) -> None:
+		"""
+		Initializes the document, and optionally reads it.
+
+		:param yamlReportFile:    Path to the YAML file.
+		:param analyzeAndConvert: Optional, if true, analyze the file and convert its content. Default: ``False``.
+		:raises ValueError:       If parameter ``yamlReportFile`` is ``None``.
+		:raises TypeError:        If parameter ``yamlReportFile`` isn't of type :class:`~pathlib.Path`.
+		:raises CoverageError:    If ``analyzeAndConvert`` is true, and the file can't be read or converted.
+		"""
+		super().__init__(yamlReportFile)
+		Report.__init__(self)
+
+		self._yamlDocument = None
+
+		if analyzeAndConvert:
+			self.Analyze()
+			self.Convert()
+
+	def Analyze(self) -> None:
+		"""
+		Read and parse the YAML file, and check its format version.
+
+		:raises CoverageError: If the file doesn't exist.
+		:raises CoverageError: If the file isn't valid YAML.
+		:raises CoverageError: If the file states no or an unsupported format version.
+		"""
+		if not self._path.exists():
+			raise CoverageError(f"OSVVM coverage file '{self._path}' does not exist.") \
+				from FileNotFoundError(f"File '{self._path}' not found.")
+
+		with Stopwatch() as sw:
+			try:
+				yamlDocument = YAML(typ="safe", pure=True).load(self._path)
+			except YAMLError as ex:
+				raise CoverageError(f"YAML syntax error in OSVVM coverage file '{self._path}'.") from ex
+
+			version = yamlDocument.get("Version", None) if isinstance(yamlDocument, Mapping) else None
+			if version not in [member.value for member in FormatVersion]:
+				ex = CoverageError(f"OSVVM coverage file '{self._path}' states an unsupported format version.")
+				ex.add_note(f"Got version '{version}'." if version is not None else "Got no version.")
+				ex.add_note(f"Supported format versions: {', '.join(member.value for member in FormatVersion)}.")
+				raise ex
+
+			self._yamlDocument = yamlDocument
+
+		self._analysisDuration = sw.Duration
+
+	def Convert(self) -> None:
+		"""
+		Convert the parsed YAML document to the format's model.
+
+		:raises CoverageError: If the YAML file was not analyzed before. |br|
+		                       Call 'Document.Analyze()' or create the document using
+		                       'Document(path, analyzeAndConvert=True)'.
+		:raises CoverageError: If a key is missing, or a value isn't of the type or in the range OSVVM writes.
+		:raises CoverageError: If a coverage model or a bin is inconsistent.
+		"""
+		if self._yamlDocument is None:
+			ex = CoverageError(f"OSVVM coverage file '{self._path}' needs to be read and analyzed by a YAML parser.")
+			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
+			raise ex
+
+		with Stopwatch() as sw:
+			try:
+				self._version =       FormatVersion.Parse(self._yamlDocument["Version"])
+				self._coverage =      self._yamlDocument["Coverage"]
+				self._writePassFail = {0: False, 1: True}[self._yamlDocument["Settings"]["WritePassFail"]]
+				self._models =        []
+
+				for model in self._yamlDocument["Models"]:
+					CoverageModel.Parse(model, parent=self)
+			except (KeyError, TypeError, ValueError) as ex:
+				raise CoverageError(f"OSVVM coverage file '{self._path}' isn't in the format OSVVM writes.") from ex
+
+		self._conversionDuration = sw.Duration
+
+	def ConvertToFunctionalCoverageReport(self) -> FunctionalCoverageReport:
+		"""
+		Convert the format's model to the functional coverage model, and aggregate it.
+
+		The report is named after the testcase: the file's name without ``_cov``. A coverage model becomes a covergroup of
+		its weight and goal, its settings key-value pairs of it, named as OSVVM names them. The covergroup has one
+		coverage item, named as the model: a coverpoint of the model's field name for a model of one dimension, a cross of
+		the field names for a model of more dimensions. The model's coverage and total counts aren't copied:
+		:meth:`~pyEDAA.Reports.FunctionalCoverage.FunctionalCoverageReport.Aggregate` computes them.
+
+		:returns: The report's root of the functional coverage model.
+		"""
+		binKinds = {
+			BinType.Count:   BinKind.Count,
+			BinType.Ignore:  BinKind.Ignore,
+			BinType.Illegal: BinKind.Illegal
+		}
+
+		report = FunctionalCoverageReport(
+			self._path.stem.removesuffix("_cov"),
+			keyValuePairs={"WritePassFail": self._writePassFail}
+		)
+		for model in self._models:
+			settings = model._settings
+			covergroup = Covergroup(
+				model._name,
+				settings._coverageWeight,
+				settings._goal,
+				model._testcases,
+				keyValuePairs={
+					"WeightMode":      settings._weightMode,
+					"Seeds":           settings._seeds,
+					"CountMode":       settings._countMode,
+					"IllegalMode":     settings._illegalMode,
+					"Threshold":       settings._threshold,
+					"ThresholdEnable": settings._thresholdEnable,
+					"IsRequirement":   settings._isRequirement
+				},
+				parent=report
+			)
+
+			if len(model._fieldNames) == 1:
+				coverpoint = Coverpoint(model._name, model._fieldNames[0], parent=covergroup)
+				for coverageBin in model._bins:
+					CoverpointBin(
+						None if coverageBin._name == "" else coverageBin._name,
+						binKinds[coverageBin._type],
+						coverageBin._ranges,
+						coverageBin._count,
+						coverageBin._atLeast,
+						parent=coverpoint
+					)
+			else:
+				cross = Cross(model._name, model._fieldNames, parent=covergroup)
+				for coverageBin in model._bins:
+					CrossBin(
+						None if coverageBin._name == "" else coverageBin._name,
+						binKinds[coverageBin._type],
+						[(valueRange, ) for valueRange in coverageBin._ranges],
+						coverageBin._count,
+						coverageBin._atLeast,
+						parent=cross
+					)
+
+		report.Aggregate()
+		return report

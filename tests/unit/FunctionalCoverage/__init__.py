@@ -28,13 +28,16 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""Testcases for OSVVM's functional coverage YAML file format: enumerations, settings and bins."""
+"""Testcases for OSVVM's functional coverage YAML file format and its conversion to pyEDAA.Reports."""
+from pathlib                           import Path
+from tempfile                          import TemporaryDirectory
+
 from pyTooling.Testing                 import Testcase
 
-from pyEDAA.Reports.FunctionalCoverage import ValueRange
+from pyEDAA.Reports.FunctionalCoverage import BinKind, Coverpoint as fc_Coverpoint, Cross as fc_Cross, ValueRange
 
-from pyEDAA.OSVVM.FunctionalCoverage   import Bin, BinType, CountMode, FormatVersion, IllegalMode, ModelSettings, \
-                                              WeightMode
+from pyEDAA.OSVVM.FunctionalCoverage   import Bin, BinType, CountMode, CoverageError, CoverageModel, Document, \
+                                              FormatVersion, IllegalMode, ModelSettings, WeightMode
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -42,6 +45,8 @@ if __name__ == "__main__":  # pragma: no cover
 	print("Use: 'python -m unittest <testcase module>'")
 	exit(1)
 
+
+DIRECTORY = Path("tests/data/OSVVM/Coverage")  #: Directory of the coverage files of the tests.
 
 SETTINGS = {
 	"CovWeight":       0,
@@ -56,6 +61,26 @@ SETTINGS = {
 	"TotalCovCount":   22,
 	"TotalCovGoal":    100
 }  #: The settings of a coverage model, as OSVVM writes them.
+
+
+def CreateModel(dimensions: int, numberOfBins: int = 1) -> dict:
+	"""
+	Create the mapping of a coverage model of one bin, as OSVVM writes it.
+
+	:param dimensions:   The number of dimensions the model states.
+	:param numberOfBins: Optional, the number of bins the model states. Default: ``1``.
+	:returns:            The model's mapping.
+	"""
+	return {
+		"Name":      "DelayCov BurstLength",
+		"TestCases": ["TbStream_SendGetRandom1"],
+		"Coverage":  22.0,
+		"Settings":  SETTINGS,
+		"BinInfo":   {"Dimensions": dimensions, "FieldNames": ["Bin1"], "NumBins": numberOfBins},
+		"Bins":      [
+			{"Name": "", "Type": "COUNT", "Range": [{"Min": 3, "Max": 11}], "Count": 19, "AtLeast": 80, "PercentCov": 23.75}
+		]
+	}
 
 
 class Enumerations(Testcase):
@@ -161,3 +186,194 @@ class Bins(Testcase):
 				with self.assertRaises(TypeError) as context:
 					_ = Bin(*arguments)
 				self.assertEqual(message, str(context.exception))
+
+
+class Models(Testcase):
+	def test_Parse(self) -> None:
+		model = CoverageModel.Parse(CreateModel(1))
+
+		self.assertEqual("DelayCov BurstLength", model.Name)
+		self.assertEqual(["TbStream_SendGetRandom1"], model.Testcases)
+		self.assertEqual(22.0, model.Coverage)
+		self.assertEqual(0, model.Settings.CoverageWeight)
+		self.assertEqual(["Bin1"], model.FieldNames)
+		self.assertEqual(1, model.Dimensions)
+		self.assertIsNone(model.Parent)
+		self.assertEqual(1, len(model.Bins))
+
+		coverageBin = model.Bins[0]
+		self.assertIs(model, coverageBin.Parent)
+		self.assertEqual("", coverageBin.Name)
+		self.assertIs(BinType.Count, coverageBin.Type)
+		self.assertEqual([ValueRange(3, 11)], coverageBin.Ranges)
+		self.assertEqual(19, coverageBin.Count)
+		self.assertEqual(80, coverageBin.AtLeast)
+		self.assertEqual(23.75, coverageBin.PercentCoverage)
+
+	def test_Dimensions(self) -> None:
+		with self.assertRaises(CoverageError) as context:
+			_ = CoverageModel.Parse(CreateModel(2))
+		self.assertEqual(
+			"Coverage model 'DelayCov BurstLength' states another number of dimensions than fields.",
+			str(context.exception)
+		)
+		self.assertEqual(["Got 2 dimensions for 1 field names."], context.exception.__notes__)
+
+	def test_NumberOfBins(self) -> None:
+		with self.assertRaises(CoverageError) as context:
+			_ = CoverageModel.Parse(CreateModel(1, 2))
+		self.assertEqual(
+			"Coverage model 'DelayCov BurstLength' states another number of bins than it has.",
+			str(context.exception)
+		)
+
+	def test_BinRanges(self) -> None:
+		model = CoverageModel("M", ["T"], 0.0, ModelSettings.Parse(SETTINGS), ["Bin1", "Bin2"])
+
+		with self.assertRaises(CoverageError) as context:
+			_ = Bin("", BinType.Count, [ValueRange(0, 0)], 0, 1, 0.0, parent=model)
+		self.assertEqual("Bin has not one range per dimension of coverage model 'M'.", str(context.exception))
+		self.assertEqual([], model.Bins)
+
+	def test_ParameterChecks(self) -> None:
+		parsed =  ModelSettings.Parse(SETTINGS)
+		mapping = SETTINGS
+		fields =  ["Bin1"]
+		for arguments, exception, message in (
+			((1,   ["T"], 0.0, parsed,  fields), TypeError,  "Parameter 'name' is not of type 'str'."),
+			(("M", ["T"], 0,   parsed,  fields), TypeError,  "Parameter 'coverage' is not of type 'float'."),
+			(("M", ["T"], 0.0, mapping, fields), TypeError,  "Parameter 'settings' is not of type 'ModelSettings'."),
+			(("M", 1,     0.0, parsed,  fields), TypeError,  "Parameter 'testcases' is not iterable."),
+			(("M", ["T"], 0.0, parsed,  [1]),    TypeError,  "Parameter 'fieldNames' contains an element not of type 'str'."),
+			(("M", ["T"], 0.0, parsed,  []),     ValueError, "Parameter 'fieldNames' is empty."),
+		):
+			with self.subTest(message=message):
+				with self.assertRaises(exception) as context:
+					_ = CoverageModel(*arguments)
+				self.assertEqual(message, str(context.exception))
+
+
+class Documents(Testcase):
+	def test_SendGetRandom1(self) -> None:
+		document = Document(DIRECTORY / "TbStream_SendGetRandom1_cov.yml", analyzeAndConvert=True)
+
+		self.assertIs(FormatVersion.Version0_1, document.Version)
+		self.assertEqual(100.0, document.Coverage)
+		self.assertFalse(document.WritePassFail)
+		self.assertIsNotNone(document.AnalysisDuration)
+		self.assertIsNotNone(document.ModelConversionDuration)
+		self.assertEqual(6, len(document.Models))
+		self.assertEqual(
+			["DelayCov BurstLength", "DelayCov BurstDelay", "DelayCov BeatDelay"] * 2,
+			[model.Name for model in document.Models]
+		)
+		self.assertEqual([1, 1, 1, 1, 2, 2], [model.Dimensions for model in document.Models])
+		self.assertIs(document, document.Models[0].Root)
+		self.assertIs(document, document.Models[0].Bins[0].Root)
+
+	def test_Convert_NotAnalyzed(self) -> None:
+		document = Document(DIRECTORY / "TbStream_SendGetRandom1_cov.yml")
+
+		with self.assertRaises(CoverageError) as context:
+			document.Convert()
+		self.assertIn("needs to be read and analyzed by a YAML parser", str(context.exception))
+
+	def test_Missing(self) -> None:
+		with self.assertRaises(CoverageError) as context:
+			_ = Document(DIRECTORY / "Missing_cov.yml", analyzeAndConvert=True)
+		self.assertIsInstance(context.exception.__cause__, FileNotFoundError)
+
+	def test_Version(self) -> None:
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text('Version: "9.9"\nCoverage: 0.00\n', encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertEqual(["Got version '9.9'.", "Supported format versions: 0.1."], context.exception.__notes__)
+
+	def test_Syntax(self) -> None:
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text('Version: "0.1"\nModels: [\n', encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertTrue(str(context.exception).startswith("YAML syntax error in OSVVM coverage file"))
+
+	def test_Format(self) -> None:
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Test_cov.yml"
+			path.write_text('Version: "0.1"\nCoverage: 0.00\nSettings:\n  WritePassFail: 0\n', encoding="utf-8")
+
+			with self.assertRaises(CoverageError) as context:
+				_ = Document(path, analyzeAndConvert=True)
+		self.assertIsInstance(context.exception.__cause__, KeyError)
+
+
+class Conversion(Testcase):
+	def test_SendGetRandom1(self) -> None:
+		document = Document(DIRECTORY / "TbStream_SendGetRandom1_cov.yml", analyzeAndConvert=True)
+		report =   document.ConvertToFunctionalCoverageReport()
+
+		self.assertEqual("TbStream_SendGetRandom1", report.Name)
+		self.assertFalse(report["WritePassFail"])
+		self.assertEqual(6, report.CovergroupCount)
+		self.assertEqual(1.0, report.HitCoverage)
+
+		for model, covergroup in zip(document.Models, report.Covergroups):
+			with self.subTest(model=model.Name):
+				self.assertEqual(model.Name, covergroup.Name)
+				self.assertEqual(0, covergroup.Weight)
+				self.assertEqual(100.0, covergroup.Goal)
+				self.assertEqual(["TbStream_SendGetRandom1"], covergroup.Testcases)
+				self.assertEqual(model.Settings.Seeds, covergroup["Seeds"])
+				self.assertIs(WeightMode.Remain, covergroup["WeightMode"])
+				self.assertAlmostEqual(model.Coverage, round(covergroup.HitCoverage * 100, 2))
+
+		for covergroup in report.Covergroups[:4]:
+			self.assertEqual(1, covergroup.CoverpointCount)
+			self.assertEqual(0, covergroup.CrossCount)
+
+		for covergroup in report.Covergroups[4:]:
+			self.assertEqual(0, covergroup.CoverpointCount)
+			self.assertEqual(1, covergroup.CrossCount)
+
+		coverpoint = report.Covergroups[0].Coverpoints["DelayCov BurstLength"]
+		self.assertIsInstance(coverpoint, fc_Coverpoint)
+		self.assertEqual("Bin1", coverpoint.Expression)
+		self.assertEqual([ValueRange(3, 11)], coverpoint.Bins[0].Ranges)
+		self.assertIsNone(coverpoint.Bins[0].Name)
+
+		cross = report.Covergroups[4].Crosses["DelayCov BurstDelay"]
+		self.assertIsInstance(cross, fc_Cross)
+		self.assertEqual(["Bin1", "Bin2"], cross.CrossedItems)
+		self.assertEqual([(ValueRange(0, 0), ), (ValueRange(2, 8), )], cross.Bins[0].Ranges)
+
+	def test_SendGetPacketBurst1(self) -> None:
+		"""The report's hit coverage is the testcase's coverage OSVVM writes."""
+		document = Document(DIRECTORY / "TbStream_SendGetPacketBurst1_cov.yml", analyzeAndConvert=True)
+		report =   document.ConvertToFunctionalCoverageReport()
+
+		self.assertEqual(50.0, document.Coverage)
+		self.assertAlmostEqual(0.5, report.HitCoverage)
+		self.assertEqual([1, 1], [covergroup.Weight for covergroup in report.Covergroups if covergroup.Weight > 0])
+
+	def test_BinTypes(self) -> None:
+		"""Ignore and illegal bins become bins of kind ignore and illegal; a named bin keeps its name."""
+		text = (DIRECTORY / "TbStream_SendGetRandom1_cov.yml").read_text(encoding="utf-8")
+		text = text.replace('Type: "COUNT"', 'Type: "IGNORE"', 1).replace('Type: "COUNT"', 'Type: "ILLEGAL"', 1)
+		text = text.replace('Name: ""', 'Name: "short"', 1)
+
+		with TemporaryDirectory() as directory:
+			path = Path(directory) / "Kinds_cov.yml"
+			path.write_text(text, encoding="utf-8")
+			report = Document(path, analyzeAndConvert=True).ConvertToFunctionalCoverageReport()
+
+		self.assertEqual("Kinds", report.Name)
+		coverpoint = report.Covergroups[0].Coverpoints["DelayCov BurstLength"]
+		self.assertEqual("short", coverpoint.Bins[0].Name)
+		self.assertIs(BinKind.Ignore, coverpoint.Bins[0].Kind)
+		self.assertIs(BinKind.Illegal, coverpoint.Bins[1].Kind)
+		self.assertEqual(0, coverpoint.BinCount)
+		self.assertEqual(3, coverpoint.IllegalHitCount)
