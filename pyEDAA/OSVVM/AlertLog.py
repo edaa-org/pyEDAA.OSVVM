@@ -905,7 +905,8 @@ class Settings(metaclass=ExtendedType, slots=True):
 	@readonly
 	def ExternalWarningCount(self) -> int:
 		"""
-		Read-only property to access the external warnings, less the warnings the test expects (:attr:`_externalWarningCount`).
+		Read-only property to access the external warnings, less the warnings the test expects
+		(:attr:`_externalWarningCount`).
 
 		A test passes external errors to ``WriteAlertYaml``, e.g. errors found by a script. The count is negative, if the
 		test expects more warnings than external warnings are passed. The YAML key is ``ExternalErrors``.
@@ -917,7 +918,8 @@ class Settings(metaclass=ExtendedType, slots=True):
 	@readonly
 	def ExternalErrorCount(self) -> int:
 		"""
-		Read-only property to access the external errors, less the errors the test expects (:attr:`_externalErrorCount`).
+		Read-only property to access the external errors, less the errors the test expects
+		(:attr:`_externalErrorCount`).
 
 		A test passes external errors to ``WriteAlertYaml``, e.g. errors found by a script. The count is negative, if the
 		test expects more errors than external errors are passed. The YAML key is ``ExternalErrors``.
@@ -929,7 +931,8 @@ class Settings(metaclass=ExtendedType, slots=True):
 	@readonly
 	def ExternalFailureCount(self) -> int:
 		"""
-		Read-only property to access the external failures, less the failures the test expects (:attr:`_externalFailureCount`).
+		Read-only property to access the external failures, less the failures the test expects
+		(:attr:`_externalFailureCount`).
 
 		A test passes external errors to ``WriteAlertYaml``, e.g. errors found by a script. The count is negative, if the
 		test expects more failures than external failures are passed. The YAML key is ``ExternalErrors``.
