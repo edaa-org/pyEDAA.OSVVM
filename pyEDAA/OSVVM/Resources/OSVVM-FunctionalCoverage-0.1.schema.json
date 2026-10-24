@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-FunctionalCoverage-0.1.schema.json",
 	"title": "OSVVM functional coverage YAML file, format version 0.1",
-	"description": "The functional coverage file '<testcase>_cov.yml' OSVVM's CoveragePkg writes ('WriteCovYaml'), format version 0.1 (OSVVM 2026.02 and later; the constant 'COVERAGE_YAML_VERSION'). Derived from the writer 'osvvm/CoveragePkg.vhd' and the reader 'Scripts/ReportCov2Html.tcl'. The writer added no key while writing version 0.1, so every key is required.",
+	"description": "The functional coverage file '<testcase>_cov.yml' OSVVM's CoveragePkg writes ('WriteCovYaml'), format version 0.1 (OSVVM 2026.01 and later; the constant 'COVERAGE_YAML_VERSION'). Derived from the writer 'osvvm/CoveragePkg.vhd' and the reader 'Scripts/ReportCov2Html.tcl'. The writer added no key while writing version 0.1, so every key is required.",
 	"type": "object",
 	"required": ["Version", "Coverage", "Settings", "Models"],
 	"properties": {

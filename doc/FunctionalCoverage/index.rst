@@ -76,7 +76,7 @@ The model of the format keeps what the file states.
   ``IGNORE``, ``ILLEGAL``), one range of values per dimension (``Range``), its count, its *at least* count, and its
   count in percent of the *at least* count (``PercentCov``).
 
-The file's format version ``0.1`` is the one OSVVM writes since OSVVM 2026.02; the file doesn't state the OSVVM version.
+The file's format version ``0.1`` is the one OSVVM writes since OSVVM 2026.01; the file doesn't state the OSVVM version.
 A file of another version is rejected. :meth:`Document.Analyze` validates the file against the JSON Schema of its
 format version, :file:`OSVVM-FunctionalCoverage-0.1.schema.json` in :mod:`pyEDAA.OSVVM.Resources`, derived from OSVVM's
 writer: every key is required, a key the schema doesn't name is rejected, and so is a value of another type or out of
