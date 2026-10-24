@@ -85,14 +85,21 @@ class Latest(Testcase):
 		self.assertEqual(0, len(doc.Testsuites))
 		self.assertEqual(YearMonthVersion(2026, 9), doc.BuildInformation.OSVVMVersion)
 
-	def test_RunAllTests_ExternalErrors(self) -> None:
-		with self.assertRaises(BuildSummaryError) as context:
-			_ = BuildSummaryDocument(DIRECTORY / "RunAllTests.yml", analyzeAndConvert=True)
+	def test_RunAllTests(self) -> None:
+		doc = BuildSummaryDocument(DIRECTORY / "RunAllTests.yml", analyzeAndConvert=True)
 
-		notes = context.exception.__notes__
-		self.assertEqual(4, len(notes))
-		expected = "Additional properties are not allowed ('ExternalErrors' was unexpected)"
-		self.assertEqual(f"/TestSuites/0/TestCases/0/Results (line 11): {expected}", notes[0])
+		self.assertEqual(4, doc.TestcaseCount)
+		self.assertEqual(0, doc.Testsuites["StreamTransactionPkg"].Testcases["TbStream_SendGet1"].ExternalErrorCount)
+		self.assertEqual(37_252_000_000, doc.Testsuites["Ethernet"].Testcases["Tb_xMii1"].SimulationTime)
+
+	def test_Coverage(self) -> None:
+		doc = BuildSummaryDocument(DIRECTORY / "RunDemoTestsWithCoverage.yml", analyzeAndConvert=True)
+
+		self.assertEqual(
+			Path("CodeCoverage/Osvvm-Libraries_RunDemoTestsWithCoverage_code_cov/index.html"),
+			doc.Settings.CodeCoverageFile
+		)
+		self.assertEqual(timedelta(seconds=9.502), doc.TotalDuration)
 
 
 class Generics(Testcase):
@@ -107,6 +114,40 @@ class Generics(Testcase):
 		self.assertEqual({"MII_INTERFACE": "RGMII", "MII_BPS": "BPS_1G"}, testcase.Generics)
 		self.assertIsNone(testcase.FunctionalCoverage)
 		self.assertEqual({}, ethernet.Testcases["Tb_xMii1"].Generics)
+
+
+class ExpectedStatus(Testcase):
+	def setUp(self) -> None:
+		self.doc = BuildSummaryDocument(DIRECTORY / "ExpectedStatus.yml", analyzeAndConvert=True)
+		self.testsuite = self.doc.Testsuites["Expected"]
+
+	def test_ExpectedFailed(self) -> None:
+		testcase = self.testsuite.Testcases["TbExpected_Failed"]
+		expected = testcase.ExpectedResults
+
+		self.assertIs(TestcaseStatus.ExpectedFailed, testcase.Status)
+		self.assertIs(OSVVMStatus.Failed, expected.OSVVMStatus)
+		self.assertEqual(1, expected.TotalErrorCount)
+		self.assertEqual(1, expected.ErrorCount)
+		self.assertEqual(1, testcase.ExternalErrorCount)
+		self.assertEqual("Checks the error path", testcase.Message)
+
+	def test_UnexpectedPassed(self) -> None:
+		testcase = self.testsuite.Testcases["TbExpected_Passed"]
+
+		self.assertIs(TestcaseStatus.UnexpectedPassed, testcase.Status)
+
+	def test_KnownStatus(self) -> None:
+		testcase = self.testsuite.Testcases["TbKnown_Failed"]
+
+		self.assertIs(TestcaseStatus.Failed, testcase.Status)
+		self.assertIs(OSVVMStatus.Failed, testcase.KnownStatus)
+		self.assertIsNone(testcase.ExpectedResults)
+		self.assertEqual("Issue 42", testcase.Message)
+
+	def test_Testsuite(self) -> None:
+		self.assertEqual(1, self.testsuite.Passed)
+		self.assertEqual(2, self.testsuite.Failed)
 
 
 class EdgeCases(Testcase):

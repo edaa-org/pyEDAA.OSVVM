@@ -38,8 +38,8 @@ from pyTooling.Versioning       import YearMonthVersion
 from pyEDAA.Reports.Unittesting import TestcaseStatus, TestsuiteStatus, Testcase as ut_Testcase
 from pyEDAA.Reports.Unittesting import Testsuite as ut_Testsuite, TestsuiteSummary as ut_TestsuiteSummary
 
-from pyEDAA.OSVVM.Build         import BuildSummaryError, FormatVersion, OSVVMStatus, Testsuite, Testcase
-from pyEDAA.OSVVM.Build         import BuildInformation, Settings, TestsuiteSummary, BuildSummaryDocument
+from pyEDAA.OSVVM.Build         import BuildSummaryError, FormatVersion, OSVVMStatus, ExpectedResults, Testsuite, \
+                                       Testcase, BuildInformation, Settings, TestsuiteSummary, BuildSummaryDocument
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -209,6 +209,49 @@ class OSVVMTestcase(py_Testcase):
 		self.assertEqual("tcVHDL", copy.VHDLName)
 		self.assertIs(OSVVMStatus.Failed, copy.OSVVMStatus)
 		self.assertEqual(2, copy.DisabledWarningCount)
+
+
+class Expected(py_Testcase):
+	def test_ExpectedResults(self) -> None:
+		expected = ExpectedResults(OSVVMStatus.Failed, 3, 1, 2, 0)
+
+		self.assertIs(OSVVMStatus.Failed, expected.OSVVMStatus)
+		self.assertEqual(3, expected.TotalErrorCount)
+		self.assertEqual(1, expected.WarningCount)
+		self.assertEqual(2, expected.ErrorCount)
+		self.assertEqual(0, expected.FatalCount)
+
+	def test_ExpectedResults_None(self) -> None:
+		with self.assertRaises(ValueError) as context:
+			_ = ExpectedResults(None)
+
+		self.assertEqual("Parameter 'osvvmStatus' is None.", str(context.exception))
+
+	def test_Aggregate_Matches(self) -> None:
+		expected = ExpectedResults(OSVVMStatus.Failed, 1, 0, 1, 0)
+		tc = Testcase("tc", osvvmStatus=OSVVMStatus.Failed, totalErrorCount=1, errorCount=1, expectedResults=expected)
+		tc.Aggregate()
+
+		self.assertIs(TestcaseStatus.ExpectedFailed, tc.Status)
+
+	def test_Aggregate_Mismatch(self) -> None:
+		expected = ExpectedResults(OSVVMStatus.Failed, 1, 0, 1, 0)
+		tc = Testcase("tc", osvvmStatus=OSVVMStatus.Failed, totalErrorCount=2, errorCount=2, expectedResults=expected)
+		tc.Aggregate()
+
+		self.assertIs(TestcaseStatus.Failed, tc.Status)
+
+	def test_Aggregate_Skipped(self) -> None:
+		tc = Testcase("tc", osvvmStatus=OSVVMStatus.Skipped, expectedResults=ExpectedResults(OSVVMStatus.Skipped))
+		tc.Aggregate()
+
+		self.assertIs(TestcaseStatus.ExpectedFailed, tc.Status)
+
+	def test_ExpectedResults_Type(self) -> None:
+		with self.assertRaises(TypeError) as context:
+			_ = Testcase("tc", expectedResults="FAILED")
+
+		self.assertEqual("Parameter 'expectedResults' is not of type 'ExpectedResults'.", str(context.exception))
 
 
 class Conversion(py_Testcase):
