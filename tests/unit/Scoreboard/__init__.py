@@ -245,7 +245,13 @@ class Parse(Testcase):
 		self.assertEqual(
 			f"OSVVM scoreboard YAML file '{path}' states unsupported format version '1.0'.", str(context.exception)
 		)
-		self.assertListEqual(["Supported format versions: 0.1."], context.exception.__notes__)
+		self.assertListEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
 
 	def test_EmptyFile(self) -> None:
 		"""OSVVM writes an empty file, if the package instance has no scoreboards."""
@@ -254,7 +260,7 @@ class Parse(Testcase):
 		with self.assertRaises(ScoreboardError) as context:
 			_ = Document(path, analyzeAndConvert=True)
 
-		self.assertEqual(f"OSVVM scoreboard YAML file '{path}' is not a YAML mapping.", str(context.exception))
+		self.assertEqual(f"OSVVM scoreboard YAML file '{path}' is empty.", str(context.exception))
 
 	def test_FileNotFound(self) -> None:
 		path = DATA / "TbMissing_sb_slv.yml"
