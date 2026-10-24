@@ -66,7 +66,10 @@ class OSVVMDomain(Domain):
 
 	.. rubric:: New directives:
 
-	* :rst:dir:`osvvm:testsuite-summary`
+	* :rst:dir:`osvvm:build-summary`
+	* :rst:dir:`osvvm:alert-log`
+	* :rst:dir:`osvvm:functional-coverage`
+	* :rst:dir:`osvvm:scoreboards`
 
 	.. rubric:: New roles:
 
@@ -90,11 +93,19 @@ class OSVVMDomain(Domain):
 	dependencies: List[str] = [
 	]  #: A list of other extensions this domain depends on.
 
-	from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
+	from pyEDAA.OSVVM.Sphinx.AlertLog           import AlertLogTable
+	from pyEDAA.OSVVM.Sphinx.FunctionalCoverage import FunctionalCoverageTables
+	from pyEDAA.OSVVM.Sphinx.Scoreboard         import ScoreboardTables
+	from pyEDAA.OSVVM.Sphinx.Testsuites         import BuildSummary
 
 	directives = {
-		BuildSummary.directiveName:     BuildSummary,
+		BuildSummary.directiveName:             BuildSummary,
+		AlertLogTable.directiveName:            AlertLogTable,
+		FunctionalCoverageTables.directiveName: FunctionalCoverageTables,
+		ScoreboardTables.directiveName:         ScoreboardTables,
 	}  #: A dictionary of all directives in this domain.
+
+	del AlertLogTable, FunctionalCoverageTables, ScoreboardTables
 
 	roles = {
 		# "design":   DesignRole,
@@ -200,8 +211,10 @@ class OSVVMDomain(Domain):
 
 		:param sphinxApplication: The Sphinx application.
 		"""
+		from pyEDAA.OSVVM.Sphinx.Testcase   import TestcaseReports
 		from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
 
+		TestcaseReports.Clear(sphinxApplication)
 		BuildSummary.ReadReports(sphinxApplication)
 
 	callbacks: Dict[str, List[Callable]] = {

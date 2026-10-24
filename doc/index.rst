@@ -269,6 +269,9 @@ The accompanying documentation is licensed under :ref:`Creative Commons - Attrib
 
    OSVVM/index
    OSVVM/BuildSummary
+   OSVVM/AlertLog
+   OSVVM/FunctionalCoverage
+   OSVVM/Scoreboard
 
 
 .. raw:: latex

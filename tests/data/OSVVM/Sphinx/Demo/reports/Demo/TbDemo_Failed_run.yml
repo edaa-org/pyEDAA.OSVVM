@@ -8,7 +8,8 @@ ReportsTestSuiteDirectory:  "reports/Demo"
 RequirementsYamlFile: ""
 AlertYamlFile:  "reports/Demo/TbDemo_Failed_alerts.yml"
 CovYamlFile:  ""
-ScoreboardDict:           null
+ScoreboardDict:
+  int: "reports/Demo/TbDemo_Failed_sb_int.yml"
 TranscriptFiles: "results/Demo/TbDemo_Failed.log"
 TestCaseFileName: "TbDemo_Failed"
 GenericNames: ""

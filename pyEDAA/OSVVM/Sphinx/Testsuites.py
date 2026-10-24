@@ -222,6 +222,35 @@ class BuildSummary(UnittestSummaryBase):
 
 		return document
 
+	@classmethod
+	def GetTestcase(cls, reportID: str, testsuiteName: str, testcaseName: str) -> Testcase:
+		"""
+		Return a testcase of a build summary read by :meth:`ReadReports`.
+
+		:param reportID:              Identifier of the build summary.
+		:param testsuiteName:         Name of the testsuite.
+		:param testcaseName:          Name of the testcase.
+		:returns:                     The testcase.
+		:raises ReportExtensionError: If the build summary wasn't read.
+		:raises ReportExtensionError: If the build summary has no such testsuite.
+		:raises ReportExtensionError: If the testsuite has no such testcase.
+		"""
+		build = cls.GetReport(reportID)
+
+		try:
+			testsuite = build._testsuites[testsuiteName]
+		except KeyError as cause:
+			ex = ReportExtensionError(f"{cls._REPORT_KIND} '{reportID}' has no testsuite '{testsuiteName}'.")
+			ex.add_note(f"Testsuites: {', '.join(build._testsuites)}")
+			raise ex from cause
+
+		try:
+			return testsuite._testcases[testcaseName]
+		except KeyError as cause:
+			ex = ReportExtensionError(f"Testsuite '{testsuiteName}' of '{reportID}' has no testcase '{testcaseName}'.")
+			ex.add_note(f"Testcases: {', '.join(testsuite._testcases)}")
+			raise ex from cause
+
 	def _TableClasses(self) -> list[str]:
 		"""
 		Return the CSS classes of the table: ``report-unittest-table``, ``osvvm-buildsummary-table``,

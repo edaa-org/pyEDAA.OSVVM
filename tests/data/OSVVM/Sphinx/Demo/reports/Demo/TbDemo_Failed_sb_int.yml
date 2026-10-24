@@ -1,0 +1,12 @@
+# Hand-written sample in the format of OSVVM's WriteScoreboardYaml: a scoreboard with failed checks.
+Version: "0.1"
+TestCase: "TbDemo_Failed"
+Scoreboards: 
+  - Name:         "Uart_1 SB"
+    ParentName:   "Uart_1"
+    ItemCount:    6
+    ErrorCount:   2
+    ItemsChecked: 6
+    ItemsPopped:  6
+    ItemsDropped: 0
+    FifoCount:    0

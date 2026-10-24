@@ -1,0 +1,23 @@
+# Hand-written sample in the format of OSVVM's WriteAlertYaml: a failed test with disabled alerts and requirements.
+Version: "0.1"
+Name: "TbDemo_Failed"
+Status: "FAILED"
+Results: {TotalErrors: 3, AlertCount: {Failure: 0, Error: 2, Warning: 1}, PassedCount: 7, AffirmCount: 9, RequirementsPassed: 1, RequirementsGoal: 2, DisabledAlertCount: {Failure: 0, Error: 1, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+Settings: {ExternalErrors: {Failure: 0, Error: 0, Warning: 0}, FailOnDisabledErrors: "true", FailOnRequirementErrors: "true", FailOnWarning: "true"}
+Children: 
+  - Name: "Default"
+    Status: "PASSED"
+    Results: {TotalErrors: 0, AlertCount: {Failure: 0, Error: 0, Warning: 0}, PassedCount: 3, AffirmCount: 3, RequirementsPassed: 1, RequirementsGoal: 1, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}}
+    Children: []
+  - Name: "Uart_1"
+    Status: "FAILED"
+    Results: {TotalErrors: 3, AlertCount: {Failure: 0, Error: 2, Warning: 1}, PassedCount: 4, AffirmCount: 6, RequirementsPassed: 0, RequirementsGoal: 1, DisabledAlertCount: {Failure: 0, Error: 1, Warning: 0}}
+    Children: 
+      - Name: "Data Check"
+        Status: "FAILED"
+        Results: {TotalErrors: 2, AlertCount: {Failure: 0, Error: 2, Warning: 0}, PassedCount: 4, AffirmCount: 6, RequirementsPassed: 0, RequirementsGoal: 1, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}}
+        Children: []
+      - Name: "Parity"
+        Status: "FAILED"
+        Results: {TotalErrors: 1, AlertCount: {Failure: 0, Error: 0, Warning: 1}, PassedCount: 0, AffirmCount: 0, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 1, Warning: 0}}
+        Children: []

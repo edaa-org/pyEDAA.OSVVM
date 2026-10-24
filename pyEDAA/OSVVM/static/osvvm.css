@@ -1,6 +1,6 @@
 /*
  * The build summary table carries pyTooling.Sphinx' class 'report-unittest-table', so pyTooling.Sphinx' stylesheet
- * colours its rows by status. These rules mark the cells OSVVM adds.
+ * colours its rows by status. These rules mark the cells OSVVM adds, and style the tables of a testcase's reports.
  */
 
 /* An alert count other than 0: OSVVM counts the alerts less the expected ones. */
@@ -14,15 +14,34 @@ table.osvvm-buildsummary-table > tbody > tr > td.osvvm-failure-mismatch {
 	background: hsl(240 75% 85%);
 }
 
-/* A testcase's OSVVM status. */
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-passed {
+/* A status: of a testcase, an AlertLog item or a bin. */
+td.osvvm-status-passed {
 	color: hsl(120 60% 30%);
 }
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-failed,
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-stoplimit,
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-timeout,
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-analyze_failed,
-table.osvvm-buildsummary-table > tbody > tr > td.osvvm-status-noreports {
+td.osvvm-status-failed,
+td.osvvm-status-stoplimit,
+td.osvvm-status-timeout,
+td.osvvm-status-analyze_failed,
+td.osvvm-status-noreports {
 	color: hsl(0 70% 40%);
+	font-weight: bold;
+}
+
+/* An AlertLog item with alerts, a scoreboard with failed checks. */
+table.osvvm-alertlog-table > tbody > tr > td.osvvm-alerts,
+table.osvvm-scoreboard-table > tbody > tr > td.osvvm-scoreboard-errors {
+	background: hsl(0 75% 85%);
+}
+
+/* The AlertLog table's cells don't wrap. */
+table.osvvm-alertlog-table > tbody > tr > td {
+	white-space: nowrap;
+}
+
+/* A coverage model's bins: an ignore bin greyed, the total in bold. */
+table.osvvm-coverage-table > tbody > tr.osvvm-bin-ignore {
+	color: #888;
+}
+table.osvvm-coverage-table > tbody > tr.osvvm-coverage-total {
 	font-weight: bold;
 }

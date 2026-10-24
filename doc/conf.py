@@ -291,6 +291,9 @@ pyTooling_DocCoverage_Packages = {
 osvvm_build_summaries = {
 	"osvvmlibraries": {
 		"yaml_report": "../tests/data/OSVVM/OSVVMLibraries_RunAllTests.yml",
+	},
+	"demo": {
+		"yaml_report": "../tests/data/OSVVM/Sphinx/Demo/Demo.yml",
 	}
 }
 
