@@ -37,21 +37,19 @@ pushed, checked, popped and dropped, how many checks failed and how many items a
 file to :file:`reports/<testsuite>/<test>_sb_<name>.yml` and read it to write the test's HTML report, which shows one
 table per file.
 
-A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and checks the
-format version it states (:class:`FormatVersion`), :meth:`Document.Convert` converts the content to the model. Each
-scoreboard is parsed by :meth:`Scoreboard.Parse`. A key the format doesn't define is reported as
-:exc:`~pyEDAA.OSVVM.UnknownKeyWarning`, which must be collected by a :class:`~pyTooling.Warning.WarningCollector`.
+A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and validates
+it against the JSON Schema of the format version it states (:class:`FormatVersion`, :data:`SCHEMAS`), so a key the
+format doesn't define is a validation error. :meth:`Document.Convert` converts the content to the model. Each
+scoreboard is parsed by :meth:`Scoreboard.Parse`.
 
 .. rubric:: Example
 
 .. code-block:: Python
 
    from pathlib import Path
-   from pyTooling.Warning import WarningCollector
    from pyEDAA.OSVVM.Scoreboard import Document
 
-   with WarningCollector() as warnings:
-     document = Document(Path("TbAxi4_TimeOut_sb_slv.yml"), analyzeAndConvert=True)
+   document = Document(Path("TbAxi4_TimeOut_sb_slv.yml"), analyzeAndConvert=True)
 
    print(f"{document.TestcaseName} - {document.Name}: {document.ScoreboardCount} scoreboards")
    for scoreboard in document.IterateScoreboards(lambda scoreboard: scoreboard.ErrorCount > 0):
@@ -59,19 +57,23 @@ scoreboard is parsed by :meth:`Scoreboard.Parse`. A key the format doesn't defin
 """
 from __future__            import annotations
 
-from datetime              import timedelta
+from datetime              import datetime, timedelta
+from json                  import JSONDecodeError, loads
 from pathlib               import Path
-from typing                import Callable, Generator, Optional as Nullable, Self
+from typing                import Any, Callable, ClassVar, Generator, Optional as Nullable, Self
 
 from ruamel.yaml           import YAML, CommentedMap, CommentedSeq, YAMLError
 
-from pyTooling.Common      import getFullyQualifiedName, StringEnum
+from pyTooling.Common      import getFullyQualifiedName, readResourceFile, StringEnum
 from pyTooling.Decorators  import export, readonly
+from pyTooling.Exceptions  import ToolingException
 from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
-from pyTooling.Warning     import WarningCollector
 
-from pyEDAA.OSVVM          import OSVVMException, UnknownKeyWarning
+from pyEDAA.OSVVM          import OSVVMException, Resources
+
+
+__all__ = ["SCHEMAS"]
 
 
 @export
@@ -92,6 +94,11 @@ class FormatVersion(StringEnum):
 	"""
 
 	Version0_1 = "0.1"  #: Format version 0.1.
+
+
+SCHEMAS: dict[FormatVersion, str] = {
+	FormatVersion.Version0_1: "OSVVM-Scoreboard-0.1.schema.json",
+}  #: The JSON Schema a scoreboard file is validated against, per format version.
 
 
 @export
@@ -196,25 +203,19 @@ class Scoreboard(metaclass=ExtendedType, slots=True):
 		"""
 		Parse an entry of ``Scoreboards``.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:param node:                           The YAML mapping of the entry.
-		:param parent:                         Optional, the document the scoreboard belongs to. Default: ``None``.
-		:returns:                              The scoreboard.
-		:raises ScoreboardError:               If the mapping lacks a key the format requires.
-		:raises ScoreboardError:               If a value isn't of the type the format requires.
-		:raises UnhandledCriticalWarningError: If the mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:param node:             The YAML mapping of the entry.
+		:param parent:           Optional, the document the scoreboard belongs to. Default: ``None``.
+		:returns:                The scoreboard.
+		:raises ScoreboardError: If the mapping has a key the format doesn't define.
+		:raises ScoreboardError: If the mapping lacks a key the format requires.
+		:raises ScoreboardError: If a value isn't of the type the format requires.
 		"""
 		line = node.lc.line + 1
 		for key in node:
 			if key not in (
 				"Name", "ParentName", "ItemCount", "ErrorCount", "ItemsChecked", "ItemsPopped", "ItemsDropped", "FifoCount"
 			):
-				keyLine = node.lc.key(key)[0] + 1
-				WarningCollector.Raise(
-					UnknownKeyWarning(f"Unknown key '{key}' in scoreboard at line {keyLine}.", key=key, line=keyLine)
-				)
+				raise ScoreboardError(f"Scoreboard at line {line} has unknown key '{key}'.")
 
 		for key, keyType, typeName in (
 			("Name",         str, "a string"),
@@ -349,6 +350,11 @@ class Document(metaclass=ExtendedType, slots=True):
 	When analyzing and converting the document, the YAML analysis duration as well as the model conversion duration gets
 	captured.
 	"""
+
+	_DESCRIPTION:    ClassVar[str] =                      "OSVVM scoreboard YAML file"  #: Format's name in messages.
+	_ERROR:          ClassVar[type[ScoreboardError]] =    ScoreboardError               #: Exception of the reader.
+	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =      FormatVersion                 #: The format's versions.
+	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                       #: Schema per version.
 
 	_path:                    _Path                    #: Path to the YAML file.
 	_name:                    Nullable[str]            #: Name of the scoreboard package's instance, from the file name.
@@ -500,70 +506,140 @@ class Document(metaclass=ExtendedType, slots=True):
 
 	def Analyze(self) -> None:
 		"""
-		Read the YAML file (specified by :attr:`_path`), check the format version it states, and store the YAML document in
-		:attr:`_yamlDocument`.
+		Read the YAML file (specified by :attr:`_path`), validate it against the JSON Schema of the format version it states
+		(:data:`SCHEMAS`), and store the YAML document in :attr:`_yamlDocument`.
 
-		:raises ScoreboardError: If the YAML file doesn't exist.
-		:raises ScoreboardError: If the YAML file can't be read.
-		:raises ScoreboardError: If the YAML file isn't valid YAML.
-		:raises ScoreboardError: If the YAML file's content isn't a mapping, e.g. an empty file. |br|
-		                         OSVVM writes an empty file, if the package instance has no scoreboards.
-		:raises ScoreboardError: If the YAML file states no format version. |br|
-		                         The note lists the supported format versions.
-		:raises ScoreboardError: If the YAML file states an unsupported format version. |br|
-		                         The note lists the supported format versions.
+		An empty file, which OSVVM writes if the package instance has no scoreboards, isn't a YAML mapping.
+
+		:raises ScoreboardError: If the YAML file can't be read, isn't valid YAML, or isn't valid according to the JSON
+		                         Schema of its format version; see :meth:`_AnalyzeYAML`.
 		"""
-		if not self._path.exists():
-			raise ScoreboardError(f"OSVVM scoreboard YAML file '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
 		with Stopwatch() as sw:
-			try:
-				yamlDocument = YAML().load(self._path)
-			except OSError as ex:
-				raise ScoreboardError(f"Couldn't read OSVVM scoreboard YAML file '{self._path}'.") from ex
-			except YAMLError as ex:
-				raise ScoreboardError(f"YAML syntax error in OSVVM scoreboard YAML file '{self._path}'.") from ex
-
-			if not isinstance(yamlDocument, CommentedMap):
-				ex = ScoreboardError(f"OSVVM scoreboard YAML file '{self._path}' is not a YAML mapping.")
-				ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
-				raise ex
-
-			version = yamlDocument.get("Version", None)
-			try:
-				formatVersion = FormatVersion.Parse(version)
-			except (TypeError, ValueError) as cause:
-				ex = ScoreboardError(
-					f"OSVVM scoreboard YAML file '{self._path}' states unsupported format version '{version}'."
-				)
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex from cause
-
-			if formatVersion is None:
-				ex = ScoreboardError(f"OSVVM scoreboard YAML file '{self._path}' states no format version.")
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex
-
-			self._yamlDocument = yamlDocument
+			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
 
+	def _AnalyzeYAML(self) -> None:
+		"""
+		Read the YAML file, read the format version it states and validate it against the version's JSON Schema.
+
+		YAML timestamps, which ruamel.yaml reads as :class:`~datetime.datetime`, are validated as ISO 8601 strings. A
+		violation of an alternative (``oneOf``, ``anyOf``) is reported by its most relevant cause.
+
+		:raises ScoreboardError: If the file doesn't exist.
+		:raises ScoreboardError: If the file can't be read.
+		:raises ScoreboardError: If the file isn't UTF-8 encoded.
+		:raises ScoreboardError: If the file isn't valid YAML.
+		:raises ScoreboardError: If the file's content isn't a YAML mapping.
+		:raises ScoreboardError: If the file states no format version. |br|
+		                           The note lists the supported format versions.
+		:raises ScoreboardError: If the file states an unsupported format version. |br|
+		                           The note lists the supported format versions.
+		:raises ScoreboardError: If the JSON Schema can't be read.
+		:raises ScoreboardError: If the file isn't valid according to the JSON Schema, e.g. has a key the format doesn't
+		                           define. |br|
+		                           A note per violation names its path and line.
+		"""
+		from jsonschema            import Draft202012Validator
+		from jsonschema.exceptions import best_match
+
+		def toJSON(node: Any) -> Any:
+			"""
+			Nested function for recursion, copying YAML data to JSON data: timestamps become ISO 8601 strings.
+
+			:param node: The YAML data.
+			:returns:    The JSON data.
+			"""
+			if isinstance(node, dict):
+				return {key: toJSON(value) for key, value in node.items()}
+			elif isinstance(node, list):
+				return [toJSON(value) for value in node]
+			elif isinstance(node, datetime):
+				return node.isoformat()
+
+			return node
+
+		def lineOf(path: Any) -> int:
+			"""
+			Nested function finding the line of a value in the YAML file.
+
+			:param path: The path of the value, as a sequence of keys and indices.
+			:returns:    The line of the value, or of the innermost mapping or sequence of its path, 1-based.
+			"""
+			node = yamlDocument
+			line = 1
+			for part in path:
+				if isinstance(node, CommentedMap) and part in node:
+					line = node.lc.key(part)[0] + 1
+				elif isinstance(node, CommentedSeq) and isinstance(part, int) and part < len(node):
+					line = node.lc.item(part)[0] + 1
+				else:
+					break
+
+				node = node[part]
+
+			return line
+
+		if not self._path.exists():
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' does not exist.") \
+				from FileNotFoundError(f"File '{self._path}' not found.")
+
+		try:
+			content = self._path.read_text(encoding="utf-8")
+		except OSError as ex:
+			raise self._ERROR(f"Couldn't read {self._DESCRIPTION} '{self._path}'.") from ex
+		except UnicodeDecodeError as ex:
+			raise self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not UTF-8 encoded.") from ex
+
+		try:
+			yamlDocument = YAML().load(content)
+		except YAMLError as ex:
+			raise self._ERROR(f"YAML syntax error in {self._DESCRIPTION} '{self._path}'.") from ex
+
+		if not isinstance(yamlDocument, CommentedMap):
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' is not a YAML mapping.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(yamlDocument)}'.")
+			raise ex
+
+		version = yamlDocument.get("Version", None)
+		try:
+			formatVersion = self._FORMAT_VERSION.Parse(version)
+		except (TypeError, ValueError) as cause:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states unsupported format version '{version}'.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex from cause
+
+		if formatVersion is None:
+			ex = self._ERROR(f"{self._DESCRIPTION} '{self._path}' states no format version.")
+			ex.add_note(f"Supported format versions: {', '.join(self._FORMAT_VERSION)}.")
+			raise ex
+
+		schemaFile = self._SCHEMAS[formatVersion]
+		try:
+			schema = loads(readResourceFile(Resources, schemaFile))
+		except (ToolingException, JSONDecodeError) as ex:
+			raise self._ERROR(f"Couldn't read JSON Schema '{schemaFile}' from package resources.") from ex
+
+		validator = Draft202012Validator(schema)
+		errors =    sorted(validator.iter_errors(toJSON(yamlDocument)), key=lambda error: list(error.absolute_path))
+		if len(errors) > 0:
+			ex = self._ERROR(f"Validation error for {self._DESCRIPTION} '{self._path}' using JSON Schema '{schemaFile}'.")
+			for error in errors:
+				error = best_match((error, ))
+				path = error.absolute_path
+				ex.add_note(f"/{'/'.join(str(part) for part in path)} (line {lineOf(path)}): {error.message}")
+			raise ex
+
+		self._yamlDocument = yamlDocument
+		self._version =      formatVersion
+
 	def Convert(self) -> None:
 		"""
-		Convert the YAML document to the scoreboard model: the test's name and the scoreboards.
+		Convert the validated YAML document to the scoreboard model: the test's name and the scoreboards.
 
-		A key the format doesn't define is reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning`.
-
-		:raises ScoreboardError:               If the YAML file was not analyzed before. |br|
-		                                       Call 'Document.Analyze()' or create the document using
-		                                       'Document(path, analyzeAndConvert=True)'.
-		:raises ScoreboardError:               If a mapping lacks a key the format requires. |br|
-		                                       The note names the YAML file.
-		:raises ScoreboardError:               If a value isn't of the type the format requires. |br|
-		                                       The note names the YAML file.
-		:raises UnhandledCriticalWarningError: If a mapping has an unknown key, and no warning collector collects the
-		                                       warning.
+		:raises ScoreboardError: If the YAML file was not analyzed before. |br|
+		                         Call 'Document.Analyze()' or create the document using
+		                         'Document(path, analyzeAndConvert=True)'.
 		"""
 		if self._yamlDocument is None:
 			ex = ScoreboardError(f"OSVVM scoreboard YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
@@ -572,40 +648,8 @@ class Document(metaclass=ExtendedType, slots=True):
 
 		root = self._yamlDocument
 		with Stopwatch() as sw:
-			try:
-				for key in root:
-					if key not in ("Version", "TestCase", "Scoreboards"):
-						keyLine = root.lc.key(key)[0] + 1
-						WarningCollector.Raise(
-							UnknownKeyWarning(f"Unknown key '{key}' in scoreboard root at line {keyLine}.", key=key, line=keyLine)
-						)
-
-				if "TestCase" not in root:
-					raise ScoreboardError("Scoreboard root has no key 'TestCase'.")
-				elif not isinstance(root["TestCase"], str):
-					ex = ScoreboardError("Key 'TestCase' of scoreboard root is not a string.")
-					ex.add_note(f"Got type '{getFullyQualifiedName(root['TestCase'])}'.")
-					raise ex
-
-				if "Scoreboards" not in root:
-					raise ScoreboardError("Scoreboard root has no key 'Scoreboards'.")
-				elif root["Scoreboards"] is not None and not isinstance(root["Scoreboards"], CommentedSeq):
-					ex = ScoreboardError("Key 'Scoreboards' of scoreboard root is not a sequence.")
-					ex.add_note(f"Got type '{getFullyQualifiedName(root['Scoreboards'])}'.")
-					raise ex
-
-				self._version =      FormatVersion.Parse(root["Version"])
-				self._testcaseName = root["TestCase"]
-
-				for entry in () if root["Scoreboards"] is None else root["Scoreboards"]:
-					if not isinstance(entry, CommentedMap):
-						ex = ScoreboardError("Entry of 'Scoreboards' is not a mapping.")
-						ex.add_note(f"Got type '{getFullyQualifiedName(entry)}'.")
-						raise ex
-
-					Scoreboard.Parse(entry, parent=self)
-			except ScoreboardError as ex:
-				ex.add_note(f"In OSVVM scoreboard YAML file '{self._path}'.")
-				raise
+			self._testcaseName = root["TestCase"]
+			for entry in () if root["Scoreboards"] is None else root["Scoreboards"]:
+				Scoreboard.Parse(entry, parent=self)
 
 		self._modelConversionDuration = sw.Duration

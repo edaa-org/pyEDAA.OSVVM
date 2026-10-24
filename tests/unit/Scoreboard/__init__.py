@@ -32,10 +32,10 @@
 from datetime                import timedelta
 from pathlib                 import Path
 
-from pyTooling.Warning       import UnhandledCriticalWarningError, WarningCollector
+from ruamel.yaml             import YAML
+
 from pyTooling.Testing       import Testcase
 
-from pyEDAA.OSVVM            import UnknownKeyWarning
 from pyEDAA.OSVVM.Scoreboard import Document, FormatVersion, Scoreboard, ScoreboardError
 
 if __name__ == "__main__": # pragma: no cover
@@ -195,24 +195,22 @@ class Parse(Testcase):
 		self.assertListEqual([], list(document.IterateScoreboards()))
 
 	def test_UnknownKeys(self) -> None:
-		with WarningCollector() as warnings:
-			document = Document(DATA / "TbUnknownKeys_sb_slv.yml", analyzeAndConvert=True)
+		path = DATA / "TbUnknownKeys_sb_slv.yml"
 
-		self.assertEqual(1, document.ScoreboardCount)
-		self.assertEqual(2, len(warnings))
-		for warning in warnings:
-			self.assertIsInstance(warning, UnknownKeyWarning)
+		with self.assertRaises(ScoreboardError) as context:
+			_ = Document(path, analyzeAndConvert=True)
 
-		self.assertListEqual(
-			[("Timestamp", 3), ("PeakFifoCount", 13)],
-			[(warning.Key, warning.Line) for warning in warnings]
+		self.assertEqual(
+			f"Validation error for OSVVM scoreboard YAML file '{path}' using JSON Schema 'OSVVM-Scoreboard-0.1.schema.json'.",
+			str(context.exception)
 		)
-
-	def test_UnknownKeys_NoCollector(self) -> None:
-		with self.assertRaises(UnhandledCriticalWarningError) as context:
-			_ = Document(DATA / "TbUnknownKeys_sb_slv.yml", analyzeAndConvert=True)
-
-		self.assertIsInstance(context.exception.__cause__, UnknownKeyWarning)
+		self.assertListEqual(
+			[
+				"/ (line 1): Additional properties are not allowed ('Timestamp' was unexpected)",
+				"/Scoreboards/0 (line 5): Additional properties are not allowed ('PeakFifoCount' was unexpected)"
+			],
+			context.exception.__notes__
+		)
 
 	def test_MissingKey(self) -> None:
 		path = DATA / "TbMissingKey_sb_slv.yml"
@@ -220,8 +218,23 @@ class Parse(Testcase):
 		with self.assertRaises(ScoreboardError) as context:
 			_ = Document(path, analyzeAndConvert=True)
 
+		self.assertListEqual(["/Scoreboards/0 (line 4): 'ItemsPopped' is a required property"], context.exception.__notes__)
+
+	def test_Parse_UnknownKey(self) -> None:
+		node = YAML().load(DATA.joinpath("TbUnknownKeys_sb_slv.yml").read_text())["Scoreboards"][0]
+
+		with self.assertRaises(ScoreboardError) as context:
+			_ = Scoreboard.Parse(node)
+
+		self.assertEqual("Scoreboard at line 5 has unknown key 'PeakFifoCount'.", str(context.exception))
+
+	def test_Parse_MissingKey(self) -> None:
+		node = YAML().load(DATA.joinpath("TbMissingKey_sb_slv.yml").read_text())["Scoreboards"][0]
+
+		with self.assertRaises(ScoreboardError) as context:
+			_ = Scoreboard.Parse(node)
+
 		self.assertEqual("Scoreboard at line 4 has no key 'ItemsPopped'.", str(context.exception))
-		self.assertListEqual([f"In OSVVM scoreboard YAML file '{path}'."], context.exception.__notes__)
 
 	def test_UnsupportedVersion(self) -> None:
 		path = DATA / "TbUnsupportedVersion_sb_slv.yml"

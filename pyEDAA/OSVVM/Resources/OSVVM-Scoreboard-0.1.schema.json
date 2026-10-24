@@ -1,0 +1,36 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-Scoreboard-0.1.schema.json",
+	"title": "OSVVM scoreboard, format version 0.1",
+	"description": "The file '<test>_sb_<name>.yml' an instance of OSVVM's ScoreboardGenericPkg writes by WriteScoreboardYaml, format version 0.1 (SCOREBOARD_YAML_VERSION). Derived from the writer 'osvvm/ScoreboardGenericPkg.vhd' and the reader 'Scripts/ReportScoreboard2Html.tcl'.",
+	"type": "object",
+	"required": ["Version", "TestCase", "Scoreboards"],
+	"properties": {
+		"Version":     {"description": "Version of the format.", "const": "0.1"},
+		"TestCase":    {"description": "Name of the test, without the values of its generics.", "type": "string"},
+		"Scoreboards": {
+			"description": "The scoreboards of the package instance, in index order; without value, if there are none.",
+			"type": ["array", "null"],
+			"items": {"$ref": "#/$defs/Scoreboard"}
+		}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"Scoreboard": {
+			"description": "The statistics of one scoreboard or FIFO.",
+			"type": "object",
+			"required": ["Name", "ParentName", "ItemCount", "ErrorCount", "ItemsChecked", "ItemsPopped", "ItemsDropped", "FifoCount"],
+			"properties": {
+				"Name":         {"description": "Name of the scoreboard's AlertLog ID.", "type": "string"},
+				"ParentName":   {"description": "Name of the AlertLog parent of the scoreboard's AlertLog ID.", "type": "string"},
+				"ItemCount":    {"description": "Number of items pushed.", "type": "integer"},
+				"ErrorCount":   {"description": "Number of failed checks.", "type": "integer"},
+				"ItemsChecked": {"description": "Number of items checked.", "type": "integer"},
+				"ItemsPopped":  {"description": "Number of items popped.", "type": "integer"},
+				"ItemsDropped": {"description": "Number of items dropped.", "type": "integer"},
+				"FifoCount":    {"description": "Number of items left.", "type": "integer"}
+			},
+			"additionalProperties": false
+		}
+	}
+}

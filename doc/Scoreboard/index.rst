@@ -12,7 +12,8 @@ Scoreboard Report
 
 * Read OSVVM's scoreboard YAML files (:file:`<test>_sb_<name>.yml`), as written by ``WriteScoreboardYaml`` of OSVVM's
   ``ScoreboardGenericPkg``.
-* Report keys the format doesn't define as warnings.
+* Validate a file against the JSON Schema of the format version it states; a key the format doesn't define is a
+  validation error.
 
 
 
@@ -29,8 +30,8 @@ Quick Start
       The following example code opens an OSVVM scoreboard report in YAML format, analyzes the data structure and
       converts the content to a list of scoreboards. Then it prints the scoreboards, which had failed checks.
 
-      Keys of the YAML file, which the format doesn't define, are reported as :exc:`~pyEDAA.OSVVM.UnknownKeyWarning` to
-      a :class:`~pyTooling.Warning.WarningCollector`.
+      Analyzing the file validates it against the JSON Schema of its format version: a key the format doesn't define
+      raises :exc:`~pyEDAA.OSVVM.Scoreboard.ScoreboardError`, with a note per violation.
 
    .. grid-item::
       :columns: 6
@@ -42,12 +43,10 @@ Quick Start
             .. code-block:: Python
 
                from pathlib import Path
-               from pyTooling.Warning import WarningCollector
                from pyEDAA.OSVVM.Scoreboard import Document
 
                path = Path("TbAxi4_TimeOut_sb_slv.yml")
-               with WarningCollector() as warnings:
-                 doc = Document(path, analyzeAndConvert=True)
+               doc = Document(path, analyzeAndConvert=True)
 
                print(f"{doc.TestcaseName} - {doc.Name}: {doc.ScoreboardCount} scoreboards")
                for sb in doc.IterateScoreboards(lambda sb: sb.ErrorCount > 0):
@@ -93,6 +92,10 @@ Scoreboard Document
       :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Convert` methods can be used to start these steps. The spent time is
       captured and can be accessed via :data:`~pyEDAA.OSVVM.Scoreboard.Document.AnalysisDuration` and
       :data:`~pyEDAA.OSVVM.Scoreboard.Document.ModelConversionDuration`.
+
+      :meth:`~pyEDAA.OSVVM.Scoreboard.Document.Analyze` validates the file against the JSON Schema of the format
+      version it states (:data:`~pyEDAA.OSVVM.Scoreboard.SCHEMAS`), a file of the resource package
+      :mod:`pyEDAA.OSVVM.Resources`.
 
    .. grid-item::
       :columns: 6

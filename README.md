@@ -127,12 +127,10 @@ print(f"Total errors: {doc.TotalErrorCount}")
 
 ```python
 from pathlib import Path
-from pyTooling.Warning import WarningCollector
 from pyEDAA.OSVVM.Scoreboard import Document as ScoreboardDocument
 
 path = Path("TbAxi4_TimeOut_sb_slv.yml")
-with WarningCollector() as warnings:
-	doc = ScoreboardDocument(path, analyzeAndConvert=True)
+doc = ScoreboardDocument(path, analyzeAndConvert=True)
 
 print(f"{doc.TestcaseName} - {doc.Name}: {doc.ScoreboardCount} scoreboards")
 for sb in doc.IterateScoreboards(lambda sb: sb.ErrorCount > 0):
