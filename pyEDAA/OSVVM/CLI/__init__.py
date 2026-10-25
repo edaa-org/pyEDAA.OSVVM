@@ -66,7 +66,7 @@ from pyEDAA.OSVVM.CLI.Project                 import ProjectHandlers
 class Application(TerminalApplication, ProjectHandlers, ArgParseHelperMixin):
 	"""Program class to implement the command line interface (CLI) using commands and options."""
 
-	HeadLine: ClassVar[str] = "OSVVM Service Program"  #: Headline of the application, printed by :meth:`_PrintHeadline`.
+	HEADLINE: ClassVar[str] = "OSVVM Service Program"  #: Headline of the application, printed by :meth:`_PrintHeadline`.
 
 	def __init__(self) -> None:
 		super().__init__()
