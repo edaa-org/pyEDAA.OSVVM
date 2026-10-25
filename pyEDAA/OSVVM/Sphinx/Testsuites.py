@@ -41,11 +41,10 @@ from docutils.parsers.rst.directives   import flag
 from sphinx.config                     import Config
 from sphinx.application                import Sphinx
 from pyTooling.Decorators              import export
-from sphinx_reports                    import Landscape
+from pyTooling.Sphinx                  import BaseDirective, ReportExtensionError, strip, stripAndNormalize
+from pyTooling.Sphinx.Node             import Landscape
 
 from pyEDAA.Reports.Unittesting        import TestcaseStatus, TestsuiteStatus
-from sphinx_reports.Common             import ReportExtensionError
-from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
 
 from pyEDAA.OSVVM.Build                import BuildSummaryDocument, TestsuiteSummary, Testsuite, Testcase
 

@@ -54,8 +54,7 @@ from sphinx.environment    import BuildEnvironment
 from sphinx.util.logging   import getLogger
 from pyTooling.Decorators  import export
 from pyTooling.Common      import readResourceFile
-
-from sphinx_reports.Common import ReportExtensionError
+from pyTooling.Sphinx      import ReportExtensionError
 
 from pyEDAA.OSVVM          import __version__
 from pyEDAA.OSVVM          import static as ResourcePackage
