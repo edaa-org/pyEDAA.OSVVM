@@ -66,12 +66,10 @@ from pyEDAA.OSVVM.CLI.Project                 import ProjectHandlers
 class Application(TerminalApplication, ProjectHandlers, ArgParseHelperMixin):
 	"""Program class to implement the command line interface (CLI) using commands and options."""
 
-	programTitle: ClassVar[str] = "OSVVM Service Program"
+	HeadLine: ClassVar[str] = "OSVVM Service Program"  #: Headline of the application, printed by :meth:`_PrintHeadline`.
 
 	def __init__(self) -> None:
 		super().__init__()
-
-		self.HeadLine = self.programTitle  # TODO: needs improvement
 
 		# Call the constructor of the ArgParseMixin
 		textWidth = min(self.Width, 160)
