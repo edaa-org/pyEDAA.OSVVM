@@ -60,6 +60,25 @@ PyPI (see :ref:`INSTALL`).
 |                                                                                       |             |                                                                                                          | * `lxml <https://GitHub.com/lxml/lxml>`__ (`BSD 3-Clause <https://GitHub.com/lxml/lxml/blob/master/LICENSE.txt>`__)                                         |
 |                                                                                       |             |                                                                                                          | * `jsonschema <https://GitHub.com/python-jsonschema/jsonschema>`__ (`MIT <https://GitHub.com/python-jsonschema/jsonschema/blob/main/COPYING>`__)            |
 +---------------------------------------------------------------------------------------+-------------+----------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+.. _DEP/sphinx:
+
+Sphinx Extension (Optional)
+***************************
+
+The Sphinx extension :mod:`pyEDAA.OSVVM.Sphinx` renders OSVVM's reports in a Sphinx documentation. Its requirements
+are the package's extra ``sphinx``:
+
+.. code-block:: bash
+
+   pip3 install -U "pyEDAA.OSVVM[sphinx]"
+
+.. rubric:: Dependency List
+
++---------------------------------------------------------------------------------------+-------------+----------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Package**                                                                           | **Version** | **License**                                                                                              | **Dependencies**                                                                                                                                            |
++=======================================================================================+=============+==========================================================================================================+=============================================================================================================================================================+
 | `pyTooling.Sphinx <https://GitHub.com/pyTooling/pyTooling.Sphinx>`__                  | ≥0.1        | `Apache License, 2.0 <https://GitHub.com/pyTooling/pyTooling.Sphinx/blob/main/LICENSE.md>`__             | * `pyTooling <https://GitHub.com/pyTooling/pyTooling>`__ (`Apache License, 2.0 <https://GitHub.com/pyTooling/pyTooling/blob/main/LICENSE.md>`__)            |
 |                                                                                       |             |                                                                                                          | * `Sphinx <https://GitHub.com/sphinx-doc/sphinx>`__ (`BSD 3-Clause <https://GitHub.com/sphinx-doc/sphinx/blob/master/LICENSE.rst>`__)                       |
 |                                                                                       |             |                                                                                                          | * `xmlschema <https://GitHub.com/sissaschool/xmlschema>`__ (`MIT <https://GitHub.com/sissaschool/xmlschema/blob/master/LICENSE>`__)                         |
