@@ -474,7 +474,7 @@ class Document(AlertLogItem, Settings):
 			except Exception as ex:
 				raise AlertLogException(f"Couldn't open '{self._path}'.") from ex
 
-		self._analysisDuration = timedelta(seconds=sw.Duration)
+		self._analysisDuration = sw.Duration
 
 	def Parse(self) -> None:
 		"""
@@ -499,7 +499,7 @@ class Document(AlertLogItem, Settings):
 			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
 				_ = self._ParseAlertLogItem(child, self)
 
-		self._modelConversionDuration = timedelta(seconds=sw.Duration)
+		self._modelConversionDuration = sw.Duration
 
 	@staticmethod
 	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:

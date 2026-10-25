@@ -39,12 +39,17 @@ packageName =            "pyEDAA.OSVVM"
 packageDirectory =       packageName.replace(".", "/")
 packageInformationFile = Path(f"{packageDirectory}/__init__.py")
 
+additionalRequirements = {
+	"sphinx": ["pyTooling.Sphinx[reports] ~= 0.1.0rc6"],
+}
+
 setup(
 	**DescribePythonPackageHostedOnGitHub(
 		packageName=packageName,
 		description="Parser and converters for OSVVM-specific data models and report formats.",
 		gitHubNamespace=gitHubNamespace,
 		sourceFileWithVersion=packageInformationFile,
+		additionalRequirements=additionalRequirements,
 		classifiers=list(DEFAULT_CLASSIFIERS) + [
 			"Framework :: Sphinx :: Domain",
 			"Framework :: Sphinx :: Extension",

@@ -13,5 +13,7 @@ sphinxcontrib-mermaid ~= 2.1
 autoapi >= 2.0.1
 sphinx_design ~= 0.7.0
 sphinx-copybutton >= 0.5.2
-sphinx_autodoc_typehints ~= 3.12
-sphinx_reports ~= 0.11.1
+sphinx_autodoc_typehints ~= 3.17
+
+# The package's extra 'sphinx': pyTooling.Sphinx with its domain 'report'
+pyTooling.Sphinx[reports] ~= 0.1.0rc6

@@ -147,9 +147,9 @@ def main() -> NoReturn:
 	try:
 		program.Run()
 	except OSVVMException as ex:
-		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.Foreground))
+		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.FOREGROUND))
 		while (ex := ex.__cause__) is not None:
-			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
+			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.FOREGROUND))
 
 	except ExceptionBase as ex:
 		program.printExceptionBase(ex)

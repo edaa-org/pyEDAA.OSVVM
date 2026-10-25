@@ -40,7 +40,8 @@ from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 
-from pyEDAA.Reports.Unittesting import UnittestException, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, TestsuiteKind
+from pyEDAA.Reports.Unittesting import UnittestError, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
+                                       TestsuiteKind
 from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
 from pyEDAA.Reports.Unittesting import Testcase as ut_Testcase
 
@@ -51,16 +52,14 @@ class OsvvmException:
 
 
 @export
-@InheritDocString(UnittestException)
-class UnittestException(UnittestException, OsvvmException):
-	"""@InheritDocString(UnittestException)"""
+@InheritDocString(UnittestError)
+class UnittestException(UnittestError, OsvvmException):
+	pass
 
 
 @export
 @InheritDocString(ut_Testcase)
 class Testcase(ut_Testcase):
-	"""@InheritDocString(ut_Testcase)"""
-
 	_disabledWarningCount: int
 	_disabledErrorCount:   int
 	_disabledFatalCount:   int
@@ -96,6 +95,7 @@ class Testcase(ut_Testcase):
 		expectedErrorCount: int = 0,
 		expectedFatalCount: int = 0,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		*,
 		parent: Nullable["Testsuite"] = None
 	) -> None:
 		"""
@@ -130,13 +130,23 @@ class Testcase(ut_Testcase):
 		"""
 		super().__init__(
 			name,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			assertionCount, failedAssertionCount, passedAssertionCount,
-			warningCount, errorCount, fatalCount,
-			expectedWarningCount, expectedErrorCount, expectedFatalCount,
-			keyValuePairs,
-			parent
+			startTime=startTime,
+			setupDuration=setupDuration,
+			testDuration=testDuration,
+			teardownDuration=teardownDuration,
+			totalDuration=totalDuration,
+			status=status,
+			assertionCount=assertionCount,
+			failedAssertionCount=failedAssertionCount,
+			passedAssertionCount=passedAssertionCount,
+			warningCount=warningCount,
+			errorCount=errorCount,
+			fatalCount=fatalCount,
+			expectedWarningCount=expectedWarningCount,
+			expectedErrorCount=expectedErrorCount,
+			expectedFatalCount=expectedFatalCount,
+			keyValuePairs=keyValuePairs,
+			parent=parent
 		)
 
 		if not isinstance(disabledWarningCount, int):
@@ -278,7 +288,7 @@ class Testcase(ut_Testcase):
 @export
 @InheritDocString(ut_Testsuite)
 class Testsuite(ut_Testsuite):
-	"""@InheritDocString(ut_Testsuite)"""
+	pass
 
 
 @export
@@ -315,8 +325,6 @@ class Settings(metaclass=ExtendedType, slots=True):
 @export
 @InheritDocString(ut_TestsuiteSummary)
 class TestsuiteSummary(ut_TestsuiteSummary):
-	"""@InheritDocString(ut_TestsuiteSummary)"""
-
 	_datetime: datetime
 
 	def __init__(
@@ -333,6 +341,7 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		fatalCount: int = 0,
 		testsuites: Nullable[Iterable[TestsuiteType]] = None,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		*,
 		parent: Nullable[TestsuiteType] = None
 	) -> None:
 		"""
@@ -354,12 +363,18 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		"""
 		super().__init__(
 			name,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			warningCount, errorCount, fatalCount,
-			testsuites,
-			keyValuePairs,
-			parent
+			startTime=startTime,
+			setupDuration=setupDuration,
+			testDuration=testDuration,
+			teardownDuration=teardownDuration,
+			totalDuration=totalDuration,
+			status=status,
+			warningCount=warningCount,
+			errorCount=errorCount,
+			fatalCount=fatalCount,
+			testsuites=testsuites,
+			keyValuePairs=keyValuePairs,
+			parent=parent
 		)
 
 
