@@ -72,6 +72,9 @@ class Testcase(ut_Testcase):
 	def __init__(
 		self,
 		name: str,
+		title: Nullable[str] = None,
+		summary: Nullable[str] = None,
+		description: Nullable[str] = None,
 		startTime: Nullable[datetime] = None,
 		setupDuration: Nullable[timedelta] = None,
 		testDuration: Nullable[timedelta] = None,
@@ -102,6 +105,9 @@ class Testcase(ut_Testcase):
 		Initializes the fields of a test case.
 
 		:param name:                    Name of the test entity.
+		:param title:                   Optional, short label of the test case, written for a reader.
+		:param summary:                 Optional, summary of the test case.
+		:param description:             Optional, description of the test case.
 		:param startTime:               Time when the test entity was started.
 		:param setupDuration:           Duration it took to set up the entity.
 		:param testDuration:            Duration of the entity's test run.
@@ -130,22 +136,13 @@ class Testcase(ut_Testcase):
 		"""
 		super().__init__(
 			name,
-			startTime=startTime,
-			setupDuration=setupDuration,
-			testDuration=testDuration,
-			teardownDuration=teardownDuration,
-			totalDuration=totalDuration,
-			status=status,
-			assertionCount=assertionCount,
-			failedAssertionCount=failedAssertionCount,
-			passedAssertionCount=passedAssertionCount,
-			warningCount=warningCount,
-			errorCount=errorCount,
-			fatalCount=fatalCount,
-			expectedWarningCount=expectedWarningCount,
-			expectedErrorCount=expectedErrorCount,
-			expectedFatalCount=expectedFatalCount,
-			keyValuePairs=keyValuePairs,
+			title, summary, description,
+			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
+			status,
+			assertionCount, failedAssertionCount, passedAssertionCount,
+			warningCount, errorCount, fatalCount,
+			expectedWarningCount, expectedErrorCount, expectedFatalCount,
+			keyValuePairs,
 			parent=parent
 		)
 
@@ -330,6 +327,9 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 	def __init__(
 		self,
 		name: str,
+		title: Nullable[str] = None,
+		summary: Nullable[str] = None,
+		description: Nullable[str] = None,
 		startTime: Nullable[datetime] = None,
 		setupDuration: Nullable[timedelta] = None,
 		testDuration: Nullable[timedelta] = None,
@@ -348,6 +348,9 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		Initializes the fields of a test summary.
 
 		:param name:               Name of the test summary.
+		:param title:              Optional, short label of the test summary, written for a reader.
+		:param summary:            Optional, summary of the test summary.
+		:param description:        Optional, description of the test summary.
 		:param startTime:          Time when the test summary was started.
 		:param setupDuration:      Duration it took to set up the test summary.
 		:param testDuration:       Duration of all tests listed in the test summary.
@@ -363,17 +366,12 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		"""
 		super().__init__(
 			name,
-			startTime=startTime,
-			setupDuration=setupDuration,
-			testDuration=testDuration,
-			teardownDuration=teardownDuration,
-			totalDuration=totalDuration,
-			status=status,
-			warningCount=warningCount,
-			errorCount=errorCount,
-			fatalCount=fatalCount,
-			testsuites=testsuites,
-			keyValuePairs=keyValuePairs,
+			title, summary, description,
+			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
+			status,
+			warningCount, errorCount, fatalCount,
+			testsuites,
+			keyValuePairs,
 			parent=parent
 		)
 
