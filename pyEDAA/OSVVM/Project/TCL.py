@@ -129,7 +129,7 @@ class TclEnvironment(metaclass=ExtendedType, slots=True):
 			self._tcl.eval(tclCode)
 		except TclError as e:
 			e = getException(e, self._context)
-			ex = OSVVMException(f"Caught TclError while evaluating TCL code.")
+			ex = OSVVMException("Caught TclError while evaluating TCL code.")
 			ex.add_note(tclCode)
 			raise ex from e
 
@@ -500,7 +500,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 		try:
 			self._tcl.eval(code)
 		except TclError as ex:
-			raise OSVVMException(f"TCL error occurred, when initializing OSVVM variables.") from ex
+			raise OSVVMException("TCL error occurred, when initializing OSVVM variables.") from ex
 
 	def OverwriteTclProcedures(self) -> None:
 		"""
