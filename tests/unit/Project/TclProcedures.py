@@ -32,10 +32,10 @@
 from pathlib  import Path
 from textwrap import dedent
 from tkinter  import TclError
-from unittest import TestCase as TestCase
 
-from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
-from pyVHDLModel      import VHDLVersion
+from pyTooling.Common  import firstPair, firstValue, firstItem, firstElement
+from pyTooling.Testing import Testcase
+from pyVHDLModel       import VHDLVersion
 
 from pyEDAA.OSVVM.Project     import Context, osvvmContext
 from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor, getException
@@ -68,7 +68,7 @@ def throw():
 	raise ex
 
 
-class BasicProcedures(TestCase):
+class BasicProcedures(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -566,7 +566,7 @@ class BasicProcedures(TestCase):
 			self.assertEqual(f"value{i}", value)
 
 
-class SetterGatter(TestCase):
+class SetterGatter(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -637,7 +637,7 @@ class SetterGatter(TestCase):
 			self.assertEqual(version, processor[f"vhdlVersion_{version}"])
 
 
-class Helper(TestCase):
+class Helper(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -687,7 +687,7 @@ class Helper(TestCase):
 		self.assertEqual(0, processor["missing"])
 
 
-class NoOperation(TestCase):
+class NoOperation(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 

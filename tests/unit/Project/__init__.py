@@ -30,9 +30,9 @@
 #
 """Tests for the OSVVM's project descriptions in ``*.pro`` files."""
 from pathlib              import Path
-from unittest             import TestCase as TestCase
 
 from pyTooling.Common     import firstPair
+from pyTooling.Testing    import Testcase as py_Testcase
 from pyVHDLModel          import VHDLVersion
 
 from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary
@@ -46,7 +46,7 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiation(TestCase):
+class Instantiation(py_Testcase):
 	def test_VHDLSourceFile(self) -> None:
 		path = Path("source.vhdl")
 		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008)
@@ -362,7 +362,7 @@ class Instantiation(TestCase):
 		self.assertEqual(0, len(context.Testsuites))
 
 
-class Operations(TestCase):
+class Operations(py_Testcase):
 	def test_Testsuite_AddTestcase(self) -> None:
 		tc = Testcase("tc")
 		ts = Testsuite("ts")
