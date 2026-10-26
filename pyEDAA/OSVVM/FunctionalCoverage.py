@@ -675,8 +675,10 @@ class CoverageModel(Element["Report"]):
 		:param parent:      Optional, the report containing the model. Default: ``None``.
 		:raises TypeError:  If parameter ``parent`` isn't of type :class:`Report`.
 		:raises TypeError:  If parameter ``name`` isn't of type :class:`str`.
-		:raises TypeError:  If parameter ``testcases`` or ``fieldNames`` isn't iterable, or contains an element not of
-		                    type :class:`str`.
+		:raises TypeError:  If parameter ``testcases`` isn't iterable.
+		:raises TypeError:  If an element of parameter ``testcases`` isn't of type :class:`str`.
+		:raises TypeError:  If parameter ``fieldNames`` isn't iterable.
+		:raises TypeError:  If an element of parameter ``fieldNames`` isn't of type :class:`str`.
 		:raises TypeError:  If parameter ``coverage`` isn't of type :class:`float`.
 		:raises TypeError:  If parameter ``settings`` isn't of type :class:`ModelSettings`.
 		:raises ValueError: If parameter ``fieldNames`` is empty.
