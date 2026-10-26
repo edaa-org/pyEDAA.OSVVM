@@ -1,0 +1,47 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-TestcaseSettings-0.1.schema.json",
+	"title": "OSVVM test case settings, format version 0.1",
+	"description": "The test case settings '<TestCaseFileName>_run.yml' OSVVM writes after a test case's simulation. Derived from OSVVM's writer 'WriteTestCaseSettingsYaml' in 'OsvvmScriptsCreateYamlReports.tcl' and reader 'ReportSimulate2Html.tcl'. Paths are relative to the build's directory, 'TestCaseFile' to 'ReportsTestSuiteDirectory'; an empty string means OSVVM wrote no such file.",
+	"type": "object",
+	"required": ["Version", "TestCaseName", "TestCaseFile", "TestSuiteName", "BuildName", "Generics", "ReportsTestSuiteDirectory", "RequirementsYamlFile", "AlertYamlFile", "CovYamlFile", "ScoreboardDict", "TranscriptFiles", "TestCaseFileName", "GenericNames", "OsvvmSettingsInfo"],
+	"properties": {
+		"Version":                   {"description": "Version of the format.", "const": "0.1"},
+		"TestCaseName":              {"description": "Name of the test.", "type": "string", "minLength": 1},
+		"TestCaseFile":              {"description": "VHDL source file of the test case: the last file analyzed before the simulation.", "type": "string"},
+		"TestSuiteName":             {"type": "string", "minLength": 1},
+		"BuildName":                 {"type": "string", "minLength": 1},
+		"Generics":                  {"type": ["object", "null"], "additionalProperties": {"type": "string"}},
+		"ReportsTestSuiteDirectory": {"type": "string"},
+		"RequirementsYamlFile":      {"type": "string"},
+		"AlertYamlFile":             {"type": "string"},
+		"CovYamlFile":               {"type": "string"},
+		"ScoreboardDict": {
+			"description": "Scoreboard report per scoreboard package instance.",
+			"type": ["object", "null"],
+			"additionalProperties": {"type": "string"}
+		},
+		"TranscriptFiles":           {"description": "Transcripts of the test case, as a Tcl list.", "type": "string"},
+		"TestCaseFileName":          {"description": "Base name of the test case's report files.", "type": "string", "minLength": 1},
+		"GenericNames":              {"description": "The generics' names and values, as appended to the test's name.", "type": "string"},
+		"OsvvmSettingsInfo":         {"$ref": "#/$defs/OsvvmSettingsInfo"}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"OsvvmSettingsInfo": {
+			"description": "OSVVM's settings: where it put the build's reports and logs. An empty string means OSVVM wrote no such file.",
+			"type": "object",
+			"required": ["ReportsSubdirectory", "SimulationLogFile", "SimulationHtmlLogFile", "RequirementsSubdirectory", "CoverageSubdirectory", "Report2CssFiles", "Report2PngFile"],
+			"properties": {
+				"ReportsSubdirectory":      {"type": "string"},
+				"SimulationLogFile":        {"type": "string"},
+				"SimulationHtmlLogFile":    {"type": "string"},
+				"RequirementsSubdirectory": {"type": "string"},
+				"CoverageSubdirectory":     {"description": "The build's code coverage report file.", "type": "string"},
+				"Report2CssFiles":          {"oneOf": [{"type": "array", "items": {"type": "string"}}, {"const": ""}]},
+				"Report2PngFile":           {"type": "string"}
+			},
+			"additionalProperties": false
+		}
+	}
+}

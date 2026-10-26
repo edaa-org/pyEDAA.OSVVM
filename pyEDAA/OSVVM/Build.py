@@ -55,7 +55,8 @@ from __future__                 import annotations
 from datetime                   import datetime, timedelta
 from pathlib                    import Path
 from re                         import fullmatch
-from typing                     import Any, ClassVar, Iterable, Mapping, Optional as Nullable
+from typing                     import TYPE_CHECKING, Any, ClassVar, Generic, Iterable, Mapping, Optional as Nullable
+from typing                     import TypeVar
 
 from ruamel.yaml                import CommentedMap
 from pyTooling.Common           import getFullyQualifiedName, StringEnum
@@ -63,6 +64,7 @@ from pyTooling.Decorators       import export, readonly
 from pyTooling.MetaClasses      import ExtendedType
 from pyTooling.Stopwatch        import Stopwatch
 from pyTooling.Versioning       import YearMonthVersion
+from pyTooling.Warning          import CriticalWarning, WarningCollector
 
 from pyEDAA.Reports.Unittesting import UnittestError, TestcaseStatus, TestsuiteStatus, TestcaseAggregateReturnType
 from pyEDAA.Reports.Unittesting import DuplicateTestsuiteError as ut_DuplicateTestsuiteError
@@ -72,12 +74,17 @@ from pyEDAA.Reports.Unittesting import Testsuite as ut_Testsuite, Testcase as ut
 
 from pyEDAA.OSVVM               import OSVVMException, YAMLDocumentMixin
 
+if TYPE_CHECKING:
+	from pyEDAA.OSVVM.TestcaseSettings import TestcaseSettings, TestcaseSettingsDocument
 
-__all__ = ["SCHEMAS"]
+
+__all__ = ["SCHEMAS", "ParentType"]
 
 # A class with a property named like a class - ``Path`` - can't name that class in the annotation of a field: the class
 # body's namespace, where annotations are evaluated, binds the name to the property.
 _Path = Path
+
+ParentType = TypeVar("ParentType", bound="TestsuiteSummary | TestcaseSettings")  #: What :class:`Settings` belong to.
 
 
 @export
@@ -105,6 +112,42 @@ class DuplicateTestcaseError(BuildSummaryError, ut_DuplicateTestcaseError):
 	A test case is identified by its report files' base name (``TestCaseFileName``). OSVVM overwrites the reports of a
 	test simulated twice with the same generics in one test suite.
 	"""
+
+
+@export
+class TestcaseSettingsWarning(CriticalWarning):
+	"""
+	A test case of a build summary, which ran, has no test case settings file :file:`<TestCaseFileName>_run.yml`.
+
+	:meth:`BuildSummaryDocument.ReadTestcaseSettings` continues with the next test case; the test case has no settings.
+
+	.. important::
+
+	   This warning is critical: it must be collected by a :class:`~pyTooling.Warning.WarningCollector` up the
+	   call-hierarchy, otherwise :meth:`~pyTooling.Warning.WarningCollector.Raise` raises an
+	   :exc:`~pyTooling.Warning.UnhandledCriticalWarningError`.
+	"""
+
+	_testcase: Testcase  #: The test case without settings.
+
+	def __init__(self, message: str, /, *, testcase: Testcase) -> None:
+		"""
+		Initializes the warning with the test case without settings.
+
+		:param message:  The warning's message.
+		:param testcase: The test case without settings.
+		"""
+		super().__init__(message)
+		self._testcase = testcase
+
+	@readonly
+	def Testcase(self) -> Testcase:
+		"""
+		Read-only property to access the test case without settings (:attr:`_testcase`).
+
+		:returns: The test case.
+		"""
+		return self._testcase
 
 
 @export
@@ -341,23 +384,24 @@ class Testcase(ut_Testcase):
 		"hr":  3_600_000_000_000_000_000,
 	}  #: Femtoseconds per unit of VHDL's type ``time``.
 
-	_vhdlName:                Nullable[str]               #: Name of the test case, as its VHDL code states it.
-	_testName:                Nullable[str]               #: Name of the test, without the generics' values.
-	_osvvmStatus:             Nullable[_OSVVMStatus]      #: Status of the test case, as OSVVM states it.
-	_totalErrorCount:         Nullable[int]               #: Total number of errors, as OSVVM counted them.
-	_disabledWarningCount:    int                         #: Number of disabled warnings.
-	_disabledErrorCount:      int                         #: Number of disabled errors.
-	_disabledFatalCount:      int                         #: Number of disabled failures.
-	_requirementsGoalCount:   int                         #: Number of passed checks the requirements need.
-	_passedRequirementsCount: int                         #: Number of passed requirement checks.
-	_functionalCoverage:      Nullable[float]             #: Functional coverage in range 0.0..1.0.
-	_simulationTime:          Nullable[int]               #: Simulated time in femtoseconds.
-	_generics:                dict[str, str]              #: Generics the test case was simulated with.
-	_externalWarningCount:    int                         #: Number of external warnings.
-	_externalErrorCount:      int                         #: Number of external errors.
-	_externalFatalCount:      int                         #: Number of external failures.
-	_expectedResults:         Nullable[_ExpectedResults]  #: Results the test case is expected to have.
-	_knownStatus:             Nullable[_OSVVMStatus]      #: Status the test case is known to have.
+	_vhdlName:                Nullable[str]                       #: Name of the test case, as its VHDL code states it.
+	_testName:                Nullable[str]                       #: Name of the test, without the generics' values.
+	_osvvmStatus:             Nullable[_OSVVMStatus]              #: Status of the test case, as OSVVM states it.
+	_totalErrorCount:         Nullable[int]                       #: Total number of errors, as OSVVM counted them.
+	_disabledWarningCount:    int                                 #: Number of disabled warnings.
+	_disabledErrorCount:      int                                 #: Number of disabled errors.
+	_disabledFatalCount:      int                                 #: Number of disabled failures.
+	_requirementsGoalCount:   int                                 #: Number of passed checks the requirements need.
+	_passedRequirementsCount: int                                 #: Number of passed requirement checks.
+	_functionalCoverage:      Nullable[float]                     #: Functional coverage in range 0.0..1.0.
+	_simulationTime:          Nullable[int]                       #: Simulated time in femtoseconds.
+	_generics:                dict[str, str]                      #: Generics the test case was simulated with.
+	_externalWarningCount:    int                                 #: Number of external warnings.
+	_externalErrorCount:      int                                 #: Number of external errors.
+	_externalFatalCount:      int                                 #: Number of external failures.
+	_expectedResults:         Nullable[_ExpectedResults]          #: Results the test case is expected to have.
+	_knownStatus:             Nullable[_OSVVMStatus]              #: Status the test case is known to have.
+	_testcaseSettings:        Nullable[TestcaseSettingsDocument]  #: Settings of the test case, from its ``_run.yml``.
 
 	def __init__(
 		self,
@@ -546,6 +590,7 @@ class Testcase(ut_Testcase):
 		self._externalFatalCount =      externalFatalCount
 		self._expectedResults =         expectedResults
 		self._knownStatus =             knownStatus
+		self._testcaseSettings =        None
 
 	@readonly
 	def TestName(self) -> Nullable[str]:
@@ -709,6 +754,18 @@ class Testcase(ut_Testcase):
 		:returns: The known status, or ``None`` if none is stated.
 		"""
 		return self._knownStatus
+
+	@readonly
+	def TestcaseSettings(self) -> Nullable[TestcaseSettingsDocument]:
+		"""
+		Read-only property to access the test case's settings (:attr:`_testcaseSettings`).
+
+		The settings link to the test case's other report files: its AlertLog, functional coverage, scoreboard and
+		requirements reports, its transcripts and its VHDL source file.
+
+		:returns: The settings, or ``None`` if :meth:`BuildSummaryDocument.ReadTestcaseSettings` didn't read them.
+		"""
+		return self._testcaseSettings
 
 	@classmethod
 	def Parse(cls, node: CommentedMap, *, parent: Nullable[Testsuite] = None) -> Testcase:
@@ -1194,15 +1251,16 @@ class BuildInformation(metaclass=ExtendedType, slots=True):
 
 
 @export
-class Settings(metaclass=ExtendedType, slots=True):
+class Settings(Generic[ParentType], metaclass=ExtendedType, slots=True):
 	"""
 	OSVVM's settings of a build (``OsvvmSettingsInfo``): where OSVVM put the build's reports and logs.
 
 	Paths are relative to the build's directory. OSVVM writes an empty string for a file it didn't write; it is ``None``
-	here.
+	here. The build summary and each test case's settings file state them: they belong to a :class:`TestsuiteSummary` or
+	a :class:`~pyEDAA.OSVVM.TestcaseSettings.TestcaseSettings`.
 	"""
 
-	_parent:                   Nullable[TestsuiteSummary]  #: The build the settings belong to.
+	_parent:                   Nullable[ParentType]        #: The build or test case settings the settings belong to.
 	_reportsSubdirectory:      _Path                       #: Directory of the reports.
 	_simulationLogFile:        Nullable[_Path]             #: Log file of the build.
 	_simulationHtmlLogFile:    Nullable[_Path]             #: Log file of the build in HTML.
@@ -1221,10 +1279,10 @@ class Settings(metaclass=ExtendedType, slots=True):
 		cssFiles: Nullable[Iterable[Path]] = None,
 		logoFile: Nullable[Path] = None,
 		*,
-		parent: Nullable[TestsuiteSummary] = None
+		parent: Nullable[ParentType] = None
 	) -> None:
 		"""
-		Initializes OSVVM's settings of a build, and adds them to their build.
+		Initializes OSVVM's settings of a build, and adds them to their build or test case settings.
 
 		:param reportsSubdirectory:      Directory of the reports (``ReportsSubdirectory``).
 		:param simulationLogFile:        Optional, log file of the build (``SimulationLogFile``).
@@ -1233,7 +1291,7 @@ class Settings(metaclass=ExtendedType, slots=True):
 		:param codeCoverageFile:         Optional, code coverage report of the build (``CoverageSubdirectory``).
 		:param cssFiles:                 Optional, stylesheets of the HTML reports (``Report2CssFiles``).
 		:param logoFile:                 Optional, logo of the HTML reports (``Report2PngFile``).
-		:param parent:                   Optional, the build the settings belong to.
+		:param parent:                   Optional, the build or test case settings the settings belong to.
 		:raises ValueError:              If parameter 'reportsSubdirectory' is None.
 		:raises TypeError:               If parameter 'reportsSubdirectory' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:               If parameter 'simulationLogFile' is not of type :class:`~pathlib.Path`.
@@ -1243,7 +1301,8 @@ class Settings(metaclass=ExtendedType, slots=True):
 		:raises TypeError:               If parameter 'logoFile' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:               If parameter 'cssFiles' is not iterable.
 		:raises TypeError:               If an element of parameter 'cssFiles' is not of type :class:`~pathlib.Path`.
-		:raises TypeError:               If parameter 'parent' is not of type :class:`TestsuiteSummary`.
+		:raises TypeError:               If parameter 'parent' is not of type :class:`TestsuiteSummary` or
+		                                 :class:`~pyEDAA.OSVVM.TestcaseSettings.TestcaseSettings`.
 		:raises BuildSummaryError:       If parameter 'parent' has settings already.
 		"""
 		if reportsSubdirectory is None:
@@ -1280,13 +1339,15 @@ class Settings(metaclass=ExtendedType, slots=True):
 
 				cssFileList.append(cssFile)
 
+		from pyEDAA.OSVVM.TestcaseSettings import TestcaseSettings
+
 		if parent is not None:
-			if not isinstance(parent, TestsuiteSummary):
-				ex = TypeError("Parameter 'parent' is not of type 'TestsuiteSummary'.")
+			if not isinstance(parent, (TestsuiteSummary, TestcaseSettings)):
+				ex = TypeError("Parameter 'parent' is not of type 'TestsuiteSummary' or 'TestcaseSettings'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
 				raise ex
 			elif parent._settings is not None:
-				raise BuildSummaryError(f"Build '{parent._name}' has settings already.")
+				raise BuildSummaryError(f"'{getFullyQualifiedName(parent)}' has settings already.")
 
 		self._parent =                   parent
 		self._reportsSubdirectory =      reportsSubdirectory
@@ -1300,14 +1361,14 @@ class Settings(metaclass=ExtendedType, slots=True):
 			parent._settings = self
 
 	@classmethod
-	def Parse(cls, node: CommentedMap, *, parent: Nullable[TestsuiteSummary] = None) -> Settings:
+	def Parse(cls, node: CommentedMap, *, parent: Nullable[ParentType] = None) -> Settings:
 		"""
 		Parse OSVVM's settings of a build (``OsvvmSettingsInfo``).
 
-		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`).
+		The mapping must be valid according to the schema of the file it's read from, e.g. :data:`SCHEMAS`.
 
 		:param node:   The YAML mapping of the settings.
-		:param parent: Optional, the build the settings belong to.
+		:param parent: Optional, the build or test case settings the settings belong to.
 		:returns:      The settings.
 		"""
 		cssFiles = node["Report2CssFiles"]
@@ -1324,11 +1385,11 @@ class Settings(metaclass=ExtendedType, slots=True):
 		)
 
 	@readonly
-	def Parent(self) -> Nullable[TestsuiteSummary]:
+	def Parent(self) -> Nullable[ParentType]:
 		"""
-		Read-only property to access the build the settings belong to (:attr:`_parent`).
+		Read-only property to access the build or test case settings the settings belong to (:attr:`_parent`).
 
-		:returns: The build, or ``None`` if the settings don't belong to one.
+		:returns: The build or test case settings, or ``None`` if the settings don't belong to one.
 		"""
 		return self._parent
 
@@ -1602,3 +1663,45 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document, YAMLDocumentMixin):
 			self.Aggregate()
 
 		self._modelConversion = sw.Duration
+
+	def ReadTestcaseSettings(self) -> None:
+		"""
+		Read the settings of each test case, which ran, and link them to the test case.
+
+		A test case's settings file is :file:`<ReportsSubdirectory>/<testsuite>/<TestCaseFileName>_run.yml`, relative to
+		the build summary's directory. Skipped test cases and test cases, which failed to analyze, have none. A missing
+		settings file is reported as :exc:`TestcaseSettingsWarning`.
+
+		:raises BuildSummaryError:             If the build summary wasn't converted yet.
+		:raises BuildSummaryError:             If a settings file names another test case.
+		:raises TestcaseSettingsError:         If a settings file can't be read.
+		:raises UnhandledCriticalWarningError: If a settings file is missing, and no warning collector collects the
+		                                       warning.
+		"""
+		from pyEDAA.OSVVM.TestcaseSettings import TestcaseSettingsDocument
+
+		if self._settings is None:
+			raise BuildSummaryError(f"OSVVM build summary '{self._path}' wasn't converted yet.")
+
+		reportsDirectory = self._path.parent / self._settings._reportsSubdirectory
+		for testsuite in self._testsuites.values():
+			for testcase in testsuite._testcases.values():
+				if testcase._osvvmStatus in (OSVVMStatus.Skipped, OSVVMStatus.AnalyzeFailed):
+					continue
+
+				settingsFile = reportsDirectory / testsuite._name / f"{testcase._name}_run.yml"
+				if not settingsFile.exists():
+					warning = TestcaseSettingsWarning(
+						f"Test case '{testcase._name}' has no settings file '{settingsFile}'.",
+						testcase=testcase
+					)
+					WarningCollector.Raise(warning)
+					continue
+
+				settings = TestcaseSettingsDocument(settingsFile, analyzeAndConvert=True)
+				if settings._testcaseFileName != testcase._name:
+					ex = BuildSummaryError(f"Settings file '{settingsFile}' names another test case.")
+					ex.add_note(f"Got test case '{settings._testcaseFileName}', expected '{testcase._name}'.")
+					raise ex
+
+				testcase._testcaseSettings = settings

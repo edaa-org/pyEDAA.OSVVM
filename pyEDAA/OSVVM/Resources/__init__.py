@@ -37,6 +37,9 @@ The files are named :file:`OSVVM-<Format>-<FormatVersion>.schema.json`. A docume
 .. rubric:: Resources
 
 * :file:`OSVVM-BuildSummary-0.1.schema.json` - OSVVM's build summary :file:`<build>.yml`, format version 0.1.
+* :file:`OSVVM-BuildIndex-0.1.schema.json` - OSVVM's build index :file:`index.yml`, format version 0.1.
+* :file:`OSVVM-TestcaseSettings-0.1.schema.json` - OSVVM's test case settings :file:`<TestCaseFileName>_run.yml`, format
+  version 0.1.
 
 .. rubric:: Usage
 

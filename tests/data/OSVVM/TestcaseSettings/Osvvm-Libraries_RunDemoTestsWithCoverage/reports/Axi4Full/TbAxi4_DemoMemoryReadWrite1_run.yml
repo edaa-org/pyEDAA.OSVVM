@@ -1,0 +1,24 @@
+Version: "0.1"
+TestCaseName: "TbAxi4_DemoMemoryReadWrite1"
+TestCaseFile:  "../../../../AXI4/Axi4/TestCases/TbAxi4_DemoMemoryReadWrite1.vhd"
+TestSuiteName: "Axi4Full"
+BuildName: "Osvvm-Libraries_RunDemoTestsWithCoverage"
+Generics:           null
+ReportsTestSuiteDirectory:  "reports/Axi4Full"
+RequirementsYamlFile: ""
+AlertYamlFile:  "reports/Axi4Full/TbAxi4_DemoMemoryReadWrite1_alerts.yml"
+CovYamlFile:  "reports/Axi4Full/TbAxi4_DemoMemoryReadWrite1_cov.yml"
+ScoreboardDict:
+  slv: "reports/Axi4Full/TbAxi4_DemoMemoryReadWrite1_sb_slv.yml"
+TranscriptFiles: "results/Axi4Full/TbAxi4_DemoMemoryReadWrite1.log"
+TestCaseFileName: "TbAxi4_DemoMemoryReadWrite1"
+GenericNames: ""
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Osvvm-Libraries_RunDemoTestsWithCoverage.log"
+  SimulationHtmlLogFile: "logs/Osvvm-Libraries_RunDemoTestsWithCoverage_log.html"
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory:    "CodeCoverage/Osvvm-Libraries_RunDemoTestsWithCoverage_code_cov/index.html"
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"
