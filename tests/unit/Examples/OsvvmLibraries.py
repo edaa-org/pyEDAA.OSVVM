@@ -154,9 +154,9 @@ class YAMLGeneratedByOSVVM(Testcase):
 
 		self.assertEqual(len(expected), len(doc.Testsuites))
 		for tsName, tcCount in expected.items():
-			self.assertIn(tsName, doc)
+			self.assertIn(tsName, doc.Testsuites)
 
-			ts = doc[tsName]
+			ts = doc.Testsuites[tsName]
 			self.assertEqual(tcCount, len(ts.Testcases), tsName)
 
 	# 	for suite in doc:

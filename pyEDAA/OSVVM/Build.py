@@ -35,28 +35,44 @@ A data model for OSVVM's build summary file :file:`<build>.yml`, derived from th
 OSVVM writes a build summary per build (``build <file>.pro``): its test suites, their test cases and the build's
 information and settings. The hierarchy matches the unified model - a test suite summary of test suites of test cases
 -, so the classes of this module derive from the unified classes and add what OSVVM states besides: per test case the
-VHDL name, the disabled alerts, the requirements and the functional coverage. :meth:`Testsuite.ToTestsuite` copies a
-test suite into the unified model, e.g. to merge it with other reports or to write it as JUnit XML.
+VHDL name, the disabled, expected and external alerts, the requirements, the functional coverage and the simulation
+time. :meth:`TestsuiteSummary.ToTestsuiteSummary` copies the hierarchy into the unified model, e.g. to merge it with
+other reports or to write it as JUnit XML.
+
+.. rubric:: Example
+
+.. code-block:: Python
+
+   from pathlib import Path
+   from pyEDAA.OSVVM.Build import BuildSummaryDocument
+
+   document = BuildSummaryDocument(Path("RunAllTests/RunAllTests.yml"), analyzeAndConvert=True)
+   for testcase in document.IterateTestcases():
+     print(f"{testcase.Name}: {testcase.Status.name} - {testcase.OSVVMStatus}")
 """
 from __future__                 import annotations
 
 from datetime                   import datetime, timedelta
 from pathlib                    import Path
-from typing                     import Any, ClassVar, Iterable, Iterator, List, Mapping, Optional as Nullable
+from typing                     import Any, ClassVar, Iterable, Mapping, Optional as Nullable
 
 from ruamel.yaml                import YAML, CommentedMap, CommentedSeq
 from pyTooling.Common           import getFullyQualifiedName, StringEnum
-from pyTooling.Decorators       import export, InheritDocString, notimplemented, readonly
+from pyTooling.Decorators       import export, readonly
 from pyTooling.MetaClasses      import ExtendedType
 from pyTooling.Stopwatch        import Stopwatch
-from pyTooling.Versioning       import CalendarVersion, SemanticVersion
+from pyTooling.Versioning       import YearMonthVersion
 
-from pyEDAA.Reports.Unittesting import UnittestError, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
-                                       TestcaseAggregateReturnType
+from pyEDAA.Reports.Unittesting import UnittestError, TestcaseStatus, TestsuiteStatus, TestcaseAggregateReturnType
 from pyEDAA.Reports.Unittesting import Document as ut_Document, TestsuiteSummary as ut_TestsuiteSummary
 from pyEDAA.Reports.Unittesting import Testsuite as ut_Testsuite, Testcase as ut_Testcase
 
 from pyEDAA.OSVVM               import OSVVMException
+
+
+# A class with a property named like a class - ``Path`` - can't name that class in the annotation of a field: the class
+# body's namespace, where annotations are evaluated, binds the name to the property.
+_Path = Path
 
 
 @export
@@ -67,6 +83,17 @@ class BuildSummaryError(OSVVMException, UnittestError):
 	It's an :exc:`~pyEDAA.Reports.Unittesting.UnittestError` too, so code handling errors of the unified test entity
 	model handles it as well.
 	"""
+
+
+@export
+class FormatVersion(StringEnum):
+	"""
+	Version of OSVVM's build summary format, as a build summary's ``Version`` states it.
+
+	OSVVM writes ``OsvvmBuildYamlVersion`` of :file:`OsvvmSettingsRequired.tcl`, so far only ``0.1``.
+	"""
+
+	Version0_1 = "0.1"  #: Format version 0.1.
 
 
 @export
@@ -467,39 +494,391 @@ class Testsuite(ut_Testsuite):
 
 @export
 class BuildInformation(metaclass=ExtendedType, slots=True):
-	_startTime:          datetime
-	_finishTime:         datetime
-	_elapsed:            timedelta
-	_simulator:          str
-	_simulatorVersion:   SemanticVersion
-	_osvvmVersion:       CalendarVersion
-	_buildErrorCode:     int
-	_analyzeErrorCount:  int
-	_simulateErrorCount: int
+	"""
+	The information about an OSVVM build (``BuildInfo``): when it finished, the simulator, the OSVVM version and the
+	build's error counts.
 
-	def __init__(self) -> None:
-		pass
+	The build's start time and duration (``StartTime``, ``ElapsedTime``) are the
+	:data:`~pyEDAA.Reports.Unittesting.Base.StartTime` and :data:`~pyEDAA.Reports.Unittesting.Base.TotalDuration` of
+	the :class:`TestsuiteSummary`.
+	"""
+
+	_parent:             Nullable[TestsuiteSummary]  #: The build the information belongs to.
+	_finishTime:         Nullable[datetime]          #: Time when the build finished.
+	_simulator:          str                         #: Name of the simulator, followed by its arguments, if any.
+	_simulatorVersion:   str                         #: Version of the simulator.
+	_osvvmVersion:       YearMonthVersion            #: Version of OSVVM.
+	_buildErrorCode:     int                         #: Error code of the build; ``0``, if the build succeeded.
+	_analyzeErrorCount:  int                         #: Number of analysis errors.
+	_simulateErrorCount: int                         #: Number of simulation errors.
+
+	def __init__(
+		self,
+		simulator: str,
+		simulatorVersion: str,
+		osvvmVersion: YearMonthVersion,
+		finishTime: Nullable[datetime] = None,
+		buildErrorCode: int = 0,
+		analyzeErrorCount: int = 0,
+		simulateErrorCount: int = 0,
+		*,
+		parent: Nullable[TestsuiteSummary] = None
+	) -> None:
+		"""
+		Initializes the information about an OSVVM build, and adds it to its build.
+
+		The simulator's version is a string, because simulators number their versions in schemes of their own, e.g.
+		``2023.4_2``.
+
+		:param simulator:          Name of the simulator, followed by its arguments, if any (``Simulator``).
+		:param simulatorVersion:   Version of the simulator (``SimulatorVersion``).
+		:param osvvmVersion:       Version of OSVVM (``OsvvmVersion``).
+		:param finishTime:         Optional, time when the build finished (``FinishTime``).
+		:param buildErrorCode:     Optional, error code of the build (``BuildErrorCode``). Default: ``0``.
+		:param analyzeErrorCount:  Optional, number of analysis errors (``AnalyzeErrorCount``). Default: ``0``.
+		:param simulateErrorCount: Optional, number of simulation errors (``SimulateErrorCount``). Default: ``0``.
+		:param parent:             Optional, the build the information belongs to.
+		:raises ValueError:        If parameter 'simulator' is None.
+		:raises ValueError:        If parameter 'simulatorVersion' is None.
+		:raises ValueError:        If parameter 'osvvmVersion' is None.
+		:raises TypeError:         If parameter 'simulator' is not of type :class:`str`.
+		:raises TypeError:         If parameter 'simulatorVersion' is not of type :class:`str`.
+		:raises TypeError:         If parameter 'osvvmVersion' is not of type
+		                           :class:`~pyTooling.Versioning.YearMonthVersion`.
+		:raises TypeError:         If parameter 'finishTime' is not of type :class:`~datetime.datetime`.
+		:raises TypeError:         If parameter 'buildErrorCode' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'analyzeErrorCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'simulateErrorCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'parent' is not of type :class:`TestsuiteSummary`.
+		:raises BuildSummaryError: If parameter 'parent' has build information already.
+		"""
+		for parameterName, text in (
+			("simulator",        simulator),
+			("simulatorVersion", simulatorVersion)
+		):
+			if text is None:
+				raise ValueError(f"Parameter '{parameterName}' is None.")
+			elif not isinstance(text, str):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'str'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(text)}'.")
+				raise ex
+
+		if osvvmVersion is None:
+			raise ValueError("Parameter 'osvvmVersion' is None.")
+		elif not isinstance(osvvmVersion, YearMonthVersion):
+			ex = TypeError("Parameter 'osvvmVersion' is not of type 'YearMonthVersion'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmVersion)}'.")
+			raise ex
+
+		if finishTime is not None and not isinstance(finishTime, datetime):
+			ex = TypeError("Parameter 'finishTime' is not of type 'datetime'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(finishTime)}'.")
+			raise ex
+
+		for parameterName, count in (
+			("buildErrorCode",     buildErrorCode),
+			("analyzeErrorCount",  analyzeErrorCount),
+			("simulateErrorCount", simulateErrorCount)
+		):
+			if not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		if parent is not None:
+			if not isinstance(parent, TestsuiteSummary):
+				ex = TypeError("Parameter 'parent' is not of type 'TestsuiteSummary'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
+				raise ex
+			elif parent._buildInformation is not None:
+				raise BuildSummaryError(f"Build '{parent._name}' has build information already.")
+
+		self._parent =             parent
+		self._finishTime =         finishTime
+		self._simulator =          simulator
+		self._simulatorVersion =   simulatorVersion
+		self._osvvmVersion =       osvvmVersion
+		self._buildErrorCode =     buildErrorCode
+		self._analyzeErrorCount =  analyzeErrorCount
+		self._simulateErrorCount = simulateErrorCount
+
+		if parent is not None:
+			parent._buildInformation = self
+
+	@readonly
+	def Parent(self) -> Nullable[TestsuiteSummary]:
+		"""
+		Read-only property to access the build the information belongs to (:attr:`_parent`).
+
+		:returns: The build, or ``None`` if the information doesn't belong to one.
+		"""
+		return self._parent
+
+	@readonly
+	def FinishTime(self) -> Nullable[datetime]:
+		"""
+		Read-only property to access the time when the build finished (:attr:`_finishTime`).
+
+		:returns: The finish time, or ``None`` if it wasn't recorded.
+		"""
+		return self._finishTime
+
+	@readonly
+	def Simulator(self) -> str:
+		"""
+		Read-only property to access the simulator's name, followed by its arguments, if any (:attr:`_simulator`).
+
+		:returns: The simulator.
+		"""
+		return self._simulator
+
+	@readonly
+	def SimulatorVersion(self) -> str:
+		"""
+		Read-only property to access the simulator's version (:attr:`_simulatorVersion`).
+
+		:returns: The simulator's version.
+		"""
+		return self._simulatorVersion
+
+	@readonly
+	def OSVVMVersion(self) -> YearMonthVersion:
+		"""
+		Read-only property to access OSVVM's version (:attr:`_osvvmVersion`).
+
+		A revision letter of an OSVVM version, e.g. ``a`` of ``2025.06a``, is the version's postfix.
+
+		:returns: OSVVM's version.
+		"""
+		return self._osvvmVersion
+
+	@readonly
+	def BuildErrorCode(self) -> int:
+		"""
+		Read-only property to access the build's error code (:attr:`_buildErrorCode`).
+
+		:returns: The error code; ``0``, if the build succeeded.
+		"""
+		return self._buildErrorCode
+
+	@readonly
+	def AnalyzeErrorCount(self) -> int:
+		"""
+		Read-only property to access the number of analysis errors (:attr:`_analyzeErrorCount`).
+
+		:returns: Number of analysis errors.
+		"""
+		return self._analyzeErrorCount
+
+	@readonly
+	def SimulateErrorCount(self) -> int:
+		"""
+		Read-only property to access the number of simulation errors (:attr:`_simulateErrorCount`).
+
+		:returns: Number of simulation errors.
+		"""
+		return self._simulateErrorCount
 
 
 @export
 class Settings(metaclass=ExtendedType, slots=True):
-	_baseDirectory:            Path
-	_reportsSubdirectory:      Path
-	_simulationLogFile:        Path
-	_simulationHtmlLogFile:    Path
-	_requirementsSubdirectory: Path
-	_coverageSubdirectory:     Path
-	_report2CssFiles:          List[Path]
-	_report2PngFile:           List[Path]
+	"""
+	OSVVM's settings of a build (``OsvvmSettingsInfo``): where OSVVM put the build's reports and logs.
 
-	def __init__(self) -> None:
-		pass
+	Paths are relative to the build's directory. OSVVM writes an empty string for a file it didn't write; it is ``None``
+	here.
+	"""
+
+	_parent:                   Nullable[TestsuiteSummary]  #: The build the settings belong to.
+	_reportsSubdirectory:      _Path                       #: Directory of the reports.
+	_simulationLogFile:        Nullable[_Path]             #: Log file of the build.
+	_simulationHtmlLogFile:    Nullable[_Path]             #: Log file of the build in HTML.
+	_requirementsSubdirectory: Nullable[_Path]             #: Directory of the requirements reports.
+	_codeCoverageFile:         Nullable[_Path]             #: Code coverage report of the build.
+	_cssFiles:                 list[_Path]                 #: Stylesheets of the HTML reports.
+	_logoFile:                 Nullable[_Path]             #: Logo of the HTML reports.
+
+	def __init__(
+		self,
+		reportsSubdirectory: Path,
+		simulationLogFile: Nullable[Path] = None,
+		simulationHtmlLogFile: Nullable[Path] = None,
+		requirementsSubdirectory: Nullable[Path] = None,
+		codeCoverageFile: Nullable[Path] = None,
+		cssFiles: Nullable[Iterable[Path]] = None,
+		logoFile: Nullable[Path] = None,
+		*,
+		parent: Nullable[TestsuiteSummary] = None
+	) -> None:
+		"""
+		Initializes OSVVM's settings of a build, and adds them to their build.
+
+		:param reportsSubdirectory:      Directory of the reports (``ReportsSubdirectory``).
+		:param simulationLogFile:        Optional, log file of the build (``SimulationLogFile``).
+		:param simulationHtmlLogFile:    Optional, log file of the build in HTML (``SimulationHtmlLogFile``).
+		:param requirementsSubdirectory: Optional, directory of the requirements reports (``RequirementsSubdirectory``).
+		:param codeCoverageFile:         Optional, code coverage report of the build (``CoverageSubdirectory``).
+		:param cssFiles:                 Optional, stylesheets of the HTML reports (``Report2CssFiles``).
+		:param logoFile:                 Optional, logo of the HTML reports (``Report2PngFile``).
+		:param parent:                   Optional, the build the settings belong to.
+		:raises ValueError:              If parameter 'reportsSubdirectory' is None.
+		:raises TypeError:               If parameter 'reportsSubdirectory' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'simulationLogFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'simulationHtmlLogFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'requirementsSubdirectory' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'codeCoverageFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'logoFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'cssFiles' is not iterable.
+		:raises TypeError:               If an element of parameter 'cssFiles' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'parent' is not of type :class:`TestsuiteSummary`.
+		:raises BuildSummaryError:       If parameter 'parent' has settings already.
+		"""
+		if reportsSubdirectory is None:
+			raise ValueError("Parameter 'reportsSubdirectory' is None.")
+		elif not isinstance(reportsSubdirectory, Path):
+			ex = TypeError("Parameter 'reportsSubdirectory' is not of type 'Path'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(reportsSubdirectory)}'.")
+			raise ex
+
+		for parameterName, path in (
+			("simulationLogFile",        simulationLogFile),
+			("simulationHtmlLogFile",    simulationHtmlLogFile),
+			("requirementsSubdirectory", requirementsSubdirectory),
+			("codeCoverageFile",         codeCoverageFile),
+			("logoFile",                 logoFile)
+		):
+			if path is not None and not isinstance(path, Path):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'Path'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
+				raise ex
+
+		self._cssFiles = cssFileList = []
+		if cssFiles is not None:
+			if not isinstance(cssFiles, Iterable):
+				ex = TypeError("Parameter 'cssFiles' is not iterable.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(cssFiles)}'.")
+				raise ex
+
+			for cssFile in cssFiles:
+				if not isinstance(cssFile, Path):
+					ex = TypeError("Element of parameter 'cssFiles' is not of type 'Path'.")
+					ex.add_note(f"Got type '{getFullyQualifiedName(cssFile)}'.")
+					raise ex
+
+				cssFileList.append(cssFile)
+
+		if parent is not None:
+			if not isinstance(parent, TestsuiteSummary):
+				ex = TypeError("Parameter 'parent' is not of type 'TestsuiteSummary'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
+				raise ex
+			elif parent._settings is not None:
+				raise BuildSummaryError(f"Build '{parent._name}' has settings already.")
+
+		self._parent =                   parent
+		self._reportsSubdirectory =      reportsSubdirectory
+		self._simulationLogFile =        simulationLogFile
+		self._simulationHtmlLogFile =    simulationHtmlLogFile
+		self._requirementsSubdirectory = requirementsSubdirectory
+		self._codeCoverageFile =         codeCoverageFile
+		self._logoFile =                 logoFile
+
+		if parent is not None:
+			parent._settings = self
+
+	@readonly
+	def Parent(self) -> Nullable[TestsuiteSummary]:
+		"""
+		Read-only property to access the build the settings belong to (:attr:`_parent`).
+
+		:returns: The build, or ``None`` if the settings don't belong to one.
+		"""
+		return self._parent
+
+	@readonly
+	def ReportsSubdirectory(self) -> Path:
+		"""
+		Read-only property to access the directory of the reports (:attr:`_reportsSubdirectory`).
+
+		A test case's reports are in a subdirectory per test suite, e.g. :file:`reports/<testsuite>/`.
+
+		:returns: The directory of the reports.
+		"""
+		return self._reportsSubdirectory
+
+	@readonly
+	def SimulationLogFile(self) -> Nullable[Path]:
+		"""
+		Read-only property to access the build's log file (:attr:`_simulationLogFile`).
+
+		:returns: The log file, or ``None`` if OSVVM wrote none.
+		"""
+		return self._simulationLogFile
+
+	@readonly
+	def SimulationHtmlLogFile(self) -> Nullable[Path]:
+		"""
+		Read-only property to access the build's log file in HTML (:attr:`_simulationHtmlLogFile`).
+
+		:returns: The HTML log file, or ``None`` if OSVVM wrote none.
+		"""
+		return self._simulationHtmlLogFile
+
+	@readonly
+	def RequirementsSubdirectory(self) -> Nullable[Path]:
+		"""
+		Read-only property to access the directory of the requirements reports (:attr:`_requirementsSubdirectory`).
+
+		:returns: The directory, or ``None`` if the build has no requirements.
+		"""
+		return self._requirementsSubdirectory
+
+	@readonly
+	def CodeCoverageFile(self) -> Nullable[Path]:
+		"""
+		Read-only property to access the build's code coverage report (:attr:`_codeCoverageFile`).
+
+		OSVVM names the key ``CoverageSubdirectory``, but states the report's file, e.g.
+		:file:`CodeCoverage/<build>_code_cov/index.html`.
+
+		:returns: The code coverage report, or ``None`` if the build didn't collect code coverage.
+		"""
+		return self._codeCoverageFile
+
+	@readonly
+	def CssFiles(self) -> list[Path]:
+		"""
+		Read-only property to access the stylesheets of the HTML reports (:attr:`_cssFiles`).
+
+		:returns: List of stylesheets.
+		"""
+		return self._cssFiles
+
+	@readonly
+	def LogoFile(self) -> Nullable[Path]:
+		"""
+		Read-only property to access the logo of the HTML reports (:attr:`_logoFile`).
+
+		:returns: The logo, or ``None`` if OSVVM states none.
+		"""
+		return self._logoFile
+
+
+# ``BuildInformation`` and ``Settings`` are also property names of :class:`TestsuiteSummary`.
+_BuildInformation = BuildInformation
+_Settings =         Settings
 
 
 @export
-@InheritDocString(ut_TestsuiteSummary)
 class TestsuiteSummary(ut_TestsuiteSummary):
-	_datetime: datetime
+	"""
+	An OSVVM build: the root of the build's test entity hierarchy.
+
+	Besides its test suites, a build has the :class:`BuildInformation` and OSVVM's :class:`Settings`.
+	"""
+
+	_buildInformation: Nullable[_BuildInformation]  #: Information about the build.
+	_settings:         Nullable[_Settings]          #: OSVVM's settings of the build.
 
 	def __init__(
 		self,
@@ -508,80 +887,126 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		summary: Nullable[str] = None,
 		description: Nullable[str] = None,
 		startTime: Nullable[datetime] = None,
-		setupDuration: Nullable[timedelta] = None,
-		testDuration: Nullable[timedelta] = None,
-		teardownDuration: Nullable[timedelta] = None,
-		totalDuration:  Nullable[timedelta] = None,
-		status: TestsuiteStatus = TestsuiteStatus.Unknown,
-		warningCount: int = 0,
-		errorCount: int = 0,
-		fatalCount: int = 0,
-		testsuites: Nullable[Iterable[TestsuiteType]] = None,
-		keyValuePairs: Nullable[Mapping[str, Any]] = None,
-		*,
-		parent: Nullable[TestsuiteType] = None
+		totalDuration: Nullable[timedelta] = None,
+		testsuites: Nullable[Iterable[Testsuite]] = None,
+		keyValuePairs: Nullable[Mapping[str, Any]] = None
 	) -> None:
 		"""
-		Initializes the fields of a test summary.
+		Initializes an OSVVM build.
 
-		:param name:               Name of the test summary.
-		:param title:              Optional, short label of the test summary, written for a reader.
-		:param summary:            Optional, summary of the test summary.
-		:param description:        Optional, description of the test summary.
-		:param startTime:          Time when the test summary was started.
-		:param setupDuration:      Duration it took to set up the test summary.
-		:param testDuration:       Duration of all tests listed in the test summary.
-		:param teardownDuration:   Duration it took to tear down the test summary.
-		:param totalDuration:      Total duration of the entity's execution (setup + test + teardown)
-		:param status:             Overall status of the test summary.
-		:param warningCount:       Count of encountered warnings incl. warnings from sub-elements.
-		:param errorCount:         Count of encountered errors incl. errors from sub-elements.
-		:param fatalCount:         Count of encountered fatal errors incl. fatal errors from sub-elements.
-		:param testsuites:         List of test suites to initialize the test summary with.
-		:param keyValuePairs:      Mapping of key-value pairs to initialize the test summary with.
-		:param parent:             Reference to the parent test summary.
+		The build information and the settings are added by creating them with the build as parent.
+
+		:param name:          Name of the build (``Name``).
+		:param title:         Optional, short label of the build, written for a reader.
+		:param summary:       Optional, summary of the build.
+		:param description:   Optional, description of the build.
+		:param startTime:     Optional, time when the build started (``StartTime`` of ``BuildInfo``).
+		:param totalDuration: Optional, duration of the build (``ElapsedTime`` of ``BuildInfo``).
+		:param testsuites:    Optional, test suites of the build.
+		:param keyValuePairs: Optional, mapping of key-value pairs to initialize the build with.
 		"""
 		super().__init__(
 			name,
 			title, summary, description,
-			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
-			status,
-			warningCount, errorCount, fatalCount,
+			startTime, None, None, None, totalDuration,
+			TestsuiteStatus.Unknown,
+			0, 0, 0,
 			testsuites,
-			keyValuePairs,
-			parent=parent
+			keyValuePairs
+		)
+
+		self._buildInformation = None
+		self._settings =         None
+
+	@readonly
+	def BuildInformation(self) -> Nullable[BuildInformation]:
+		"""
+		Read-only property to access the information about the build (:attr:`_buildInformation`).
+
+		:returns: The build information, or ``None`` if it wasn't recorded.
+		"""
+		return self._buildInformation
+
+	@readonly
+	def Settings(self) -> Nullable[Settings]:
+		"""
+		Read-only property to access OSVVM's settings of the build (:attr:`_settings`).
+
+		:returns: The settings, or ``None`` if they weren't recorded.
+		"""
+		return self._settings
+
+	def ToTestsuiteSummary(self) -> ut_TestsuiteSummary:
+		"""
+		Convert the build and its test suites to a test suite summary of the unified test entity model.
+
+		Call :meth:`Aggregate` before, so the unified status of each test case is computed.
+
+		:returns: A test suite summary of the unified test entity model.
+		"""
+		return ut_TestsuiteSummary(
+			self._name,
+			startTime=self._startTime,
+			totalDuration=self._totalDuration,
+			status=self._status,
+			testsuites=(testsuite.ToTestsuite() for testsuite in self._testsuites.values()),
+			keyValuePairs=self._dict
 		)
 
 
 @export
 class BuildSummaryDocument(TestsuiteSummary, ut_Document):
-	_yamlDocument: Nullable[YAML]             #: Internal YAML document instance.
-	_version:      Nullable[SemanticVersion]  #: YAML data structure version.
+	"""
+	An OSVVM build summary file :file:`<build>.yml`: read and converted to the build's test entity hierarchy.
+	"""
+
+	_yamlDocument: Nullable[CommentedMap]   #: The parsed YAML document, after :meth:`Analyze`.
+	_version:      Nullable[FormatVersion]  #: Format version the file states.
+	_date:         Nullable[datetime]       #: Time when OSVVM started to write the file (``Date``).
 
 	def __init__(self, yamlReportFile: Path, analyzeAndConvert: bool = False) -> None:
+		"""
+		Initializes a build summary document, and optionally reads it.
+
+		:param yamlReportFile:    Path to the YAML file.
+		:param analyzeAndConvert: Optional, if true, analyze the file and convert its content. Default: ``False``.
+		"""
 		super().__init__("Unprocessed OSVVM YAML file")
 
 		self._yamlDocument = None
 		self._version =      None
+		self._date =         None
 
 		ut_Document.__init__(self, yamlReportFile, analyzeAndConvert)
 
 	@readonly
-	def Version(self) -> Nullable[SemanticVersion]:
+	def Version(self) -> Nullable[FormatVersion]:
 		"""
-		Read-only property to access the YAML file's data structure version (:attr:`_version`).
+		Read-only property to access the format version the file states (:attr:`_version`).
 
-		:returns: The YAML data structures version.
+		:returns: The format version, or ``None`` if the file wasn't converted yet.
 		"""
 		return self._version
 
+	@readonly
+	def Date(self) -> Nullable[datetime]:
+		"""
+		Read-only property to access the time when OSVVM started to write the file (:attr:`_date`).
+
+		:returns: The date, or ``None`` if the file wasn't converted yet.
+		"""
+		return self._date
+
 	def Analyze(self) -> None:
 		"""
-		Analyze the YAML file, parse the content into an YAML data structure.
+		Analyze the YAML file: parse its content into a YAML data structure.
 
 		.. hint::
 
-		   The time spend for analysis will be made available via property :data:`AnalysisDuration`..
+		   The time spend for analysis will be made available via property :data:`AnalysisDuration`.
+
+		:raises BuildSummaryError: If the file doesn't exist.
+		:raises BuildSummaryError: If the file can't be read or isn't valid YAML.
 		"""
 		if not self._path.exists():
 			raise BuildSummaryError(f"OSVVM YAML file '{self._path}' does not exist.") \
@@ -589,41 +1014,11 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 
 		with Stopwatch() as sw:
 			try:
-				yamlReader = YAML()
-				self._yamlDocument = yamlReader.load(self._path)
+				self._yamlDocument = YAML().load(self._path)
 			except Exception as ex:
 				raise BuildSummaryError(f"Couldn't open '{self._path}'.") from ex
 
 		self._analysisDuration = sw.Duration
-
-	@notimplemented
-	def Write(self, path: Nullable[Path] = None, overwrite: bool = False) -> None:
-		"""
-		Write the data model as XML into a file adhering to the Any JUnit dialect.
-
-		:param path:               Optional path to the YAML file, if internal path shouldn't be used.
-		:param overwrite:          If true, overwrite an existing file.
-		:raises BuildSummaryError: If the file cannot be overwritten.
-		:raises BuildSummaryError: If the internal YAML data structure wasn't generated.
-		:raises BuildSummaryError: If the file cannot be opened or written.
-		"""
-		if path is None:
-			path = self._path
-
-		if not overwrite and path.exists():
-			raise BuildSummaryError(f"OSVVM YAML file '{path}' can not be overwritten.") \
-				from FileExistsError(f"File '{path}' already exists.")
-
-		# if regenerate:
-		# 	self.Generate(overwrite=True)
-
-		if self._yamlDocument is None:
-			ex = BuildSummaryError("Internal YAML document tree is empty and needs to be generated before write is possible.")
-			# ex.add_note(f"Call 'BuildSummaryDocument.Generate()' or 'BuildSummaryDocument.Write(..., regenerate=True)'.")
-			raise ex
-
-		# with path.open("w", encoding="utf-8") as file:
-		# 	self._yamlDocument.writexml(file, addindent="\t", encoding="utf-8", newl="\n")
 
 	@staticmethod
 	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:
@@ -730,24 +1125,65 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 
 		   The time spend for model conversion will be made available via property :data:`ModelConversionDuration`.
 
-		:raises BuildSummaryError: If XML was not read and parsed before.
+		:raises BuildSummaryError: If the YAML file was not analyzed before. |br|
+		                           Call 'Document.Analyze()' or create the document using
+		                           'Document(path, analyzeAndConvert=True)'.
+		:raises BuildSummaryError: If the file states an unsupported format version.
 		"""
 		if self._yamlDocument is None:
 			ex = BuildSummaryError(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note("Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
+			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
-			self._version = SemanticVersion.Parse(self._yamlDocument["Version"])
-			if not (self._version >> "0.1"):
-				ex = BuildSummaryError(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
-				ex.add_note("Supported versions are: 1.0")
-				raise ex
+			version = self._ParseStrFieldFromYAML(self._yamlDocument, "Version")
+			try:
+				self._version = FormatVersion.Parse(version)
+			except ValueError as cause:
+				ex = BuildSummaryError(f"Unsupported format version '{version}' in OSVVM YAML file '{self._path}'.")
+				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
+				raise ex from cause
 
-			self._name = self._yamlDocument["Name"]
+			self._date = self._ParseDateFieldFromYAML(self._yamlDocument, "Date")
+			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
+
 			buildInfo = self._ParseMapFromYAML(self._yamlDocument, "BuildInfo")
 			self._startTime = self._ParseDateFieldFromYAML(buildInfo, "StartTime")
 			self._totalDuration = self._ParseDurationFieldFromYAML(buildInfo, "ElapsedTime")
+			BuildInformation(
+				self._ParseStrFieldFromYAML(buildInfo, "Simulator"),
+				self._ParseStrFieldFromYAML(buildInfo, "SimulatorVersion"),
+				YearMonthVersion.Parse(self._ParseStrFieldFromYAML(buildInfo, "OsvvmVersion")),
+				finishTime=self._ParseDateFieldFromYAML(buildInfo, "FinishTime"),
+				buildErrorCode=self._ParseIntFieldFromYAML(buildInfo, "BuildErrorCode"),
+				analyzeErrorCount=self._ParseIntFieldFromYAML(buildInfo, "AnalyzeErrorCount"),
+				simulateErrorCount=self._ParseIntFieldFromYAML(buildInfo, "SimulateErrorCount"),
+				parent=self
+			)
+
+			settingsInfo = self._ParseMapFromYAML(self._yamlDocument, "OsvvmSettingsInfo")
+			files = {}
+			for key in (
+				"SimulationLogFile",
+				"SimulationHtmlLogFile",
+				"RequirementsSubdirectory",
+				"CoverageSubdirectory",
+				"Report2PngFile"
+			):
+				path = self._ParseStrFieldFromYAML(settingsInfo, key)
+				files[key] = None if path == "" else Path(path)
+
+			cssFiles = settingsInfo["Report2CssFiles"]
+			Settings(
+				Path(self._ParseStrFieldFromYAML(settingsInfo, "ReportsSubdirectory")),
+				simulationLogFile=files["SimulationLogFile"],
+				simulationHtmlLogFile=files["SimulationHtmlLogFile"],
+				requirementsSubdirectory=files["RequirementsSubdirectory"],
+				codeCoverageFile=files["CoverageSubdirectory"],
+				cssFiles=None if cssFiles == "" else (Path(cssFile) for cssFile in cssFiles),
+				logoFile=files["Report2PngFile"],
+				parent=self
+			)
 
 			if "TestSuites" in self._yamlDocument:
 				for yamlTestsuite in self._ParseSequenceFromYAML(self._yamlDocument, "TestSuites"):
@@ -822,15 +1258,3 @@ class BuildSummaryDocument(TestsuiteSummary, ut_Document):
 			functionalCoverage=None if functionalCoverage == "" else float(functionalCoverage) / 100.0,
 			parent=parentTestsuite
 		)
-
-	def __contains__(self, key: str) -> bool:
-		return key in self._testsuites
-
-	def __iter__(self) -> Iterator[Testsuite]:
-		return iter(self._testsuites.values())
-
-	def __getitem__(self, key: str) -> Testsuite:
-		return self._testsuites[key]
-
-	def __len__(self) -> int:
-		return self._testsuites.__len__()
