@@ -43,6 +43,8 @@ The files are named :file:`OSVVM-<Format>-<FormatVersion>.schema.json`. A docume
 * :file:`OSVVM-AlertLog-0.1.schema.json` - OSVVM's AlertLog :file:`<TestCaseFileName>_alerts.yml`, format version 0.1.
 * :file:`OSVVM-Scoreboard-0.1.schema.json` - OSVVM's scoreboard :file:`<TestCaseFileName>_sb_<name>.yml`, format version
   0.1.
+* :file:`OSVVM-FunctionalCoverage-0.1.schema.json` - OSVVM's functional coverage :file:`<TestCaseFileName>_cov.yml`,
+  format version 0.1.
 
 .. rubric:: Usage
 
