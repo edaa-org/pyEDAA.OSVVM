@@ -29,14 +29,13 @@
 # ==================================================================================================================== #
 #
 """Testcases for OSVVM's AlertLog YAML file format."""
-from datetime import timedelta
-from pathlib import Path
+from datetime              import timedelta
+from pathlib               import Path
 
-from pytest       import mark
+from pyTooling.Testing     import Testcase
 
-from pyTooling.Testing import Testcase
-
-from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument, AlertLogStatus, AlertLogException
+from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
+                                  DuplicateAlertLogItemError
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -44,30 +43,39 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiation(Testcase):
-	def test_AlertLogStatus_dummy(self) -> None:
-		with self.assertRaises(AlertLogException):
+class Status(Testcase):
+	def test_Parse(self) -> None:
+		self.assertIs(AlertLogStatus.Passed, AlertLogStatus.Parse("PASSED"))
+		self.assertIs(AlertLogStatus.Failed, AlertLogStatus.Parse("FAILED"))
+		self.assertIs(AlertLogStatus.StopLimit, AlertLogStatus.Parse("STOPLIMIT"))
+		self.assertIs(AlertLogStatus.TimeOut, AlertLogStatus.Parse("TIMEOUT"))
+		self.assertIs(AlertLogStatus.ManualChecks, AlertLogStatus.Parse("MANUALCHECKS"))
+		self.assertIs(AlertLogStatus.NoChecks, AlertLogStatus.Parse("NOCHECKS"))
+
+	def test_Parse_Case(self) -> None:
+		self.assertIs(AlertLogStatus.Passed, AlertLogStatus.Parse("passed"))
+		self.assertIs(AlertLogStatus.Failed, AlertLogStatus.Parse("Failed"))
+
+	def test_Parse_Unknown(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
 			_ = AlertLogStatus.Parse("dummy")
 
-	@mark.xfail(reason="Bug in AlertLogStatus. Enum value is still an integer")
-	def test_AlertLogStatus_passed(self) -> None:
-		passed = AlertLogStatus.Parse("passed")
+		self.assertEqual("Unknown AlertLog status 'dummy'.", str(context.exception))
+		self.assertIsInstance(context.exception.__cause__, ValueError)
 
-		self.assertIs(AlertLogStatus.Passed, passed)
-		self.assertTrue(passed)
+	def test_Bool(self) -> None:
+		self.assertTrue(AlertLogStatus.Passed)
+		self.assertFalse(AlertLogStatus.Failed)
+		self.assertFalse(AlertLogStatus.TimeOut)
+		self.assertFalse(AlertLogStatus.Unknown)
 
-	@mark.xfail(reason="Bug in AlertLogStatus. Enum value is still an integer")
-	def test_AlertLogStatus_failed(self) -> None:
-		failed = AlertLogStatus.Parse("failed")
 
-		self.assertIs(AlertLogStatus.Failed, failed)
-		self.assertFalse(failed)
-
+class Instantiation(Testcase):
 	def test_AlertLogItem(self) -> None:
 		item = AlertLogItem("name")
 
 		self.assertIsNone(item.Parent)
-		self.assertEqual(AlertLogStatus.Unknown, item.Status)
+		self.assertIs(AlertLogStatus.Unknown, item.Status)
 		self.assertEqual("name", item.Name)
 		self.assertEqual(0, len(item))
 		self.assertEqual(0, len(item.Children))
@@ -120,6 +128,24 @@ class Hierarchy(Testcase):
 			self.assertEqual(0, len(child))
 			self.assertIs(child, root[child.Name])
 
+	def test_TopDown_Duplicate(self) -> None:
+		root = AlertLogItem("root")
+		item = AlertLogItem("item1", parent=root)
+
+		with self.assertRaises(DuplicateAlertLogItemError) as context:
+			_ = AlertLogItem("item1", parent=root)
+
+		self.assertIs(item, context.exception.Item)
+
+	def test_BottomUp_AlreadyInAlertLog(self) -> None:
+		root = AlertLogItem("root")
+		child = AlertLogItem("item1", parent=root)
+
+		with self.assertRaises(AlreadyInAlertLogError) as context:
+			_ = AlertLogItem("other", children=(child, ))
+
+		self.assertIs(child, context.exception.Item)
+
 	def test_Parent(self) -> None:
 		root = AlertLogItem("root")
 		item = AlertLogItem("item1")
@@ -140,3 +166,28 @@ class Iterate(Testcase):
 
 		self.assertTupleEqual(tuple(root), children)
 		self.assertDictEqual(root.Children, {c.Name: c for c in children})
+
+
+class Parse(Testcase):
+	def test_Create(self) -> None:
+		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
+		document = Document(path)
+
+		self.assertEqual(path, document.Path)
+		with self.assertRaises(AlertLogError):
+			_ = document.AnalysisDuration
+
+		with self.assertRaises(AlertLogError):
+			_ = document.ModelConversionDuration
+
+	def test_Create_WithParse(self) -> None:
+		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
+		document = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(path, document.Path)
+		self.assertEqual("TbAxi4_BasicReadWrite", document.Name)
+		self.assertIs(AlertLogStatus.Passed, document.Status)
+		self.assertEqual(5, len(document))
+		self.assertEqual(40, document["Default"].PassedCount)
+		self.assertGreater(document.AnalysisDuration, timedelta())
+		self.assertGreater(document.ModelConversionDuration, timedelta())

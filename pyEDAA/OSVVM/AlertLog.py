@@ -29,58 +29,145 @@
 # ==================================================================================================================== #
 #
 """A data model for OSVVM's AlertLog YAML file format."""
-from datetime import timedelta
-from enum     import Enum, auto
-from pathlib  import Path
-from typing   import Optional as Nullable, Dict, Iterator, Iterable, Callable
+from __future__            import annotations
 
-from ruamel.yaml           import YAML, CommentedSeq, CommentedMap
-from pyTooling.Decorators  import readonly, export
+from datetime              import timedelta
+from pathlib               import Path
+from typing                import Callable, Dict, Iterable, Iterator, Optional as Nullable, Self
+
+from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
+
+from pyTooling.Common      import getFullyQualifiedName, StringEnum
+from pyTooling.Decorators  import export, readonly
+from pyTooling.Exceptions  import AlreadyInHierarchyError, DuplicateElementError
 from pyTooling.MetaClasses import ExtendedType
-from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
-from pyTooling.Versioning  import SemanticVersion
 
 from pyEDAA.OSVVM          import OSVVMException
 
 
 @export
-class AlertLogException(OSVVMException):
-	"""Base-class for all pyEDAA.OSVVM.AlertLog specific exceptions."""
+class AlertLogError(OSVVMException):
+	"""
+	The exception is raised by the AlertLog data model.
+
+	E.g., an AlertLog YAML file can't be read or converted, or an item is added twice.
+	"""
 
 
 @export
-class DuplicateItemException(AlertLogException):
-	"""Raised if a duplicate item is detected in the AlertLog hierarchy."""
+class DuplicateAlertLogItemError(AlertLogError, DuplicateElementError):
+	"""
+	The exception is raised when an AlertLog item is added to an item, which has a child of the same name already.
+	"""
+
+	_item: Nullable[AlertLogItem]  #: The child of the same name, which is in the item already.
+
+	def __init__(self, message: str, /, *, item: Nullable[AlertLogItem] = None) -> None:
+		"""
+		Initializes the exception with the child of the same name, which is in the item already.
+
+		:param message: The exception's message.
+		:param item:    Optional, the child of the same name, which is in the item already. Default: ``None``.
+		"""
+		super().__init__(message)
+		self._item = item
+
+	@readonly
+	def Item(self) -> Nullable[AlertLogItem]:
+		"""
+		Read-only property to access the child of the same name, which is in the item already (:attr:`_item`).
+
+		:returns: The child, or ``None`` if it wasn't recorded.
+		"""
+		return self._item
 
 
 @export
-class AlertLogStatus(Enum):
-	"""Status of an :class:`AlertLogItem`."""
-	Unknown = auto()
-	Passed =  auto()
-	Failed =  auto()
+class AlreadyInAlertLogError(AlertLogError, AlreadyInHierarchyError):
+	"""
+	The exception is raised when an AlertLog item is given as a child, but it has a parent already.
+	"""
 
-	__MAPPINGS__ = {
-		"passed": Passed,
-		"failed": Failed
-	}
+	_item: Nullable[AlertLogItem]  #: The item, which has a parent already.
+
+	def __init__(self, message: str, /, *, item: Nullable[AlertLogItem] = None) -> None:
+		"""
+		Initializes the exception with the item, which has a parent already.
+
+		:param message: The exception's message.
+		:param item:    Optional, the item, which has a parent already. Default: ``None``.
+		"""
+		super().__init__(message)
+		self._item = item
+
+	@readonly
+	def Item(self) -> Nullable[AlertLogItem]:
+		"""
+		Read-only property to access the item, which has a parent already (:attr:`_item`).
+
+		:returns: The item, or ``None`` if it wasn't recorded.
+		"""
+		return self._item
+
+
+@export
+class FormatVersion(StringEnum):
+	"""
+	Version of OSVVM's AlertLog YAML format, as a file's ``Version`` states it.
+
+	OSVVM writes ``ALERT_YAML_VERSION`` of ``OsvvmScriptSettingsPkg``, so far only ``0.1``. The format grew within this
+	version: the root's ``Results`` state ``ExpectedCount`` since OSVVM 2025.06 and ``ExternalErrors`` since OSVVM
+	2026.08, so both are optional.
+	"""
+
+	Version0_1 = "0.1"  #: Format version 0.1.
+
+
+@export
+class AlertLogStatus(StringEnum):
+	"""
+	Status of an :class:`AlertLogItem`, as OSVVM's ``GetTestResultStatus`` writes it.
+
+	An item below the root is either passed or failed. The root, which is the test, may also have stopped, timed out, or
+	have no or manual checks. The values are OSVVM's defaults of ``OsvvmSettingsPkg`` (``ALERT_LOG_PASS_NAME``, ...);
+	:meth:`Parse` ignores their case.
+	"""
+
+	Unknown =      "UNKNOWN"       #: Status of an item, which wasn't read from a file. OSVVM doesn't write it.
+	Passed =       "PASSED"        #: The item has no errors.
+	Failed =       "FAILED"        #: The item has errors.
+	StopLimit =    "STOPLIMIT"     #: The test stopped, because an alert count reached its stop limit (root only).
+	TimeOut =      "TIMEOUT"       #: The test timed out (root only).
+	ManualChecks = "MANUALCHECKS"  #: The test has no errors, but needs manual checks (root only).
+	NoChecks =     "NOCHECKS"      #: The test has no errors, but did no affirmations (root only).
 
 	@classmethod
-	def Parse(self, name: str) -> "AlertLogStatus":
+	def Parse(cls, value: Nullable[str]) -> Nullable[Self]:
+		"""
+		Convert a status, as written in an AlertLog file, to the member carrying that value, ignoring the case.
+
+		:param value:          The status.
+		:returns:              The member carrying that value. ``None``, if parameter ``value`` is ``None`` or empty.
+		:raises TypeError:     If parameter ``value`` isn't of type :class:`str`.
+		:raises AlertLogError: If no member carries that value. |br|
+		                       The note lists the values it accepts.
+		"""
 		try:
-			return self.__MAPPINGS__[name.lower()]
-		except KeyError as ex:
-			raise AlertLogException(f"Unknown AlertLog status '{name}'.") from ex
+			return super().Parse(value.upper() if isinstance(value, str) else value)
+		except ValueError as cause:
+			ex = AlertLogError(f"Unknown AlertLog status '{value}'.")
+			ex.add_note(f"Allowed values: {', '.join(member.value for member in cls)}.")
+			raise ex from cause
 
 	def __bool__(self) -> bool:
 		"""
-		Convert an *AlertLogStatus* to a boolean.
+		Convert an AlertLog status to a boolean.
 
-		:returns: Return true, if the status is ``Passed``.
+		:returns: ``True``, if the status is :attr:`Passed`.
 		"""
-		return self is self.Passed
+		return self is AlertLogStatus.Passed
 
 
 @export
@@ -147,7 +234,9 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
 				raise ex
 			elif name in parent._children:
-				raise DuplicateItemException(f"AlertLogItem '{name}' already exists in '{parent._name}'.")
+				raise DuplicateAlertLogItemError(
+					f"AlertLogItem '{name}' already exists in '{parent._name}'.", item=parent._children[name]
+				)
 
 			parent._children[name] = self
 
@@ -159,9 +248,14 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 					ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
 					raise ex
 				elif child._name in self._children:
-					raise DuplicateItemException(f"AlertLogItem '{child._name}' already exists in '{self._name}'.")
+					raise DuplicateAlertLogItemError(
+						f"AlertLogItem '{child._name}' already exists in '{self._name}'.", item=self._children[child._name]
+					)
 				elif child._parent is not None:
-					raise AlertLogException(f"AlertLogItem '{child._name}' is already part of another AlertLog hierarchy ({child._parent._name}).")
+					raise AlreadyInAlertLogError(
+						f"AlertLogItem '{child._name}' is already part of another AlertLog hierarchy ({child._parent._name}).",
+						item=child
+					)
 
 				self._children[child._name] = child
 				child._parent = self
@@ -198,7 +292,9 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 				raise ex
 			elif self._name in value._children:
-				raise DuplicateItemException(f"AlertLogItem '{self._name}' already exists in '{value._name}'.")
+				raise DuplicateAlertLogItemError(
+					f"AlertLogItem '{self._name}' already exists in '{value._name}'.", item=value._children[self._name]
+				)
 
 			value._children[self._name] = self
 
@@ -397,7 +493,7 @@ class Document(AlertLogItem, Settings):
 
 	_path:                   Path                       #: Path to the YAML file.
 	_yamlDocument:           Nullable[YAML]             #: Internal YAML document instance.
-	_version:                Nullable[SemanticVersion]  #: YAML data structure version.
+	_version:                Nullable[FormatVersion]    #: YAML data structure version.
 
 	_analysisDuration:        Nullable[timedelta]       #: YAML file analysis duration in seconds.
 	_modelConversionDuration: Nullable[timedelta]       #: Data structure conversion duration in seconds.
@@ -440,7 +536,7 @@ class Document(AlertLogItem, Settings):
 		:returns: The YAML file analysis duration.
 		"""
 		if self._analysisDuration is None:
-			raise AlertLogException(f"Document '{self._path}' was not analyzed.")
+			raise AlertLogError(f"Document '{self._path}' was not analyzed.")
 
 		return self._analysisDuration
 
@@ -452,7 +548,7 @@ class Document(AlertLogItem, Settings):
 		:returns: The data structure conversion duration.
 		"""
 		if self._modelConversionDuration is None:
-			raise AlertLogException(f"Document '{self._path}' was not converted.")
+			raise AlertLogError(f"Document '{self._path}' was not converted.")
 
 		return self._modelConversionDuration
 
@@ -460,11 +556,11 @@ class Document(AlertLogItem, Settings):
 		"""
 		Analyze the YAML file (specified by :attr:`_path`) and store the YAML document in :attr:`_yamlDocument`.
 
-		:raises AlertLogException: If YAML file doesn't exist.
-		:raises AlertLogException: If YAML file can't be opened.
+		:raises AlertLogError: If YAML file doesn't exist.
+		:raises AlertLogError: If YAML file can't be opened.
 		"""
 		if not self._path.exists():
-			raise AlertLogException(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
+			raise AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
 				from FileNotFoundError(f"File '{self._path}' not found.")
 
 		with Stopwatch() as sw:
@@ -472,7 +568,7 @@ class Document(AlertLogItem, Settings):
 				yamlReader = YAML()
 				self._yamlDocument = yamlReader.load(self._path)
 			except Exception as ex:
-				raise AlertLogException(f"Couldn't open '{self._path}'.") from ex
+				raise AlertLogError(f"Couldn't open '{self._path}'.") from ex
 
 		self._analysisDuration = sw.Duration
 
@@ -480,18 +576,25 @@ class Document(AlertLogItem, Settings):
 		"""
 		Convert the YAML data structure to a hierarchy of :class:`AlertLogItem` instances.
 
-		:raises AlertLogException: If YAML file was not analyzed.
+		:raises AlertLogError: If YAML file was not analyzed.
 		"""
 		if self._yamlDocument is None:
-			ex = AlertLogException(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
+			ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
 			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
-			self._version = SemanticVersion.Parse(self._yamlDocument["Version"])
-			if not (self._version >> "0.1"):
-				ex = AlertLogException(f"Unsupported YAML data structure version {self._version} for file '{self._path}'.")
-				ex.add_note("Supported versions are: 1.0")
+			version = self._yamlDocument.get("Version", None)
+			try:
+				self._version = FormatVersion.Parse(version)
+			except (TypeError, ValueError) as cause:
+				ex = AlertLogError(f"Unsupported YAML data structure version '{version}' for file '{self._path}'.")
+				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
+				raise ex from cause
+
+			if self._version is None:
+				ex = AlertLogError(f"No YAML data structure version in file '{self._path}'.")
+				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
 				raise ex
 
 			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
@@ -513,7 +616,7 @@ class Document(AlertLogItem, Settings):
 		if value is None:
 			return ()
 		elif not isinstance(value, CommentedSeq):
-			ex = AlertLogException(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
+			ex = AlertLogError(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
 			ex.add_note(f"Found type {value.__class__.__name__} at line {node._yaml_line_col.data[fieldName][0] + 1}.")
 			raise ex
 
@@ -531,7 +634,7 @@ class Document(AlertLogItem, Settings):
 		if value is None:
 			return {}
 		elif not isinstance(value, CommentedMap):
-			ex = AlertLogException(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
+			ex = AlertLogError(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
 			ex.add_note(f"Type mismatch found for line {node._yaml_line_col.data[fieldName][0] + 1}.")
 			raise ex
 		return value
@@ -546,7 +649,7 @@ class Document(AlertLogItem, Settings):
 			raise newEx from ex
 
 		if not isinstance(value, str):
-			raise AlertLogException(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
+			raise AlertLogError(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
 
 		return value
 
@@ -560,7 +663,7 @@ class Document(AlertLogItem, Settings):
 			raise newEx from ex
 
 		if not isinstance(value, int):
-			raise AlertLogException(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
+			raise AlertLogError(f"Field '{fieldName}' is not of type int.")  # TODO: from TypeError??
 
 		return value
 
