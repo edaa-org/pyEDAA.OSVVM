@@ -168,14 +168,17 @@ class ModelSettings(metaclass=ExtendedType, slots=True):
 		:param isRequirement:   Whether the model is a requirement.
 		:param totalCount:      The hits counted toward the scaled *at least* counts.
 		:param totalGoal:       The sum of the scaled *at least* counts.
-		:raises TypeError:      If parameter ``coverageWeight``, ``totalCount`` or ``totalGoal`` isn't of type
-		                        :class:`int`.
-		:raises TypeError:      If parameter ``goal`` or ``threshold`` isn't of type :class:`float`.
+		:raises TypeError:      If parameter ``coverageWeight`` isn't of type :class:`int`.
+		:raises TypeError:      If parameter ``totalCount`` isn't of type :class:`int`.
+		:raises TypeError:      If parameter ``totalGoal`` isn't of type :class:`int`.
+		:raises TypeError:      If parameter ``goal`` isn't of type :class:`float`.
+		:raises TypeError:      If parameter ``threshold`` isn't of type :class:`float`.
 		:raises TypeError:      If parameter ``weightMode`` isn't of type :class:`WeightMode`.
 		:raises TypeError:      If parameter ``seeds`` isn't a tuple of two :class:`int`.
 		:raises TypeError:      If parameter ``countMode`` isn't of type :class:`CountMode`.
 		:raises TypeError:      If parameter ``illegalMode`` isn't of type :class:`IllegalMode`.
-		:raises TypeError:      If parameter ``thresholdEnable`` or ``isRequirement`` isn't of type :class:`bool`.
+		:raises TypeError:      If parameter ``thresholdEnable`` isn't of type :class:`bool`.
+		:raises TypeError:      If parameter ``isRequirement`` isn't of type :class:`bool`.
 		"""
 		for parameterName, value in (
 			("coverageWeight", coverageWeight),
@@ -457,9 +460,11 @@ class Bin(Element["CoverageModel"]):
 		:raises TypeError:       If parameter ``parent`` isn't of type :class:`CoverageModel`.
 		:raises TypeError:       If parameter ``name`` isn't of type :class:`str`.
 		:raises TypeError:       If parameter ``binType`` isn't of type :class:`BinType`.
-		:raises TypeError:       If parameter ``ranges`` isn't iterable, or contains an element not of type
+		:raises TypeError:       If parameter ``ranges`` isn't iterable.
+		:raises TypeError:       If an element of parameter ``ranges`` isn't of type
 		                         :class:`~pyEDAA.Reports.FunctionalCoverage.ValueRange`.
-		:raises TypeError:       If parameter ``count`` or ``atLeast`` isn't of type :class:`int`.
+		:raises TypeError:       If parameter ``count`` isn't of type :class:`int`.
+		:raises TypeError:       If parameter ``atLeast`` isn't of type :class:`int`.
 		:raises TypeError:       If parameter ``percentCoverage`` isn't of type :class:`float`.
 		:raises CoverageError:   If parameter ``ranges`` has not one range per dimension of the coverage model.
 		"""
