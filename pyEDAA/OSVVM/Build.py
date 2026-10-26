@@ -206,7 +206,8 @@ class Testcase(ut_Testcase):
 		:param functionalCoverage:      Optional, functional coverage in range 0.0..1.0 (``FunctionalCoverage``).
 		:param keyValuePairs:           Optional, mapping of key-value pairs to initialize the test case with.
 		:param parent:                  Optional, reference to the parent test suite.
-		:raises TypeError:              If parameter 'testName' or 'vhdlName' is not of type :class:`str`.
+		:raises TypeError:              If parameter 'testName' is not of type :class:`str`.
+		:raises TypeError:              If parameter 'vhdlName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
 		:raises TypeError:              If parameter 'totalErrorCount' is not of type :class:`int`.
 		:raises TypeError:              If a parameter of the disabled alert counts or of the requirements is not of type
@@ -226,7 +227,10 @@ class Testcase(ut_Testcase):
 			parent=parent
 		)
 
-		for parameterName, text in (("testName", testName), ("vhdlName", vhdlName)):
+		for parameterName, text in (
+			("testName", testName),
+			("vhdlName", vhdlName)
+		):
 			if text is not None and not isinstance(text, str):
 				ex = TypeError(f"Parameter '{parameterName}' is not of type 'str'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(text)}'.")
