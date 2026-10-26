@@ -50,6 +50,7 @@ from typing   import NoReturn, Optional as Nullable, ClassVar
 
 from argparse import RawDescriptionHelpFormatter, Namespace
 from textwrap import dedent
+from types    import ModuleType
 
 from pyTooling.Decorators                     import export
 from pyTooling.Exceptions                     import ExceptionBase
@@ -58,6 +59,7 @@ from pyTooling.Attributes.ArgParse.Argument   import StringArgument
 from pyTooling.Attributes.ArgParse.Flag       import FlagArgument
 from pyTooling.TerminalUI                     import TerminalApplication
 
+from pyEDAA                                   import OSVVM
 from pyEDAA.OSVVM                             import OSVVMException
 from pyEDAA.OSVVM.CLI.Project                 import ProjectHandlers
 
@@ -66,7 +68,8 @@ from pyEDAA.OSVVM.CLI.Project                 import ProjectHandlers
 class Application(TerminalApplication, ProjectHandlers, ArgParseHelperMixin):
 	"""Program class to implement the command line interface (CLI) using commands and options."""
 
-	HEADLINE: ClassVar[str] = "OSVVM Service Program"  #: Headline of the application, printed by :meth:`_PrintHeadline`.
+	HEADLINE:      ClassVar[str]        = "OSVVM Service Program"  #: Headline printed by :meth:`_PrintHeadline`.
+	DUNDER_MODULE: ClassVar[ModuleType] = OSVVM                    #: Package with the dunder variables.
 
 	def __init__(self) -> None:
 		super().__init__()
@@ -118,10 +121,8 @@ class Application(TerminalApplication, ProjectHandlers, ArgParseHelperMixin):
 	@CommandHandler("version", help="Display version information.", description="Display version information.")
 	def HandleVersion(self, _: Namespace) -> None:
 		"""Handle program calls with command ``version``."""
-		import pyEDAA.OSVVM as DunderModule
-
 		self._PrintHeadline()
-		super()._PrintVersion(DunderModule, DunderModule.__name__)
+		super()._PrintVersion("pyEDAA.OSVVM")
 
 
 @export
@@ -152,7 +153,7 @@ def main() -> NoReturn:
 			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.FOREGROUND))
 
 	except ExceptionBase as ex:
-		program.printExceptionBase(ex)
+		program.PrintExceptionBase(ex)
 	except NotImplementedError as ex:
 		program.PrintNotImplementedError(ex)
 	except Exception as ex:
