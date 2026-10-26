@@ -1,0 +1,115 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://edaa-org.github.io/pyEDAA.OSVVM/Schemas/OSVVM-BuildSummary-0.1.schema.json",
+	"title": "OSVVM build summary, format version 0.1",
+	"description": "The build summary '<build>.yml' OSVVM writes per build. Derived from OSVVM's writers 'OsvvmScriptsCreateYamlReports.tcl' (Tcl) and 'ReportPkg.vhd', 'AlertLogPkg.vhd' (VHDL), and OSVVM's reader 'ReportBuildYaml2Dict.tcl'. Timestamps are ISO 8601; the reader converts unquoted YAML timestamps to strings before validation.",
+	"type": "object",
+	"required": ["Version", "Date", "Name", "BuildInfo", "OsvvmSettingsInfo"],
+	"properties": {
+		"Version":           {"description": "Version of the format.", "const": "0.1"},
+		"Date":              {"description": "Time OSVVM started to write the file.", "type": "string", "format": "date-time"},
+		"Name":              {"description": "Name of the build.", "type": "string", "minLength": 1},
+		"BuildInfo":         {"$ref": "#/$defs/BuildInfo"},
+		"OsvvmSettingsInfo": {"$ref": "#/$defs/OsvvmSettingsInfo"},
+		"TestSuites": {
+			"description": "The build's test suites; absent if the build simulated no test.",
+			"type": "array",
+			"items": {"$ref": "#/$defs/TestSuite"}
+		}
+	},
+	"additionalProperties": false,
+	"$defs": {
+		"AlertCount": {
+			"description": "Numbers of failures, errors and warnings (OSVVM's AlertCountType).",
+			"type": "object",
+			"required": ["Failure", "Error", "Warning"],
+			"properties": {
+				"Failure": {"type": "integer"},
+				"Error":   {"type": "integer"},
+				"Warning": {"type": "integer"}
+			},
+			"additionalProperties": false
+		},
+		"Status": {
+			"description": "Status of a test case: written by AlertLogPkg's GetTestResultStatus or, for SKIPPED and ANALYZE_FAILED, by OSVVM's scripts.",
+			"enum": ["PASSED", "FAILED", "SKIPPED", "ANALYZE_FAILED", "STOPLIMIT", "TIMEOUT", "MANUALCHECKS", "NOCHECKS"]
+		},
+		"Results": {
+			"description": "A test case's results. 'ExpectedCount' since OSVVM 2025.06.",
+			"type": "object",
+			"required": ["TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal", "DisabledAlertCount"],
+			"properties": {
+				"TotalErrors":        {"type": "integer"},
+				"AlertCount":         {"$ref": "#/$defs/AlertCount"},
+				"PassedCount":        {"type": "integer", "minimum": 0},
+				"AffirmCount":        {"type": "integer", "minimum": 0},
+				"RequirementsPassed": {"type": "integer", "minimum": 0},
+				"RequirementsGoal":   {"type": "integer", "minimum": 0},
+				"DisabledAlertCount": {"$ref": "#/$defs/AlertCount"},
+				"ExpectedCount":      {"$ref": "#/$defs/AlertCount"}
+			},
+			"additionalProperties": false
+		},
+		"TestCase": {
+			"description": "A test case. A skipped one, or one that failed to analyze, has 'Reason' and no 'TestCaseFileName'; a simulation without results has no 'Status' and no 'Results'.",
+			"type": "object",
+			"required": ["TestCaseName"],
+			"properties": {
+				"TestCaseName":       {"description": "Name of the test.", "type": "string", "minLength": 1},
+				"Name":               {"description": "Name of the test, as its VHDL code states it.", "type": "string"},
+				"Status":             {"$ref": "#/$defs/Status"},
+				"Results":            {"oneOf": [{"$ref": "#/$defs/Results"}, {"type": "null"}]},
+				"Reason":             {"description": "Reason of a skipped test case, or of a failed analysis.", "type": "string"},
+				"FunctionalCoverage": {"description": "Functional coverage in percent; empty without coverage model.", "oneOf": [{"type": "number", "minimum": 0, "maximum": 100}, {"const": ""}]},
+				"SimulationTime":     {"description": "Simulated time, as VHDL's to_string(NOW) writes it.", "type": "string", "pattern": "^[0-9]+ (fs|ps|ns|us|ms|sec|min|hr)$"},
+				"TestCaseFileName":   {"description": "Base name of the test case's report files: the test's name extended by the generics' values.", "type": "string", "minLength": 1},
+				"Generics":           {"type": ["object", "null"], "additionalProperties": {"type": "string"}},
+				"ElapsedTime":        {"description": "Duration of the simulation in seconds.", "type": "number", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"TestSuite": {
+			"description": "A test suite and its test cases.",
+			"type": "object",
+			"required": ["Name", "TestCases"],
+			"properties": {
+				"Name":        {"type": "string", "minLength": 1},
+				"TestCases":   {"type": ["array", "null"], "items": {"$ref": "#/$defs/TestCase"}},
+				"ElapsedTime": {"description": "Duration of the test suite's simulations in seconds.", "type": "number", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"BuildInfo": {
+			"description": "Information about the build.",
+			"type": "object",
+			"required": ["StartTime", "FinishTime", "ElapsedTime", "Simulator", "SimulatorVersion", "OsvvmVersion", "BuildErrorCode", "AnalyzeErrorCount", "SimulateErrorCount"],
+			"properties": {
+				"StartTime":          {"type": "string", "format": "date-time"},
+				"FinishTime":         {"type": "string", "format": "date-time"},
+				"ElapsedTime":        {"description": "Duration of the build in seconds.", "type": "number", "minimum": 0},
+				"Simulator":          {"description": "Name of the simulator, followed by its arguments, if any.", "type": "string"},
+				"SimulatorVersion":   {"type": "string"},
+				"OsvvmVersion":       {"description": "OSVVM's version YYYY.MM, optionally followed by a revision letter.", "type": "string", "pattern": "^[0-9]{4}\\.[0-9]{1,2}[a-z]?$"},
+				"BuildErrorCode":     {"type": "integer"},
+				"AnalyzeErrorCount":  {"type": "integer", "minimum": 0},
+				"SimulateErrorCount": {"type": "integer", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"OsvvmSettingsInfo": {
+			"description": "OSVVM's settings: where it put the build's reports and logs. An empty string means OSVVM wrote no such file.",
+			"type": "object",
+			"required": ["ReportsSubdirectory", "SimulationLogFile", "SimulationHtmlLogFile", "RequirementsSubdirectory", "CoverageSubdirectory", "Report2CssFiles", "Report2PngFile"],
+			"properties": {
+				"ReportsSubdirectory":      {"type": "string"},
+				"SimulationLogFile":        {"type": "string"},
+				"SimulationHtmlLogFile":    {"type": "string"},
+				"RequirementsSubdirectory": {"type": "string"},
+				"CoverageSubdirectory":     {"description": "The build's code coverage report file.", "type": "string"},
+				"Report2CssFiles":          {"oneOf": [{"type": "array", "items": {"type": "string"}}, {"const": ""}]},
+				"Report2PngFile":           {"type": "string"}
+			},
+			"additionalProperties": false
+		}
+	}
+}

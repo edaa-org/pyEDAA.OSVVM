@@ -1,0 +1,54 @@
+# Hand-written sample, not an OSVVM output: test cases as OSVVM 2026.01 writes them for 'SkipTest'
+# (SkipTestBuildYaml), a failed analysis (AnalyzeFailedBuildYaml), a simulation without results, and a failed test.
+Version: "0.1"
+Date: 2026-02-22T20:21:18+01:00
+TestSuites: 
+  - Name: Demo
+    TestCases:
+      - TestCaseName: TbDemo_Skipped
+        Name: TbDemo_Skipped
+        Status: SKIPPED
+        Results: null
+        Reason: "Not supported by NVC"
+        ElapsedTime: 0
+      - TestCaseName: TbDemo_AnalyzeFailed
+        Name: TbDemo_AnalyzeFailed
+        Status: ANALYZE_FAILED
+        Results: null
+        Reason: "Analyze failed for TbDemo_AnalyzeFailed.vhd"
+        ElapsedTime: 0
+      - TestCaseName: "TbDemo_Crashed"
+        TestCaseFileName: "TbDemo_Crashed"
+        Generics:           null
+        ElapsedTime: 0.012
+      - TestCaseName: "TbDemo_Failed"
+        FunctionalCoverage: 43.75
+        SimulationTime: "125 ns"
+        Name: "TbDemo_Failed"
+        Status: FAILED
+        Results: {TotalErrors: 3, AlertCount: {Failure: 0, Error: 2, Warning: 1}, PassedCount: 7, AffirmCount: 9, RequirementsPassed: 1, RequirementsGoal: 2, DisabledAlertCount: {Failure: 0, Error: 1, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}}
+        TestCaseFileName: "TbDemo_Failed"
+        Generics:           null
+        ElapsedTime: 0.250
+    ElapsedTime: 0.262
+  - Name: Empty
+    TestCases:
+Name:     "Demo"
+BuildInfo:
+  StartTime:            2026-02-22T20:21:18+01:00
+  FinishTime:           2026-02-22T20:21:19+01:00
+  ElapsedTime:              0.731
+  Simulator:            "NVC"
+  SimulatorVersion:     "1.19.2"
+  OsvvmVersion:         "2025.06a"
+  BuildErrorCode:       0
+  AnalyzeErrorCount:    1
+  SimulateErrorCount:   1
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Demo.log"
+  SimulationHtmlLogFile: ""
+  RequirementsSubdirectory: "reports"
+  CoverageSubdirectory: ""
+  Report2CssFiles:            ""
+  Report2PngFile:  "reports/OsvvmLogo.png"

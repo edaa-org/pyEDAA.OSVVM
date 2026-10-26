@@ -63,7 +63,8 @@ setup(
 		dataFiles={
 			packageName: [
 				"py.typed",
-				"static/*.css"
+				"static/*.css",
+				"Resources/*.schema.json"
 			]
 		}
 	)
