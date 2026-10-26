@@ -43,14 +43,12 @@ from pyVHDLModel                     import VHDLVersion
 
 from pyEDAA.OSVVM                    import OSVVMException
 from pyEDAA.OSVVM.Project            import Context, osvvmContext, Build, Project
-from pyEDAA.OSVVM.Project.Procedures import noop, NoNullRangeWarning
-from pyEDAA.OSVVM.Project.Procedures import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
-from pyEDAA.OSVVM.Project.Procedures import build, BuildName, include, library, analyze, simulate, generic
-from pyEDAA.OSVVM.Project.Procedures import TestSuite, TestName, RunTest
-from pyEDAA.OSVVM.Project.Procedures import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
-from pyEDAA.OSVVM.Project.Procedures import SetVHDLVersion, GetVHDLVersion
-from pyEDAA.OSVVM.Project.Procedures import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
-from pyEDAA.OSVVM.Project.Procedures import ConstraintFile, ScopeToRef, ScopeToCell
+from pyEDAA.OSVVM.Project.Procedures import noop, NoNullRangeWarning, FileExists, DirectoryExists, \
+                                            FindOsvvmSettingsDirectory, build, BuildName, include, library, analyze, \
+                                            simulate, generic, TestSuite, TestName, RunTest, ChangeWorkingDirectory, \
+                                            CreateOsvvmScriptSettingsPkg, SetVHDLVersion, GetVHDLVersion, \
+                                            SetCoverageAnalyzeEnable, SetCoverageSimulateEnable, ConstraintFile, \
+                                            ScopeToRef, ScopeToCell
 
 
 @export

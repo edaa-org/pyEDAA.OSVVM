@@ -56,8 +56,7 @@ from pyTooling.Decorators  import export
 from pyTooling.Common      import readResourceFile
 from pyTooling.Sphinx      import ReportExtensionError
 
-from pyEDAA.OSVVM          import __version__
-from pyEDAA.OSVVM          import static as ResourcePackage
+from pyEDAA.OSVVM          import __version__, static as ResourcePackage
 
 @export
 class OSVVMDomain(Domain):
@@ -103,8 +102,6 @@ class OSVVMDomain(Domain):
 	indices = [
 		# LibraryIndex,
 	]  #: A list of all indices in this domain.
-
-	from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
 
 	configValues: Dict[str, Tuple[Any, str, Any]] = {
 		**BuildSummary.configValues,

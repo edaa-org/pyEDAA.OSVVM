@@ -57,9 +57,9 @@ from pyTooling.Common      import getFullyQualifiedName
 from pyVHDLModel           import VHDLVersion
 
 from pyEDAA.OSVVM          import OSVVMException
-from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue, ConstraintFile as OSVVM_ConstraintFile
-from pyEDAA.OSVVM.Project  import XDCConstraintFile, ScopeToRef as OSVVM_ScopeToRef, ScopeToCell as OSVVM_ScopeToCell
-from pyEDAA.OSVVM.Project  import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
+from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue, ConstraintFile as OSVVM_ConstraintFile, \
+                                  XDCConstraintFile, ScopeToRef as OSVVM_ScopeToRef, ScopeToCell as OSVVM_ScopeToCell, \
+                                  BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
 @export

@@ -41,9 +41,8 @@ from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 
 from pyEDAA.Reports.Unittesting import UnittestError, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
-                                       TestsuiteKind
-from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
-from pyEDAA.Reports.Unittesting import Testcase as ut_Testcase
+                                       TestsuiteKind, TestsuiteSummary as ut_TestsuiteSummary, \
+                                       Testsuite as ut_Testsuite, Testcase as ut_Testcase
 
 
 @export

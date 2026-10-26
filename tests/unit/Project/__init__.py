@@ -35,9 +35,8 @@ from pyTooling.Common     import firstPair
 from pyTooling.Testing    import Testcase as py_Testcase
 from pyVHDLModel          import VHDLVersion
 
-from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary
-from pyEDAA.OSVVM.Project import GenericValue, Testcase, Testsuite
-from pyEDAA.OSVVM.Project import Context, Project, Build
+from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary, GenericValue, Testcase, Testsuite, Context, Project, \
+                                 Build
 
 
 if __name__ == "__main__": # pragma: no cover
