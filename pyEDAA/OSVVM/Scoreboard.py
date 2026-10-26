@@ -144,12 +144,22 @@ class Scoreboard(metaclass=ExtendedType, slots=True):
 		:param fifoCount:          Optional, number of items left in the scoreboard. Default: ``0``.
 		:param parent:             Optional, the document the scoreboard belongs to; the scoreboard is appended to its
 		                           scoreboards. Default: ``None``.
-		:raises ValueError:        If parameter ``name`` or ``alertLogParentName`` is ``None``.
-		:raises TypeError:         If parameter ``name`` or ``alertLogParentName`` isn't of type :class:`str`.
-		:raises ValueError:        If parameter ``itemCount``, ``errorCount``, ``checkedItemCount``, ``poppedItemCount``,
-		                           ``droppedItemCount`` or ``fifoCount`` is ``None``.
-		:raises TypeError:         If parameter ``itemCount``, ``errorCount``, ``checkedItemCount``, ``poppedItemCount``,
-		                           ``droppedItemCount`` or ``fifoCount`` isn't of type :class:`int`.
+		:raises ValueError:        If parameter ``name`` is ``None``.
+		:raises ValueError:        If parameter ``alertLogParentName`` is ``None``.
+		:raises TypeError:         If parameter ``name`` isn't of type :class:`str`.
+		:raises TypeError:         If parameter ``alertLogParentName`` isn't of type :class:`str`.
+		:raises ValueError:        If parameter ``itemCount`` is ``None``.
+		:raises ValueError:        If parameter ``errorCount`` is ``None``.
+		:raises ValueError:        If parameter ``checkedItemCount`` is ``None``.
+		:raises ValueError:        If parameter ``poppedItemCount`` is ``None``.
+		:raises ValueError:        If parameter ``droppedItemCount`` is ``None``.
+		:raises ValueError:        If parameter ``fifoCount`` is ``None``.
+		:raises TypeError:         If parameter ``itemCount`` isn't of type :class:`int`.
+		:raises TypeError:         If parameter ``errorCount`` isn't of type :class:`int`.
+		:raises TypeError:         If parameter ``checkedItemCount`` isn't of type :class:`int`.
+		:raises TypeError:         If parameter ``poppedItemCount`` isn't of type :class:`int`.
+		:raises TypeError:         If parameter ``droppedItemCount`` isn't of type :class:`int`.
+		:raises TypeError:         If parameter ``fifoCount`` isn't of type :class:`int`.
 		:raises TypeError:         If parameter ``parent`` isn't of type :class:`Document`.
 		"""
 		for parameterName, text in (
