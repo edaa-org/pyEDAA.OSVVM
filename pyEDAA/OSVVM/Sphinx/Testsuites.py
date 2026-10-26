@@ -54,15 +54,20 @@ chosen by option ``:columns:`` from :data:`COLUMNS`.
 """
 from __future__                      import annotations
 
+from os.path                         import relpath
 from pathlib                         import Path
 from typing                          import TYPE_CHECKING, Any, Callable, ClassVar, Optional as Nullable, TypedDict
 
 from docutils                        import nodes
 from docutils.parsers.rst.directives import flag
+from sphinx                          import addnodes
 from sphinx.util.logging             import getLogger
 
+from pyTooling.Common                import getTypeName
 from pyTooling.Decorators            import export
-from pyTooling.Sphinx                import ReportExtensionError, strip, stripAndNormalize
+from pyTooling.Sphinx                import BaseDirective, ReportExtensionError, SphinxExtensionError, strip, \
+                                            stripAndNormalize
+from pyTooling.Sphinx.Pages          import ReportPages
 from pyTooling.Sphinx.Unittest       import Column, ColumnGroup, ShowTestcases, UnittestSummaryBase
 from pyTooling.Warning               import WarningCollector
 
@@ -251,6 +256,19 @@ class BuildSummary(UnittestSummaryBase):
 			ex.add_note(f"Testcases: {', '.join(testsuite._testcases)}")
 			raise ex from cause
 
+	def _Pages(self) -> Nullable[ReportPages[Any]]:
+		"""
+		Return the pages of the build summary, if it was declared with the key ``pages``.
+
+		:returns: The build summary's pages, or ``None`` if it has none.
+		"""
+		from pyEDAA.OSVVM.Sphinx.Pages import BuildReportPages
+
+		if not BuildReportPages.HasPages(self._reportID):
+			return None
+
+		return BuildReportPages.GetPages(self._reportID)
+
 	def _TableClasses(self) -> list[str]:
 		"""
 		Return the CSS classes of the table: ``report-unittest-table``, ``osvvm-buildsummary-table``,
@@ -397,6 +415,94 @@ class BuildSummary(UnittestSummaryBase):
 		:returns:        The sum of disabled failures, errors and warnings.
 		"""
 		return testcase.DisabledFatalCount + testcase.DisabledErrorCount + testcase.DisabledWarningCount
+
+
+@export
+class BuildInformation(BaseDirective):
+	"""
+	The ``osvvm:build-information`` directive: the information about a build, as OSVVM's HTML build summary shows it.
+
+	A field per fact: the build's name and status, the testcases per status, the start and finish time, the elapsed
+	time, the simulator, OSVVM's version, the build's error code, the analysis and simulation errors, and links to the
+	build's simulation log, which Sphinx copies into the build as a download.
+	"""
+
+	directiveName: str = "build-information"  #: Name the directive is invoked by.
+
+	has_content =        False  #: A boolean; ``True`` if content is allowed.
+	required_arguments = 0      #: Number of required directive arguments.
+	optional_arguments = 0      #: Number of optional arguments.
+
+	option_spec: dict[str, Any] = {  # type: ignore[misc]
+		"class":    strip,
+		"reportid": stripAndNormalize
+	}  #: Mapping of option names to validator functions.
+
+	def run(self) -> list[nodes.Node]:
+		"""
+		Return the build's information as a field list, or the error message.
+
+		:returns: The field list, or a container holding the error message.
+		"""
+		container = nodes.container()
+
+		try:
+			cssClasses = self._ParseStringOption("class", "", r"(\w+)?( +\w+)*")
+			reportID = self._ParseStringOption("reportid")
+			build = BuildSummary.GetReport(reportID)
+		except SphinxExtensionError as ex:
+			message = f"Caught {getTypeName(ex)} when checking options for directive '{self.directiveName}'."
+			return self._internalError(container, __name__, message, ex)
+
+		fieldList = nodes.field_list(classes=["osvvm-build-information", *([] if cssClasses == "" else cssClasses.split())])
+		information = build.BuildInformation
+		version = information.OSVVMVersion
+		fields: list[tuple[str, str | list[nodes.Node]]] = [
+			("Build",            build.Name),
+			("Status",           f"{BuildSummary._ConvertTestsuiteStatusToSymbol(build.Status)} {build.Status.name}"),
+			("Testcases",        f"{build.TestcaseCount} - {build.Passed} passed, {build.Failed} failed, "
+			                     f"{build.Skipped} skipped"),
+			("Start Time",       f"{build.StartTime:%Y-%m-%d %H:%M:%S %Z}"),
+			("Finish Time",      "" if information.FinishTime is None else f"{information.FinishTime:%Y-%m-%d %H:%M:%S %Z}"),
+			("Elapsed Time",     BuildSummary._FormatTimedelta(build.TotalDuration)),
+			("Simulator",        f"{information.Simulator} {information.SimulatorVersion}"),
+			("OSVVM Version",    f"{version.Major}.{version.Minor:02}{version.Postfix}"),
+			("Build Error Code", f"{information.BuildErrorCode}"),
+			("Analyze Errors",   f"{information.AnalyzeErrorCount}"),
+			("Simulate Errors",  f"{information.SimulateErrorCount}"),
+		]
+		if len(log := self._LogLink(build)) > 0:
+			fields.append(("Log", log))
+
+		for name, value in fields:
+			content = [nodes.Text(value)] if isinstance(value, str) else value
+			body = nodes.field_body("", nodes.paragraph("", "", *content))
+			fieldList += nodes.field("", nodes.field_name(name, name), body)
+
+		return [fieldList]
+
+	def _LogLink(self, build: BuildSummaryDocument) -> list[nodes.Node]:
+		"""
+		Create the link to the build's simulation log, which Sphinx copies into the build as a download.
+
+		A log file the build summary names, but which doesn't exist, is logged as a warning.
+
+		:param build: The build summary.
+		:returns:     The link, or nothing if the build summary names no log file or the file doesn't exist.
+		"""
+		if (file := build.Settings.SimulationLogFile) is None:
+			return []
+		elif not (path := build.Path.parent / file).exists():
+			getLogger(__name__).warning(
+				f"Log file '{path}' of build '{build.Name}' doesn't exist.", location=self.get_location(), type="osvvm",
+				subtype="read"
+			)
+			return []
+
+		target = "/" + relpath(path, self.env.srcdir).replace("\\", "/")
+		return [addnodes.download_reference(
+			"", "", nodes.literal("log", "log"), reftarget=target, refdoc=self.env.docname, refexplicit=True
+		)]
 
 
 @export
