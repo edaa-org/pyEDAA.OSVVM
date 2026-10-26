@@ -162,13 +162,23 @@ class TestcaseSettings(metaclass=ExtendedType, slots=True):
 		:param scoreboardFiles:           Optional, scoreboard report per scoreboard package instance
 		                                  (``ScoreboardDict``).
 		:param transcriptFiles:           Optional, transcripts of the test case (``TranscriptFiles``).
-		:raises ValueError:               If parameter 'testName', 'testcaseFileName', 'testsuiteName', 'buildName' or
-		                                  'reportsTestsuiteDirectory' is None.
-		:raises TypeError:                If a name or parameter 'genericNames' is not of type :class:`str`.
-		:raises TypeError:                If parameter 'reportsTestsuiteDirectory', 'testcaseFile', 'alertLogFile',
-		                                  'functionalCoverageFile' or 'requirementsFile' is not of type
-		                                  :class:`~pathlib.Path`.
-		:raises TypeError:                If parameter 'generics' or 'scoreboardFiles' is not a mapping.
+		:raises ValueError:               If parameter 'testName' is None.
+		:raises ValueError:               If parameter 'testcaseFileName' is None.
+		:raises ValueError:               If parameter 'testsuiteName' is None.
+		:raises ValueError:               If parameter 'buildName' is None.
+		:raises ValueError:               If parameter 'reportsTestsuiteDirectory' is None.
+		:raises TypeError:                If parameter 'testName' is not of type :class:`str`.
+		:raises TypeError:                If parameter 'testcaseFileName' is not of type :class:`str`.
+		:raises TypeError:                If parameter 'testsuiteName' is not of type :class:`str`.
+		:raises TypeError:                If parameter 'buildName' is not of type :class:`str`.
+		:raises TypeError:                If parameter 'genericNames' is not of type :class:`str`.
+		:raises TypeError:                If parameter 'reportsTestsuiteDirectory' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:                If parameter 'testcaseFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:                If parameter 'alertLogFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:                If parameter 'functionalCoverageFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:                If parameter 'requirementsFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:                If parameter 'generics' is not a mapping.
+		:raises TypeError:                If parameter 'scoreboardFiles' is not a mapping.
 		:raises TypeError:                If a value of parameter 'scoreboardFiles' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:                If parameter 'transcriptFiles' is not iterable.
 		:raises TypeError:                If an element of parameter 'transcriptFiles' is not of type
@@ -207,7 +217,10 @@ class TestcaseSettings(metaclass=ExtendedType, slots=True):
 				ex.add_note(f"Got type '{getFullyQualifiedName(path)}'.")
 				raise ex
 
-		for parameterName, mapping in (("generics", generics), ("scoreboardFiles", scoreboardFiles)):
+		for parameterName, mapping in (
+			("generics",        generics),
+			("scoreboardFiles", scoreboardFiles)
+		):
 			if mapping is not None and not isinstance(mapping, Mapping):
 				ex = TypeError(f"Parameter '{parameterName}' is not a mapping.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(mapping)}'.")

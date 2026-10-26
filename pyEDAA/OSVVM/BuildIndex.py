@@ -167,13 +167,35 @@ class BuildEntry(metaclass=ExtendedType, slots=True):
 		:param toolVersion:        Version of the simulator (``ToolVersion``).
 		:param osvvmVersion:       Version of OSVVM (``OsvvmVersion``).
 		:param parent:             Optional, the build index the entry belongs to.
-		:raises ValueError:        If a parameter is None.
-		:raises TypeError:         If parameter 'name', 'toolName' or 'toolVersion' is not of type :class:`str`.
+		:raises ValueError:        If parameter 'name' is None.
+		:raises ValueError:        If parameter 'directory' is None.
+		:raises ValueError:        If parameter 'status' is None.
+		:raises ValueError:        If parameter 'passedCount' is None.
+		:raises ValueError:        If parameter 'failedCount' is None.
+		:raises ValueError:        If parameter 'skippedCount' is None.
+		:raises ValueError:        If parameter 'analyzeErrorCount' is None.
+		:raises ValueError:        If parameter 'simulateErrorCount' is None.
+		:raises ValueError:        If parameter 'buildErrorCode' is None.
+		:raises ValueError:        If parameter 'startTime' is None.
+		:raises ValueError:        If parameter 'finishTime' is None.
+		:raises ValueError:        If parameter 'elapsedTime' is None.
+		:raises ValueError:        If parameter 'toolName' is None.
+		:raises ValueError:        If parameter 'toolVersion' is None.
+		:raises ValueError:        If parameter 'osvvmVersion' is None.
+		:raises TypeError:         If parameter 'name' is not of type :class:`str`.
+		:raises TypeError:         If parameter 'toolName' is not of type :class:`str`.
+		:raises TypeError:         If parameter 'toolVersion' is not of type :class:`str`.
 		:raises ValueError:        If parameter 'name' is empty.
 		:raises TypeError:         If parameter 'directory' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:         If parameter 'status' is not of type :class:`BuildStatus`.
-		:raises TypeError:         If a count or the error code is not of type :class:`int`.
-		:raises TypeError:         If parameter 'startTime' or 'finishTime' is not of type :class:`~datetime.datetime`.
+		:raises TypeError:         If parameter 'passedCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'failedCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'skippedCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'analyzeErrorCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'simulateErrorCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'buildErrorCode' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'startTime' is not of type :class:`~datetime.datetime`.
+		:raises TypeError:         If parameter 'finishTime' is not of type :class:`~datetime.datetime`.
 		:raises TypeError:         If parameter 'elapsedTime' is not of type :class:`~datetime.timedelta`.
 		:raises TypeError:         If parameter 'osvvmVersion' is not of type
 		                           :class:`~pyTooling.Versioning.YearMonthVersion`.
