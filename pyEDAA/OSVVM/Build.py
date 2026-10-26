@@ -118,8 +118,8 @@ class Testcase(ut_Testcase):
 		:param failedAssertionCount:    Number of failed assertions within the test.
 		:param passedAssertionCount:    Number of passed assertions within the test.
 		:param requirementsCount:       Number of requirements within the test.
-		:param failedRequirementsCount: Number of failed requirements within the test.
 		:param passedRequirementsCount: Number of passed requirements within the test.
+		:param failedRequirementsCount: Number of failed requirements within the test.
 		:param warningCount:            Count of encountered warnings.
 		:param errorCount:              Count of encountered errors.
 		:param fatalCount:              Count of encountered fatal errors.
@@ -131,8 +131,8 @@ class Testcase(ut_Testcase):
 		:param expectedFatalCount:      Count of expected fatal errors.
 		:param keyValuePairs:           Mapping of key-value pairs to initialize the test case.
 		:param parent:                  Reference to the parent test suite.
-		:raises TypeError:              If parameter 'parent' is not a Testsuite.
 		:raises ValueError:             If parameter 'assertionCount' is not consistent.
+		:raises TypeError:              If parameter 'parent' is not a Testsuite.
 		"""
 		super().__init__(
 			name,

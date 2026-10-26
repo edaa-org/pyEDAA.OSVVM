@@ -366,9 +366,9 @@ class VHDLLibrary(Named["Build"]):
 		:param build:       Optional, parent reference to a :class:`Build`.
 		:raises TypeError:  When parameter 'name' is not of type string.
 		:raises ValueError: When parameter 'name' is empty.
-		:raises TypeError:  When parameter 'build' is not of type :class:`Build`.
 		:raises TypeError:  When parameter 'vhdlFiles' is not an iterable.
 		:raises TypeError:  When parameter 'vhdlFiles' contains elements not of type :class:`VHDLSourceFile`.
+		:raises TypeError:  When parameter 'build' is not of type :class:`Build`.
 		"""
 		if build is None:
 			super().__init__(name, None)
@@ -684,10 +684,10 @@ class Testcase(Named["Testsuite"]):
 		:param testsuite:    Optional, reference to the parent testsuite.
 		:raises TypeError:   When parameter 'name' is not of type string.
 		:raises ValueError:  When parameter 'name' is empty.
-		:raises TypeError:   When parameter 'testsuite' is not of type :class:`Testsuite`.
 		:raises TypeError:   When parameter 'toplevelName' is not of type string.
 		:raises TypeError:   When parameter 'generics' is not a mapping or iterable.
 		:raises TypeError:   When parameter 'generics' contains elements not of type :class:`GenericValue`.
+		:raises TypeError:   When parameter 'testsuite' is not of type :class:`Testsuite`.
 		"""
 		if testsuite is None:
 			super().__init__(name, None)
@@ -810,9 +810,9 @@ class Testsuite(Named["Build"]):
 		:param build:       Optional, reference to the parent build.
 		:raises TypeError:  When parameter 'name' is not of type string.
 		:raises ValueError: When parameter 'name' is empty.
-		:raises TypeError:  When parameter 'build' is not of type :class:`Build`.
 		:raises TypeError:  When parameter 'testcases' is not an iterable or mapping.
 		:raises TypeError:  When parameter 'testcases' contains an element not of type :class:`Testcase`.
+		:raises TypeError:  When parameter 'build' is not of type :class:`Build`.
 		"""
 		if build is None:
 			super().__init__(name, None)
@@ -945,11 +945,11 @@ class Build(Named["Project"]):
 		:param project:       Optional, reference to the parent project.
 		:raises TypeError:    When parameter 'name' is not of type string.
 		:raises ValueError:   When parameter 'name' is empty.
-		:raises TypeError:    When parameter 'project' is not of type :class:`Project`.
 		:raises TypeError:    When parameter 'vhdlLibraries' is not an iterable or mapping.
 		:raises TypeError:    When parameter 'vhdlLibraries' contains an element not of type :class:`VHDLLibrary`.
 		:raises TypeError:    When parameter 'testsuites' is not an iterable or mapping.
 		:raises TypeError:    When parameter 'testsuites' contains an element not of type :class:`Testsuites`.
+		:raises TypeError:    When parameter 'project' is not of type :class:`Project`.
 		"""
 		if project is None:
 			super().__init__(name, None)
