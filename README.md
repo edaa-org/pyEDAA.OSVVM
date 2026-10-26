@@ -125,8 +125,17 @@ print(f"Total errors: {doc.TotalErrorCount}")
 
 ## Scoreboard Reports
 
-> [!NOTE]  
-> *TBD*
+```python
+from pathlib import Path
+from pyEDAA.OSVVM.Scoreboard import Document as ScoreboardDocument
+
+path = Path("TbAxi4_TimeOut_sb_slv.yml")
+doc = ScoreboardDocument(path, analyzeAndConvert=True)
+
+print(f"{doc.TestcaseName} - {doc.Name}: {doc.ScoreboardCount} scoreboards")
+for sb in doc.IterateScoreboards(lambda sb: sb.ErrorCount > 0):
+	print(f"  {sb.AlertLogParentName}/{sb.Name}: {sb.ErrorCount} errors")
+```
 
 ## Functional Coverage Reports
 
