@@ -538,17 +538,24 @@ class BuildInformation(metaclass=ExtendedType, slots=True):
 		:param analyzeErrorCount:  Optional, number of analysis errors (``AnalyzeErrorCount``). Default: ``0``.
 		:param simulateErrorCount: Optional, number of simulation errors (``SimulateErrorCount``). Default: ``0``.
 		:param parent:             Optional, the build the information belongs to.
-		:raises ValueError:        If parameter 'simulator', 'simulatorVersion' or 'osvvmVersion' is None.
-		:raises TypeError:         If parameter 'simulator' or 'simulatorVersion' is not of type :class:`str`.
+		:raises ValueError:        If parameter 'simulator' is None.
+		:raises ValueError:        If parameter 'simulatorVersion' is None.
+		:raises ValueError:        If parameter 'osvvmVersion' is None.
+		:raises TypeError:         If parameter 'simulator' is not of type :class:`str`.
+		:raises TypeError:         If parameter 'simulatorVersion' is not of type :class:`str`.
 		:raises TypeError:         If parameter 'osvvmVersion' is not of type
 		                           :class:`~pyTooling.Versioning.YearMonthVersion`.
 		:raises TypeError:         If parameter 'finishTime' is not of type :class:`~datetime.datetime`.
-		:raises TypeError:         If parameter 'buildErrorCode', 'analyzeErrorCount' or 'simulateErrorCount' is not of type
-		                           :class:`int`.
+		:raises TypeError:         If parameter 'buildErrorCode' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'analyzeErrorCount' is not of type :class:`int`.
+		:raises TypeError:         If parameter 'simulateErrorCount' is not of type :class:`int`.
 		:raises TypeError:         If parameter 'parent' is not of type :class:`TestsuiteSummary`.
 		:raises BuildSummaryError: If parameter 'parent' has build information already.
 		"""
-		for parameterName, text in (("simulator", simulator), ("simulatorVersion", simulatorVersion)):
+		for parameterName, text in (
+			("simulator",        simulator),
+			("simulatorVersion", simulatorVersion)
+		):
 			if text is None:
 				raise ValueError(f"Parameter '{parameterName}' is None.")
 			elif not isinstance(text, str):
@@ -716,9 +723,11 @@ class Settings(metaclass=ExtendedType, slots=True):
 		:param parent:                   Optional, the build the settings belong to.
 		:raises ValueError:              If parameter 'reportsSubdirectory' is None.
 		:raises TypeError:               If parameter 'reportsSubdirectory' is not of type :class:`~pathlib.Path`.
-		:raises TypeError:               If parameter 'simulationLogFile', 'simulationHtmlLogFile',
-		                                 'requirementsSubdirectory', 'codeCoverageFile' or 'logoFile' is not of type
-		                                 :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'simulationLogFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'simulationHtmlLogFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'requirementsSubdirectory' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'codeCoverageFile' is not of type :class:`~pathlib.Path`.
+		:raises TypeError:               If parameter 'logoFile' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:               If parameter 'cssFiles' is not iterable.
 		:raises TypeError:               If an element of parameter 'cssFiles' is not of type :class:`~pathlib.Path`.
 		:raises TypeError:               If parameter 'parent' is not of type :class:`TestsuiteSummary`.
