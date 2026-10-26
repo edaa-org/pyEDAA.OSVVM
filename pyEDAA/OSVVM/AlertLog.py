@@ -253,9 +253,28 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		:raises TypeError:                  If parameter ``name`` isn't of type :class:`str`.
 		:raises ValueError:                 If parameter ``status`` is ``None``.
 		:raises TypeError:                  If parameter ``status`` isn't of type :class:`AlertLogStatus`.
-		:raises ValueError:                 If a count parameter (``totalErrorCount``, ``warningCount``, ...) is ``None``.
-		:raises TypeError:                  If a count parameter (``totalErrorCount``, ``warningCount``, ...) isn't of type
-		                                    :class:`int`.
+		:raises ValueError:                 If parameter ``totalErrorCount`` is ``None``.
+		:raises ValueError:                 If parameter ``warningCount`` is ``None``.
+		:raises ValueError:                 If parameter ``errorCount`` is ``None``.
+		:raises ValueError:                 If parameter ``failureCount`` is ``None``.
+		:raises ValueError:                 If parameter ``passedCount`` is ``None``.
+		:raises ValueError:                 If parameter ``affirmCount`` is ``None``.
+		:raises ValueError:                 If parameter ``passedRequirementsCount`` is ``None``.
+		:raises ValueError:                 If parameter ``requirementsGoalCount`` is ``None``.
+		:raises ValueError:                 If parameter ``disabledWarningCount`` is ``None``.
+		:raises ValueError:                 If parameter ``disabledErrorCount`` is ``None``.
+		:raises ValueError:                 If parameter ``disabledFailureCount`` is ``None``.
+		:raises TypeError:                  If parameter ``totalErrorCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``warningCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``errorCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``failureCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``passedCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``affirmCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``passedRequirementsCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``requirementsGoalCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``disabledWarningCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``disabledErrorCount`` isn't of type :class:`int`.
+		:raises TypeError:                  If parameter ``disabledFailureCount`` isn't of type :class:`int`.
 		:raises TypeError:                  If parameter ``children`` isn't iterable.
 		:raises TypeError:                  If parameter ``children`` contains an element not of type
 		                                    :class:`AlertLogItem`.
