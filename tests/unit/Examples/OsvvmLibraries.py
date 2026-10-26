@@ -147,7 +147,7 @@ class YAMLGeneratedByOSVVM(Testcase):
 			"UART": 11,
 			"Wishbone": 3,
 			"DpRam": 1,
-			"Ethernet": None,  # 6,
+			"Ethernet": 6,
 			"VideoBus": 1,
 			"Spi": 12
 		}
@@ -157,8 +157,7 @@ class YAMLGeneratedByOSVVM(Testcase):
 			self.assertIn(tsName, doc)
 
 			ts = doc[tsName]
-			if tcCount is not None:  # WORKAROUND: for testsuite 'Ethernet'
-				self.assertEqual(tcCount, len(ts.Testcases), tsName)
+			self.assertEqual(tcCount, len(ts.Testcases), tsName)
 
 	# 	for suite in doc:
 	# 		self.printTestsuite(suite)
