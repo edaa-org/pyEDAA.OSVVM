@@ -114,10 +114,10 @@ from pyEDAA.OSVVM.AlertLog import Document as AlertLogDocument
 path = Path("TbAxi4_BasicReadWrite_alerts.yml")
 doc = AlertLogDocument(path, analyzeAndConvert=True)
 
-print(f"{doc.Name}: {doc.AlertCountWarnings}/{doc.AlertCountErrors}/{doc.AlertCountFailures}")
-for item in doc:
-	print(f"  {item.Name:<19}: {item.AlertCountWarnings}/{item.AlertCountErrors}/{item.AlertCountFailures}")
-print(f"Total errors: {doc.TotalErrors}")
+print(f"{doc.Name}: {doc.WarningCount}/{doc.ErrorCount}/{doc.FailureCount}")
+for item in doc.Children.values():
+	print(f"  {item.Name:<19}: {item.WarningCount}/{item.ErrorCount}/{item.FailureCount}")
+print(f"Total errors: {doc.TotalErrorCount}")
 ```
 
 

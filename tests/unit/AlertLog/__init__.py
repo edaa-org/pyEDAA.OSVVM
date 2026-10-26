@@ -37,7 +37,7 @@ from ruamel.yaml           import YAML, CommentedMap
 from pyTooling.Testing     import Testcase
 
 from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
-                                  DuplicateAlertLogItemError, Settings
+                                  DuplicateAlertLogItemError, FormatVersion, Settings
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
@@ -178,6 +178,41 @@ class Instantiation(Testcase):
 
 		self.assertEqual("Parameter 'failOnWarning' is not of type 'bool'.", str(context.exception))
 
+	def test_Document(self) -> None:
+		path = DATA / "TbModelParameters_alerts.yml"
+		document = Document(path)
+
+		self.assertEqual(path, document.Path)
+		self.assertIsNone(document.Parent)
+		self.assertIsNone(document.Version)
+		self.assertIsNone(document.Settings)
+		self.assertIsNone(document.ExpectedWarningCount)
+		self.assertIsNone(document.ExpectedErrorCount)
+		self.assertIsNone(document.ExpectedFailureCount)
+		self.assertIsNone(document.ExternalWarningCount)
+		self.assertIsNone(document.ExternalErrorCount)
+		self.assertIsNone(document.ExternalFailureCount)
+		self.assertIsNone(document.AnalysisDuration)
+		self.assertIsNone(document.ModelConversionDuration)
+
+	def test_Document_Analyzed(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml")
+		document.Analyze()
+
+		self.assertGreater(document.AnalysisDuration, timedelta())
+		self.assertIsNone(document.ModelConversionDuration)
+
+	def test_Document_Path(self) -> None:
+		with self.assertRaises(ValueError) as context:
+			_ = Document(None)
+
+		self.assertEqual("Parameter 'filename' is None.", str(context.exception))
+
+		with self.assertRaises(TypeError) as context:
+			_ = Document("TbModelParameters_alerts.yml")
+
+		self.assertEqual("Parameter 'filename' is not of type 'Path'.", str(context.exception))
+
 
 class Hierarchy(Testcase):
 	def test_TopDown(self) -> None:
@@ -303,6 +338,14 @@ class Hierarchy(Testcase):
 
 		self.assertEqual("Parameter 'value' is not of type 'AlertLogItem'.", str(context.exception))
 
+	def test_Parent_Document(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml")
+
+		with self.assertRaises(TypeError) as context:
+			document.Parent = AlertLogItem("root")
+
+		self.assertEqual("A 'pyEDAA.OSVVM.AlertLog.Document' has no parent.", str(context.exception))
+
 	def test_Settings_Parent(self) -> None:
 		document = Document(DATA / "TbModelParameters_alerts.yml")
 		settings = Settings(0, 0, 0, True, True, True, parent=document)
@@ -385,48 +428,93 @@ class ItemParse(Testcase):
 
 
 class Parse(Testcase):
-	def test_Create(self) -> None:
-		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
-		document = Document(path)
-
-		self.assertEqual(path, document.Path)
-		with self.assertRaises(AlertLogError):
-			_ = document.AnalysisDuration
-
-		with self.assertRaises(AlertLogError):
-			_ = document.ModelConversionDuration
-
-	def test_Create_WithParse(self) -> None:
+	def test_Older(self) -> None:
+		"""The root's results of OSVVM before 2026.08 have no ``ExternalErrors``."""
 		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
 		document = Document(path, analyzeAndConvert=True)
 
-		self.assertEqual(path, document.Path)
+		self.assertIs(FormatVersion.Version0_1, document.Version)
 		self.assertEqual("TbAxi4_BasicReadWrite", document.Name)
 		self.assertIs(AlertLogStatus.Passed, document.Status)
+		self.assertEqual(0, document.ExpectedWarningCount)
+		self.assertEqual(0, document.ExpectedErrorCount)
+		self.assertEqual(0, document.ExpectedFailureCount)
+		self.assertIsNone(document.ExternalWarningCount)
+		self.assertIsNone(document.ExternalErrorCount)
+		self.assertIsNone(document.ExternalFailureCount)
 		self.assertEqual(5, document.ChildCount)
+		self.assertEqual(15, len(list(document.IterateItems())))
 		self.assertEqual(40, document.Children["Default"].PassedCount)
+		self.assertEqual(10, document.Children["manager_1"].Children["WriteResp SB"].AffirmCount)
 		self.assertGreater(document.AnalysisDuration, timedelta())
 		self.assertGreater(document.ModelConversionDuration, timedelta())
+
+	def test_ExpectedAlerts(self) -> None:
+		document = Document(DATA / "TbAxi4_TimeOut_alerts.yml", analyzeAndConvert=True)
+
+		self.assertEqual("TbAxi4_TimeOut", document.Name)
+		self.assertIs(AlertLogStatus.Passed, document.Status)
+		self.assertEqual(0, document.TotalErrorCount)
+		self.assertEqual(71, document.PassedCount)
+		self.assertEqual(75, document.AffirmCount)
+		self.assertEqual(0, document.ExpectedWarningCount)
+		self.assertEqual(4, document.ExpectedErrorCount)
+		self.assertEqual(20, document.ExpectedFailureCount)
+		self.assertEqual(0, document.ExternalWarningCount)
+		self.assertEqual(0, document.ExternalErrorCount)
+		self.assertEqual(0, document.ExternalFailureCount)
+		self.assertEqual(0, document.Settings.ExternalWarningCount)
+		self.assertEqual(-4, document.Settings.ExternalErrorCount)
+		self.assertEqual(-20, document.Settings.ExternalFailureCount)
+		self.assertTrue(document.Settings.FailOnDisabledErrors)
+		self.assertTrue(document.Settings.FailOnRequirementErrors)
+		self.assertTrue(document.Settings.FailOnWarning)
+
+		manager = document.Children["manager_1"]
+		self.assertIs(AlertLogStatus.Failed, manager.Status)
+		self.assertEqual(14, manager.TotalErrorCount)
+		self.assertEqual(0, manager.WarningCount)
+		self.assertEqual(4, manager.ErrorCount)
+		self.assertEqual(10, manager.FailureCount)
+		self.assertIs(document, manager.Parent)
+
+		failed = list(document.IterateItems(lambda item: item.Status is AlertLogStatus.Failed))
+		self.assertListEqual(
+			["subordinate_1", "No response", "manager_1", "No response", "WriteResp SB", "ReadResp SB"],
+			[item.Name for item in failed]
+		)
 
 	def test_TimeOut(self) -> None:
 		document = Document(DATA / "TbTimeOut_alerts.yml", analyzeAndConvert=True)
 
 		self.assertIs(AlertLogStatus.TimeOut, document.Status)
+		self.assertEqual(3, document.TotalErrorCount)
+		self.assertEqual(1, document.WarningCount)
+		self.assertEqual(1, document.ErrorCount)
+		self.assertEqual(1, document.FailureCount)
+		self.assertEqual(1, document.PassedRequirementsCount)
+		self.assertEqual(2, document.RequirementsGoalCount)
+		self.assertEqual(0, document.DisabledWarningCount)
+		self.assertEqual(2, document.DisabledErrorCount)
+		self.assertEqual(0, document.DisabledFailureCount)
 		self.assertFalse(document.Settings.FailOnDisabledErrors)
 		self.assertTrue(document.Settings.FailOnRequirementErrors)
 		self.assertFalse(document.Settings.FailOnWarning)
+		self.assertIs(AlertLogStatus.Failed, document.Children["Default"].Status)
 
-		default = document.Children["Default"]
-		self.assertIs(AlertLogStatus.Failed, default.Status)
-		self.assertEqual(3, default.TotalErrorCount)
-		self.assertEqual(1, default.WarningCount)
-		self.assertEqual(1, default.ErrorCount)
-		self.assertEqual(1, default.FailureCount)
-		self.assertEqual(1, default.PassedRequirementsCount)
-		self.assertEqual(2, default.RequirementsGoalCount)
-		self.assertEqual(0, default.DisabledWarningCount)
-		self.assertEqual(2, default.DisabledErrorCount)
-		self.assertEqual(0, default.DisabledFailureCount)
+	def test_ToTree(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml", analyzeAndConvert=True)
+
+		self.assertEqual(
+			(
+				"TbModelParameters: 0=0/0/0 60/60\n"
+				"├─VHDL Asserts: 0=0/0/0 0/0\n"
+				"├─Default: 0=0/0/0 0/0\n"
+				"├─OSVVM: 0=0/0/0 0/0\n"
+				"└─TB: 0=0/0/0 60/60\n"
+			),
+			document.ToTree().Render()
+		)
 
 	def test_ToTree_Format(self) -> None:
 		document = Document(DATA / "TbModelParameters_alerts.yml", analyzeAndConvert=True)
@@ -436,13 +524,114 @@ class Parse(Testcase):
 		self.assertEqual("TBMODELPARAMETERS\n├─VHDL ASSERTS\n├─DEFAULT\n├─OSVVM\n└─TB\n", tree.Render())
 
 	def test_UnknownKeys(self) -> None:
-		with self.assertRaises(AlertLogError) as context:
-			_ = Document(DATA / "UnknownKeys_alerts.yml", analyzeAndConvert=True)
+		path = DATA / "UnknownKeys_alerts.yml"
 
-		self.assertEqual("Unknown key 'FailOnVhdlAssertErrors' in settings at line 5.", str(context.exception))
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(
+			f"Validation error for OSVVM AlertLog YAML file '{path}' using JSON Schema 'OSVVM-AlertLog-0.1.schema.json'.",
+			str(context.exception)
+		)
+		self.assertListEqual(
+			[
+				"/ (line 1): Additional properties are not allowed ('Timestamp' was unexpected)",
+				"/Children/0 (line 8): Additional properties are not allowed ('ReportMode' was unexpected)",
+				"/Results (line 4): Additional properties are not allowed ('StopCount' was unexpected)",
+				"/Results/AlertCount (line 4): Additional properties are not allowed ('Note' was unexpected)",
+				"/Settings (line 5): Additional properties are not allowed ('FailOnVhdlAssertErrors' was unexpected)"
+			],
+			context.exception.__notes__
+		)
 
 	def test_MissingKey(self) -> None:
+		path = DATA / "MissingStatus_alerts.yml"
+
 		with self.assertRaises(AlertLogError) as context:
-			_ = Document(DATA / "MissingStatus_alerts.yml", analyzeAndConvert=True)
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertListEqual(["/Children/0 (line 7): 'Status' is a required property"], context.exception.__notes__)
+
+	def test_MissingKey_Unvalidated(self) -> None:
+		node = YAML().load(DATA.joinpath("MissingStatus_alerts.yml").read_text())["Children"][0]
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(node)
 
 		self.assertEqual("AlertLog item at line 7 has no key 'Status'.", str(context.exception))
+
+	def test_UnsupportedVersion(self) -> None:
+		path = DATA / "UnsupportedVersion_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(
+			f"OSVVM AlertLog YAML file '{path}' states unsupported format version '0.2'.", str(context.exception)
+		)
+		self.assertListEqual(
+			[
+				"Supported format versions: 0.1.",
+				"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported."
+			],
+			context.exception.__notes__
+		)
+
+	def test_OldVersion(self) -> None:
+		"""OSVVM 2025.06a and older wrote format version 1.0."""
+		path = DATA / "OldVersion_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(
+			f"OSVVM AlertLog YAML file '{path}' states unsupported format version '1.0'.", str(context.exception)
+		)
+		self.assertEqual(
+			"OSVVM restarted its YAML format versions at 0.1 with OSVVM 2026.01; files of older releases aren't supported.",
+			context.exception.__notes__[1]
+		)
+
+	def test_NoVersion(self) -> None:
+		path = DATA / "NoVersion_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(f"OSVVM AlertLog YAML file '{path}' states no format version.", str(context.exception))
+
+	def test_NoMapping(self) -> None:
+		path = DATA / "NoMapping_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(f"OSVVM AlertLog YAML file '{path}' is not a YAML mapping.", str(context.exception))
+
+	def test_SyntaxError(self) -> None:
+		path = DATA / "SyntaxError_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(f"YAML syntax error in OSVVM AlertLog YAML file '{path}'.", str(context.exception))
+
+	def test_FileNotFound(self) -> None:
+		path = DATA / "Missing_alerts.yml"
+
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(path, analyzeAndConvert=True)
+
+		self.assertEqual(f"OSVVM AlertLog YAML file '{path}' does not exist.", str(context.exception))
+		self.assertIsInstance(context.exception.__cause__, FileNotFoundError)
+
+	def test_ConvertBeforeAnalyze(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml")
+
+		with self.assertRaises(AlertLogError) as context:
+			document.Convert()
+
+		self.assertEqual(
+			f"OSVVM AlertLog YAML file '{document.Path}' needs to be read and analyzed by a YAML parser.",
+			str(context.exception)
+		)

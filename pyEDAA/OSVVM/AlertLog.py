@@ -28,14 +28,40 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-"""A data model for OSVVM's AlertLog YAML file format."""
+"""
+A data model for OSVVM's AlertLog YAML file format (:file:`<test>_alerts.yml`).
+
+At the end of a test, OSVVM's ``AlertLogPkg`` writes the test's AlertLog hierarchy by ``WriteAlertYaml``: per AlertLog
+item, its status, alert counts, affirmations and requirements; for the test (the root item), also the alert counts the
+test expected, the external errors and the settings deciding whether the test failed. The OSVVM scripts move the file to
+:file:`reports/<testsuite>/<test>_alerts.yml` and read it to write the test's HTML report.
+
+A file is read in two steps, as in :mod:`pyEDAA.Reports`: :meth:`Document.Analyze` reads the YAML file and validates
+it against the JSON Schema of the format version it states (:class:`FormatVersion`, :data:`SCHEMAS`), so a key the
+format doesn't define is a validation error. :meth:`Document.Convert` converts the content to the model. Each element
+below the root is parsed by its ``Parse`` classmethod, e.g. :meth:`AlertLogItem.Parse`, which checks a mapping no
+schema validated the same way.
+
+.. rubric:: Example
+
+.. code-block:: Python
+
+   from pathlib import Path
+   from pyEDAA.OSVVM.AlertLog import Document
+
+   document = Document(Path("TbAxi4_BasicReadWrite_alerts.yml"), analyzeAndConvert=True)
+
+   print(f"{document.Name}: {document.Status} with {document.TotalErrorCount} errors")
+   for item in document.IterateItems():
+     print(f"  {item.Name}: {item.FailureCount}/{item.ErrorCount}/{item.WarningCount}")
+"""
 from __future__            import annotations
 
 from datetime              import timedelta
 from pathlib               import Path
-from typing                import Callable, Generator, Iterable, Optional as Nullable, Self
+from typing                import Callable, ClassVar, Generator, Iterable, Optional as Nullable, Self
 
-from ruamel.yaml           import YAML, CommentedMap, CommentedSeq
+from ruamel.yaml           import CommentedMap, CommentedSeq
 
 from pyTooling.Common      import getFullyQualifiedName, StringEnum
 from pyTooling.Decorators  import export, readonly
@@ -44,7 +70,10 @@ from pyTooling.MetaClasses import ExtendedType
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Tree        import Node
 
-from pyEDAA.OSVVM          import OSVVMException
+from pyEDAA.OSVVM          import OSVVMException, YAMLDocumentMixin
+
+
+__all__ = ["SCHEMAS"]
 
 
 @export
@@ -123,6 +152,11 @@ class FormatVersion(StringEnum):
 	"""
 
 	Version0_1 = "0.1"  #: Format version 0.1.
+
+
+SCHEMAS: dict[FormatVersion, str] = {
+	FormatVersion.Version0_1: "OSVVM-AlertLog-0.1.schema.json",
+}  #: The JSON Schema an AlertLog file is validated against, per format version.
 
 
 @export
@@ -948,53 +982,94 @@ class Settings(metaclass=ExtendedType, slots=True):
 		return self._failOnWarning
 
 
-# A class with a property named like a class - ``Settings`` - can't name that class in the annotation of a field: the
-# class body's namespace, where annotations are evaluated, binds the name to the property.
+# A class with a property named like a class - ``Path``, ``Settings`` - can't name that class in the annotation of a
+# field: the class body's namespace, where annotations are evaluated, binds the name to the property.
+_Path =     Path
 _Settings = Settings
 
 
-# TODO: Derive from common Document class?
 @export
-class Document(AlertLogItem):
+class Document(AlertLogItem, YAMLDocumentMixin):
 	"""
 	An *AlertLog Document* represents an OSVVM AlertLog report document (YAML file).
 
-	The document inherits :class:`AlertLogItem` and represents the AlertLog hierarchy's root element.
+	The document inherits :class:`AlertLogItem` and represents the AlertLog hierarchy's root element: the test. In
+	addition to an item, it has the format version, the settings, the expected alerts and the external errors.
 
 	When analyzing and converting the document, the YAML analysis duration as well as the model conversion duration gets
 	captured.
 	"""
 
-	_path:                   Path                       #: Path to the YAML file.
-	_yamlDocument:           Nullable[YAML]             #: Internal YAML document instance.
-	_version:                Nullable[FormatVersion]    #: YAML data structure version.
-	_settings:               Nullable[_Settings]        #: The settings deciding whether the test failed.
+	_DESCRIPTION:    ClassVar[str] =                      "OSVVM AlertLog YAML file"  #: Format's name in messages.
+	_ERROR:          ClassVar[type[AlertLogError]] =      AlertLogError               #: Exception of the reader.
+	_FORMAT_VERSION: ClassVar[type[FormatVersion]] =      FormatVersion               #: The format's versions.
+	_SCHEMAS:        ClassVar[dict[FormatVersion, str]] = SCHEMAS                     #: Schema per version.
 
-	_analysisDuration:        Nullable[timedelta]       #: YAML file analysis duration in seconds.
-	_modelConversionDuration: Nullable[timedelta]       #: Data structure conversion duration in seconds.
+	_path:                    _Path                    #: Path to the YAML file.
+	_settings:                Nullable[_Settings]      #: The settings deciding whether the test failed.
+	_expectedWarningCount:    Nullable[int]            #: Number of warnings the test expects.
+	_expectedErrorCount:      Nullable[int]            #: Number of errors the test expects.
+	_expectedFailureCount:    Nullable[int]            #: Number of failures the test expects.
+	_externalWarningCount:    Nullable[int]            #: Number of external warnings.
+	_externalErrorCount:      Nullable[int]            #: Number of external errors.
+	_externalFailureCount:    Nullable[int]            #: Number of external failures.
+
+	_analysisDuration:        Nullable[timedelta]      #: YAML file analysis duration.
+	_modelConversionDuration: Nullable[timedelta]      #: Data structure conversion duration.
 
 	def __init__(self, filename: Path, analyzeAndConvert: bool = False) -> None:
 		"""
 		Initializes an AlertLog YAML document.
 
 		:param filename:          Path to the YAML file.
-		:param analyzeAndConvert: If true, analyze the YAML document and convert the content to an AlertLog data model instance.
+		:param analyzeAndConvert: Optional, if true, analyze the YAML document and convert the content to an AlertLog
+		                          data model instance. Default: ``False``.
+		:raises ValueError:       If parameter ``filename`` is ``None``.
+		:raises TypeError:        If parameter ``filename`` isn't of type :class:`~pathlib.Path`.
 		"""
-		super().__init__("", parent=None)
+		super().__init__("")
+		YAMLDocumentMixin.__init__(self)
 
-		self._path = filename
-		self._yamlDocument = None
-		self._version = None
-		self._settings = None
+		if filename is None:
+			raise ValueError("Parameter 'filename' is None.")
+		elif not isinstance(filename, Path):
+			ex = TypeError("Parameter 'filename' is not of type 'Path'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(filename)}'.")
+			raise ex
 
-		self._analysisDuration = None
-		self._modelConversionDuration =  None
+		self._path =                    filename
+		self._settings =                None
+		self._expectedWarningCount =    None
+		self._expectedErrorCount =      None
+		self._expectedFailureCount =    None
+		self._externalWarningCount =    None
+		self._externalErrorCount =      None
+		self._externalFailureCount =    None
+
+		self._analysisDuration =        None
+		self._modelConversionDuration = None
 
 		if analyzeAndConvert:
 			self.Analyze()
 			self.Convert()
 
 	@property
+	def Parent(self) -> None:
+		"""
+		Property to access the parent item: a document is the root of the AlertLog hierarchy and has no parent.
+
+		:returns:          Always ``None``.
+		:raises TypeError: Always, when a value is assigned.
+		"""
+		return None
+
+	@Parent.setter
+	def Parent(self, value: Nullable[AlertLogItem]) -> None:
+		ex = TypeError(f"A '{getFullyQualifiedName(self)}' has no parent.")
+		ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
+		raise ex
+
+	@readonly
 	def Path(self) -> Path:
 		"""
 		Read-only property to access the path to the YAML file of this document (:attr:`_path`).
@@ -1013,130 +1088,162 @@ class Document(AlertLogItem):
 		return self._settings
 
 	@readonly
-	def AnalysisDuration(self) -> timedelta:
+	def ExpectedWarningCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of warnings the test expects (:attr:`_expectedWarningCount`).
+
+		OSVVM 2025.06 and later write it in the root's ``ExpectedCount``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._expectedWarningCount
+
+	@readonly
+	def ExpectedErrorCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of errors the test expects (:attr:`_expectedErrorCount`).
+
+		OSVVM 2025.06 and later write it in the root's ``ExpectedCount``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._expectedErrorCount
+
+	@readonly
+	def ExpectedFailureCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of failures the test expects (:attr:`_expectedFailureCount`).
+
+		OSVVM 2025.06 and later write it in the root's ``ExpectedCount``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._expectedFailureCount
+
+	@readonly
+	def ExternalWarningCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of external warnings (:attr:`_externalWarningCount`).
+
+		OSVVM 2026.08 and later write it in the root's ``ExternalErrors``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._externalWarningCount
+
+	@readonly
+	def ExternalErrorCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of external errors (:attr:`_externalErrorCount`).
+
+		OSVVM 2026.08 and later write it in the root's ``ExternalErrors``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._externalErrorCount
+
+	@readonly
+	def ExternalFailureCount(self) -> Nullable[int]:
+		"""
+		Read-only property to access the number of external failures (:attr:`_externalFailureCount`).
+
+		OSVVM 2026.08 and later write it in the root's ``ExternalErrors``.
+
+		:returns: The number; ``None`` before the document was converted or if the file doesn't state it.
+		"""
+		return self._externalFailureCount
+
+	@readonly
+	def AnalysisDuration(self) -> Nullable[timedelta]:
 		"""
 		Read-only property to access the time spent for YAML file analysis (:attr:`_analysisDuration`).
 
-		:returns: The YAML file analysis duration.
+		:returns: The YAML file analysis duration, or ``None`` if the document wasn't analyzed yet.
 		"""
-		if self._analysisDuration is None:
-			raise AlertLogError(f"Document '{self._path}' was not analyzed.")
-
 		return self._analysisDuration
 
 	@readonly
-	def ModelConversionDuration(self) -> timedelta:
+	def ModelConversionDuration(self) -> Nullable[timedelta]:
 		"""
-		Read-only property to access the time spent for data structure to AlertLog hierarchy conversion (:attr:`_modelConversionDuration`).
+		Read-only property to access the time spent for data structure to AlertLog hierarchy conversion
+		(:attr:`_modelConversionDuration`).
 
-		:returns: The data structure conversion duration.
+		:returns: The data structure conversion duration, or ``None`` if the document wasn't converted yet.
 		"""
-		if self._modelConversionDuration is None:
-			raise AlertLogError(f"Document '{self._path}' was not converted.")
-
 		return self._modelConversionDuration
 
 	def Analyze(self) -> None:
 		"""
-		Analyze the YAML file (specified by :attr:`_path`) and store the YAML document in :attr:`_yamlDocument`.
+		Read the YAML file (specified by :attr:`_path`), validate it against the JSON Schema of the format version it states
+		(:data:`SCHEMAS`), and store the YAML document in :attr:`_yamlDocument`.
 
-		:raises AlertLogError: If YAML file doesn't exist.
-		:raises AlertLogError: If YAML file can't be opened.
+		:raises AlertLogError: If the YAML file can't be read, isn't valid YAML, or isn't valid according to the JSON Schema
+		                       of its format version; see :meth:`_AnalyzeYAML`.
 		"""
-		if not self._path.exists():
-			raise AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' does not exist.") \
-				from FileNotFoundError(f"File '{self._path}' not found.")
-
 		with Stopwatch() as sw:
-			try:
-				yamlReader = YAML()
-				self._yamlDocument = yamlReader.load(self._path)
-			except Exception as ex:
-				raise AlertLogError(f"Couldn't open '{self._path}'.") from ex
+			self._AnalyzeYAML()
 
 		self._analysisDuration = sw.Duration
 
 	def Convert(self) -> None:
 		"""
-		Convert the YAML data structure to the settings and a hierarchy of :class:`AlertLogItem` instances.
+		Convert the validated YAML document to the AlertLog model: the root's fields, its settings and its hierarchy of
+		:class:`AlertLogItem` instances.
 
-		:raises AlertLogError: If YAML file was not analyzed.
-		:raises AlertLogError: If a mapping lacks a key the format requires.
-		:raises AlertLogError: If a value isn't of the type the format requires.
-		:raises AlertLogError: If a mapping has a key the format doesn't define.
+		:raises AlertLogError:              If the YAML file was not analyzed before. |br|
+		                                    Call 'Document.Analyze()' or create the document using
+		                                    'Document(path, analyzeAndConvert=True)'.
+		:raises AlertLogError:              If a status is unknown. |br|
+		                                    The note names the YAML file.
+		:raises DuplicateAlertLogItemError: If an item has two children of the same name. |br|
+		                                    The note names the YAML file.
 		"""
 		if self._yamlDocument is None:
 			ex = AlertLogError(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
 			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, analyzeAndConvert=True)'.")
 			raise ex
 
+		root =    self._yamlDocument
+		results = root["Results"]
 		with Stopwatch() as sw:
-			version = self._yamlDocument.get("Version", None)
 			try:
-				self._version = FormatVersion.Parse(version)
-			except (TypeError, ValueError) as cause:
-				ex = AlertLogError(f"Unsupported YAML data structure version '{version}' for file '{self._path}'.")
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex from cause
+				try:
+					status = AlertLogStatus.Parse(root["Status"])
+				except AlertLogError as ex:
+					ex.add_note("Status of AlertLog root.")
+					raise
 
-			if self._version is None:
-				ex = AlertLogError(f"No YAML data structure version in file '{self._path}'.")
-				ex.add_note(f"Supported format versions: {', '.join(FormatVersion)}.")
-				raise ex
+				self._name =                    root["Name"]
+				self._status =                  status
+				self._totalErrorCount =         results["TotalErrors"]
+				self._warningCount =            results["AlertCount"]["Warning"]
+				self._errorCount =              results["AlertCount"]["Error"]
+				self._failureCount =            results["AlertCount"]["Failure"]
+				self._passedCount =             results["PassedCount"]
+				self._affirmCount =             results["AffirmCount"]
+				self._passedRequirementsCount = results["RequirementsPassed"]
+				self._requirementsGoalCount =   results["RequirementsGoal"]
+				self._disabledWarningCount =    results["DisabledAlertCount"]["Warning"]
+				self._disabledErrorCount =      results["DisabledAlertCount"]["Error"]
+				self._disabledFailureCount =    results["DisabledAlertCount"]["Failure"]
+				if "ExpectedCount" in results:
+					expectedCount =              results["ExpectedCount"]
+					self._expectedWarningCount = expectedCount["Warning"]
+					self._expectedErrorCount =   expectedCount["Error"]
+					self._expectedFailureCount = expectedCount["Failure"]
 
-			self._name = self._ParseStrFieldFromYAML(self._yamlDocument, "Name")
-			self._status = AlertLogStatus.Parse(self._ParseStrFieldFromYAML(self._yamlDocument, "Status"))
-			Settings.Parse(self._ParseMapFromYAML(self._yamlDocument, "Settings"), parent=self)
-			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
-				AlertLogItem.Parse(child, parent=self)
+				if "ExternalErrors" in results:
+					externalErrors =             results["ExternalErrors"]
+					self._externalWarningCount = externalErrors["Warning"]
+					self._externalErrorCount =   externalErrors["Error"]
+					self._externalFailureCount = externalErrors["Failure"]
+
+				Settings.Parse(root["Settings"], parent=self)
+
+				for child in () if root["Children"] is None else root["Children"]:
+					AlertLogItem.Parse(child, parent=self)
+			except AlertLogError as ex:
+				ex.add_note(f"In OSVVM AlertLog YAML file '{self._path}'.")
+				raise
 
 		self._modelConversionDuration = sw.Duration
-
-	@staticmethod
-	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = OSVVMException(f"Sequence field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if value is None:
-			return ()
-		elif not isinstance(value, CommentedSeq):
-			ex = AlertLogError(f"Field '{fieldName}' is not a sequence.")  # TODO: from TypeError??
-			ex.add_note(f"Found type {value.__class__.__name__} at line {node._yaml_line_col.data[fieldName][0] + 1}.")
-			raise ex
-
-		return value
-
-	@staticmethod
-	def _ParseMapFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedMap]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = OSVVMException(f"Dictionary field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if value is None:
-			return {}
-		elif not isinstance(value, CommentedMap):
-			ex = AlertLogError(f"Field '{fieldName}' is not a list.")  # TODO: from TypeError??
-			ex.add_note(f"Type mismatch found for line {node._yaml_line_col.data[fieldName][0] + 1}.")
-			raise ex
-		return value
-
-	@staticmethod
-	def _ParseStrFieldFromYAML(node: CommentedMap, fieldName: str) -> Nullable[str]:
-		try:
-			value = node[fieldName]
-		except KeyError as ex:
-			newEx = OSVVMException(f"String field '{fieldName}' not found in node starting at line {node.lc.line + 1}.")
-			newEx.add_note(f"Available fields: {', '.join(key for key in node)}")
-			raise newEx from ex
-
-		if not isinstance(value, str):
-			raise AlertLogError(f"Field '{fieldName}' is not of type str.")  # TODO: from TypeError??
-
-		return value
