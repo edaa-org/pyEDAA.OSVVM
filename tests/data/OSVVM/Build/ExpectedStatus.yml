@@ -1,0 +1,67 @@
+# Hand-written sample, not an OSVVM output: test cases with the keys OSVVM 2026.09 adds for 'ExpectedStatus' and
+# 'KnownStatus' (OsvvmScriptsCreateYamlReports.tcl), and ExternalErrors in the results.
+Version: "0.1"
+Date: 2026-10-10T16:50:50+00:00
+TestSuites: 
+  - Name: Expected
+    TestCases:
+      - TestCaseName: "TbExpected_Failed"
+        Name: "TbExpected_Failed"
+        Status: "FAILED"
+        Results: {TotalErrors: 1, AlertCount: {Failure: 0, Error: 1, Warning: 0}, PassedCount: 4, AffirmCount: 5, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 1, Warning: 0}}
+        ExpectedResults:
+          Status: "FAILED"
+          TotalErrors: 1
+          AlertCount:
+            Failure: 0
+            Error: 1
+            Warning: 0
+        Reason: "Checks the error path"
+        TestCaseFileName: "TbExpected_Failed"
+        Generics:           null
+        ElapsedTime: 0.101
+      - TestCaseName: "TbExpected_Passed"
+        Name: "TbExpected_Passed"
+        Status: "PASSED"
+        Results: {TotalErrors: 0, AlertCount: {Failure: 0, Error: 0, Warning: 0}, PassedCount: 5, AffirmCount: 5, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        ExpectedResults:
+          Status: "FAILED"
+          TotalErrors: 1
+          AlertCount:
+            Failure: 0
+            Error: 1
+            Warning: 0
+        Reason: ""
+        TestCaseFileName: "TbExpected_Passed"
+        Generics:           null
+        ElapsedTime: 0.102
+      - TestCaseName: "TbKnown_Failed"
+        Name: "TbKnown_Failed"
+        Status: "FAILED"
+        Results: {TotalErrors: 2, AlertCount: {Failure: 0, Error: 2, Warning: 0}, PassedCount: 3, AffirmCount: 5, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        KnownStatus: "FAILED"
+        Reason: "Issue 42"
+        TestCaseFileName: "TbKnown_Failed"
+        Generics:           null
+        ElapsedTime: 0.103
+    ElapsedTime: 0.31
+Name:     "Expected"
+BuildInfo:
+  StartTime:            2026-10-10T16:50:50+00:00
+  FinishTime:           2026-10-10T16:50:51+00:00
+  ElapsedTime:              0.5
+  Simulator:            "NVC"
+  SimulatorVersion:     "1.23.0"
+  OsvvmVersion:         "2026.09"
+  BuildErrorCode:       0
+  AnalyzeErrorCount:    0
+  SimulateErrorCount:   0
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Expected.log"
+  SimulationHtmlLogFile: ""
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory: ""
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"

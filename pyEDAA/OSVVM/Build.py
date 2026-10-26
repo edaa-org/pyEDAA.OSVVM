@@ -112,7 +112,9 @@ class FormatVersion(StringEnum):
 	"""
 	Version of OSVVM's build summary format, as a build summary's ``Version`` states it.
 
-	OSVVM writes ``OsvvmBuildYamlVersion`` of :file:`OsvvmSettingsRequired.tcl`, so far only ``0.1``.
+	OSVVM writes ``OsvvmBuildYamlVersion`` of :file:`OsvvmSettingsRequired.tcl`, so far only ``0.1``. The format grew
+	within this version: a test case's ``Results`` state ``ExpectedCount`` since OSVVM 2025.06 and ``ExternalErrors``
+	since 2026.08, a test case states ``ExpectedResults`` and ``KnownStatus`` since 2026.09. These keys are optional.
 	"""
 
 	Version0_1 = "0.1"  #: Format version 0.1.
@@ -168,6 +170,146 @@ _OSVVMStatus = OSVVMStatus
 
 
 @export
+class ExpectedResults(metaclass=ExtendedType, slots=True):
+	"""
+	The results a test case is expected to have, as OSVVM's ``ExpectedStatus`` states them (``ExpectedResults``).
+
+	A test case with expected results passes, if its status and alert counts match them. Expected results are a value:
+	they belong to no element.
+	"""
+
+	_osvvmStatus:     _OSVVMStatus  #: Expected status.
+	_totalErrorCount: int           #: Expected total number of errors.
+	_warningCount:    int           #: Expected number of warnings.
+	_errorCount:      int           #: Expected number of errors.
+	_fatalCount:      int           #: Expected number of failures.
+
+	def __init__(
+		self,
+		osvvmStatus: OSVVMStatus,
+		totalErrorCount: int = 0,
+		warningCount: int = 0,
+		errorCount: int = 0,
+		fatalCount: int = 0
+	) -> None:
+		"""
+		Initializes the expected results of a test case.
+
+		:param osvvmStatus:     Expected status.
+		:param totalErrorCount: Optional, expected total number of errors. Default: ``0``.
+		:param warningCount:    Optional, expected number of warnings. Default: ``0``.
+		:param errorCount:      Optional, expected number of errors. Default: ``0``.
+		:param fatalCount:      Optional, expected number of failures. Default: ``0``.
+		:raises ValueError:     If parameter 'osvvmStatus' is None.
+		:raises TypeError:      If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
+		:raises TypeError:      If parameter 'totalErrorCount' is not of type :class:`int`.
+		:raises TypeError:      If parameter 'warningCount' is not of type :class:`int`.
+		:raises TypeError:      If parameter 'errorCount' is not of type :class:`int`.
+		:raises TypeError:      If parameter 'fatalCount' is not of type :class:`int`.
+		"""
+		if osvvmStatus is None:
+			raise ValueError("Parameter 'osvvmStatus' is None.")
+		elif not isinstance(osvvmStatus, OSVVMStatus):
+			ex = TypeError("Parameter 'osvvmStatus' is not of type 'OSVVMStatus'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmStatus)}'.")
+			raise ex
+
+		for parameterName, count in (
+			("totalErrorCount", totalErrorCount),
+			("warningCount",    warningCount),
+			("errorCount",      errorCount),
+			("fatalCount",      fatalCount)
+		):
+			if not isinstance(count, int):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
+				raise ex
+
+		self._osvvmStatus =     osvvmStatus
+		self._totalErrorCount = totalErrorCount
+		self._warningCount =    warningCount
+		self._errorCount =      errorCount
+		self._fatalCount =      fatalCount
+
+	@classmethod
+	def Parse(cls, node: CommentedMap) -> ExpectedResults:
+		"""
+		Parse the expected results of a test case (``ExpectedResults``).
+
+		The mapping must be valid according to the build summary's schema (:data:`SCHEMAS`).
+
+		:param node:               The YAML mapping of the expected results.
+		:returns:                  The expected results.
+		:raises BuildSummaryError: If the expected status is unknown. |br|
+		                           The note lists the allowed values.
+		"""
+		try:
+			osvvmStatus = OSVVMStatus.Parse(status := node["Status"])
+		except ValueError as cause:
+			ex = BuildSummaryError(f"Expected results at line {node.lc.line + 1} have unknown status '{status}'.")
+			ex.add_note(f"Allowed values: {', '.join(OSVVMStatus)}.")
+			raise ex from cause
+
+		alertCount = node["AlertCount"]
+		return cls(
+			osvvmStatus,
+			int(node["TotalErrors"]),
+			int(alertCount["Warning"]),
+			int(alertCount["Error"]),
+			int(alertCount["Failure"])
+		)
+
+	@readonly
+	def OSVVMStatus(self) -> OSVVMStatus:
+		"""
+		Read-only property to access the expected status (:attr:`_osvvmStatus`).
+
+		:returns: The expected status.
+		"""
+		return self._osvvmStatus
+
+	@readonly
+	def TotalErrorCount(self) -> int:
+		"""
+		Read-only property to access the expected total number of errors (:attr:`_totalErrorCount`).
+
+		:returns: Expected total number of errors.
+		"""
+		return self._totalErrorCount
+
+	@readonly
+	def WarningCount(self) -> int:
+		"""
+		Read-only property to access the expected number of warnings (:attr:`_warningCount`).
+
+		:returns: Expected number of warnings.
+		"""
+		return self._warningCount
+
+	@readonly
+	def ErrorCount(self) -> int:
+		"""
+		Read-only property to access the expected number of errors (:attr:`_errorCount`).
+
+		:returns: Expected number of errors.
+		"""
+		return self._errorCount
+
+	@readonly
+	def FatalCount(self) -> int:
+		"""
+		Read-only property to access the expected number of failures (:attr:`_fatalCount`).
+
+		:returns: Expected number of failures.
+		"""
+		return self._fatalCount
+
+
+# ``ExpectedResults`` is also a property name of :class:`Testcase`.
+_ExpectedResults = ExpectedResults
+
+
+@export
 class Testcase(ut_Testcase):
 	"""
 	A test case of an OSVVM build: a simulation of a test bench, with the results OSVVM states for it.
@@ -178,11 +320,13 @@ class Testcase(ut_Testcase):
 
 	Besides the fields of the unified test case, an OSVVM test case states the test's name (``TestCaseName``), the name
 	the VHDL code gives it (``Name``), the status OSVVM determined, the disabled alerts, the requirements, the
-	functional coverage, the simulated time and the generics. The unified status
-	(:data:`~pyEDAA.Reports.Unittesting.Testcase.Status`) is computed from the OSVVM status by :meth:`Aggregate`.
+	functional coverage, the simulated time, the generics, the external errors and the expected and known status. The
+	unified status (:data:`~pyEDAA.Reports.Unittesting.Testcase.Status`) is computed from the OSVVM status and the
+	expected results by :meth:`Aggregate`.
 
 	OSVVM's alerts *failure*, *error* and *warning* are the unified *fatal errors*, *errors* and *warnings*; its
-	affirmations are the unified assertions. The reason of a skipped test case is the test case's
+	affirmations are the unified assertions. The reason of a skipped test case or of an expected or known status is the
+	test case's
 	:data:`~pyEDAA.Reports.Unittesting.TestcaseOutputMixin.Message`.
 	"""
 
@@ -197,18 +341,23 @@ class Testcase(ut_Testcase):
 		"hr":  3_600_000_000_000_000_000,
 	}  #: Femtoseconds per unit of VHDL's type ``time``.
 
-	_vhdlName:                Nullable[str]           #: Name of the test case, as its VHDL code states it.
-	_testName:                Nullable[str]           #: Name of the test, without the generics' values.
-	_osvvmStatus:             Nullable[_OSVVMStatus]  #: Status of the test case, as OSVVM states it.
-	_totalErrorCount:         Nullable[int]           #: Total number of errors, as OSVVM counted them.
-	_disabledWarningCount:    int                     #: Number of disabled warnings.
-	_disabledErrorCount:      int                     #: Number of disabled errors.
-	_disabledFatalCount:      int                     #: Number of disabled failures.
-	_requirementsGoalCount:   int                     #: Number of passed checks the requirements need.
-	_passedRequirementsCount: int                     #: Number of passed requirement checks.
-	_functionalCoverage:      Nullable[float]         #: Functional coverage in range 0.0..1.0.
-	_simulationTime:          Nullable[int]           #: Simulated time in femtoseconds.
-	_generics:                dict[str, str]          #: Generics the test case was simulated with.
+	_vhdlName:                Nullable[str]               #: Name of the test case, as its VHDL code states it.
+	_testName:                Nullable[str]               #: Name of the test, without the generics' values.
+	_osvvmStatus:             Nullable[_OSVVMStatus]      #: Status of the test case, as OSVVM states it.
+	_totalErrorCount:         Nullable[int]               #: Total number of errors, as OSVVM counted them.
+	_disabledWarningCount:    int                         #: Number of disabled warnings.
+	_disabledErrorCount:      int                         #: Number of disabled errors.
+	_disabledFatalCount:      int                         #: Number of disabled failures.
+	_requirementsGoalCount:   int                         #: Number of passed checks the requirements need.
+	_passedRequirementsCount: int                         #: Number of passed requirement checks.
+	_functionalCoverage:      Nullable[float]             #: Functional coverage in range 0.0..1.0.
+	_simulationTime:          Nullable[int]               #: Simulated time in femtoseconds.
+	_generics:                dict[str, str]              #: Generics the test case was simulated with.
+	_externalWarningCount:    int                         #: Number of external warnings.
+	_externalErrorCount:      int                         #: Number of external errors.
+	_externalFatalCount:      int                         #: Number of external failures.
+	_expectedResults:         Nullable[_ExpectedResults]  #: Results the test case is expected to have.
+	_knownStatus:             Nullable[_OSVVMStatus]      #: Status the test case is known to have.
 
 	def __init__(
 		self,
@@ -232,12 +381,17 @@ class Testcase(ut_Testcase):
 		disabledWarningCount: int = 0,
 		disabledErrorCount: int = 0,
 		disabledFatalCount: int = 0,
+		externalWarningCount: int = 0,
+		externalErrorCount: int = 0,
+		externalFatalCount: int = 0,
 		requirementsGoalCount: int = 0,
 		passedRequirementsCount: int = 0,
 		functionalCoverage: Nullable[float] = None,
 		simulationTime: Nullable[int] = None,
 		generics: Nullable[Mapping[str, str]] = None,
 		reason: Nullable[str] = None,
+		expectedResults: Nullable[ExpectedResults] = None,
+		knownStatus: Nullable[OSVVMStatus] = None,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
 		*,
 		parent: Nullable[Testsuite] = None
@@ -265,6 +419,9 @@ class Testcase(ut_Testcase):
 		:param disabledWarningCount:    Optional, number of disabled warnings. Default: ``0``.
 		:param disabledErrorCount:      Optional, number of disabled errors. Default: ``0``.
 		:param disabledFatalCount:      Optional, number of disabled failures. Default: ``0``.
+		:param externalWarningCount:    Optional, number of external warnings (``ExternalErrors``). Default: ``0``.
+		:param externalErrorCount:      Optional, number of external errors (``ExternalErrors``). Default: ``0``.
+		:param externalFatalCount:      Optional, number of external failures (``ExternalErrors``). Default: ``0``.
 		:param requirementsGoalCount:   Optional, number of passed checks the requirements need (``RequirementsGoal``).
 		                                Default: ``0``.
 		:param passedRequirementsCount: Optional, number of passed requirement checks (``RequirementsPassed``).
@@ -272,19 +429,30 @@ class Testcase(ut_Testcase):
 		:param functionalCoverage:      Optional, functional coverage in range 0.0..1.0 (``FunctionalCoverage``).
 		:param simulationTime:          Optional, simulated time in femtoseconds (``SimulationTime``).
 		:param generics:                Optional, generics the test case was simulated with (``Generics``).
-		:param reason:                  Optional, reason of a skipped test case (``Reason``).
+		:param reason:                  Optional, reason of a skipped test case or of an expected or known status
+		                                (``Reason``).
+		:param expectedResults:         Optional, results the test case is expected to have (``ExpectedResults``).
+		:param knownStatus:             Optional, status the test case is known to have (``KnownStatus``).
 		:param keyValuePairs:           Optional, mapping of key-value pairs to initialize the test case with.
 		:param parent:                  Optional, reference to the parent test suite.
 		:raises TypeError:              If parameter 'testName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'vhdlName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
+		:raises TypeError:              If parameter 'knownStatus' is not of type :class:`OSVVMStatus`.
 		:raises TypeError:              If parameter 'totalErrorCount' is not of type :class:`int`.
 		:raises TypeError:              If parameter 'simulationTime' is not of type :class:`int`.
-		:raises TypeError:              If a parameter of the disabled alert counts or of the requirements is not of type
-		                                :class:`int`.
+		:raises TypeError:              If parameter 'disabledWarningCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'disabledErrorCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'disabledFatalCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'externalWarningCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'externalErrorCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'externalFatalCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'requirementsGoalCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'passedRequirementsCount' is not of type :class:`int`.
 		:raises TypeError:              If parameter 'functionalCoverage' is not of type :class:`float`.
 		:raises ValueError:             If parameter 'functionalCoverage' is out of range 0.0..1.0.
 		:raises TypeError:              If parameter 'generics' is not a mapping.
+		:raises TypeError:              If parameter 'expectedResults' is not of type :class:`ExpectedResults`.
 		"""
 		super().__init__(
 			name,
@@ -308,10 +476,14 @@ class Testcase(ut_Testcase):
 				ex.add_note(f"Got type '{getFullyQualifiedName(text)}'.")
 				raise ex
 
-		if osvvmStatus is not None and not isinstance(osvvmStatus, OSVVMStatus):
-			ex = TypeError("Parameter 'osvvmStatus' is not of type 'OSVVMStatus'.")
-			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmStatus)}'.")
-			raise ex
+		for parameterName, status in (
+			("osvvmStatus", osvvmStatus),
+			("knownStatus", knownStatus)
+		):
+			if status is not None and not isinstance(status, OSVVMStatus):
+				ex = TypeError(f"Parameter '{parameterName}' is not of type 'OSVVMStatus'.")
+				ex.add_note(f"Got type '{getFullyQualifiedName(status)}'.")
+				raise ex
 
 		for parameterName, count in (
 			("totalErrorCount", totalErrorCount),
@@ -326,6 +498,9 @@ class Testcase(ut_Testcase):
 			("disabledWarningCount",    disabledWarningCount),
 			("disabledErrorCount",      disabledErrorCount),
 			("disabledFatalCount",      disabledFatalCount),
+			("externalWarningCount",    externalWarningCount),
+			("externalErrorCount",      externalErrorCount),
+			("externalFatalCount",      externalFatalCount),
 			("requirementsGoalCount",   requirementsGoalCount),
 			("passedRequirementsCount", passedRequirementsCount)
 		):
@@ -349,6 +524,11 @@ class Testcase(ut_Testcase):
 			ex.add_note(f"Got type '{getFullyQualifiedName(generics)}'.")
 			raise ex
 
+		if expectedResults is not None and not isinstance(expectedResults, ExpectedResults):
+			ex = TypeError("Parameter 'expectedResults' is not of type 'ExpectedResults'.")
+			ex.add_note(f"Got type '{getFullyQualifiedName(expectedResults)}'.")
+			raise ex
+
 		self._testName =                testName
 		self._vhdlName =                vhdlName
 		self._osvvmStatus =             osvvmStatus
@@ -361,6 +541,11 @@ class Testcase(ut_Testcase):
 		self._functionalCoverage =      functionalCoverage
 		self._simulationTime =          simulationTime
 		self._generics =                {} if generics is None else dict(generics)
+		self._externalWarningCount =    externalWarningCount
+		self._externalErrorCount =      externalErrorCount
+		self._externalFatalCount =      externalFatalCount
+		self._expectedResults =         expectedResults
+		self._knownStatus =             knownStatus
 
 	@readonly
 	def TestName(self) -> Nullable[str]:
@@ -478,6 +663,53 @@ class Testcase(ut_Testcase):
 		"""
 		return self._generics
 
+	@readonly
+	def ExternalWarningCount(self) -> int:
+		"""
+		Read-only property to access the number of external warnings (:attr:`_externalWarningCount`).
+
+		:returns: Number of external warnings.
+		"""
+		return self._externalWarningCount
+
+	@readonly
+	def ExternalErrorCount(self) -> int:
+		"""
+		Read-only property to access the number of external errors (:attr:`_externalErrorCount`).
+
+		:returns: Number of external errors.
+		"""
+		return self._externalErrorCount
+
+	@readonly
+	def ExternalFatalCount(self) -> int:
+		"""
+		Read-only property to access the number of external failures (:attr:`_externalFatalCount`).
+
+		:returns: Number of external failures.
+		"""
+		return self._externalFatalCount
+
+	@readonly
+	def ExpectedResults(self) -> Nullable[ExpectedResults]:
+		"""
+		Read-only property to access the results the test case is expected to have (:attr:`_expectedResults`).
+
+		:returns: The expected results, or ``None`` if none are stated.
+		"""
+		return self._expectedResults
+
+	@readonly
+	def KnownStatus(self) -> Nullable[OSVVMStatus]:
+		"""
+		Read-only property to access the status the test case is known to have (:attr:`_knownStatus`).
+
+		OSVVM tracks a test case with a known status, but doesn't change its result.
+
+		:returns: The known status, or ``None`` if none is stated.
+		"""
+		return self._knownStatus
+
 	@classmethod
 	def Parse(cls, node: CommentedMap, *, parent: Nullable[Testsuite] = None) -> Testcase:
 		"""
@@ -491,7 +723,9 @@ class Testcase(ut_Testcase):
 		:param node:                    The YAML mapping of the test case.
 		:param parent:                  Optional, reference to the parent test suite.
 		:returns:                       The test case.
-		:raises BuildSummaryError:      If the status is unknown. |br|
+		:raises BuildSummaryError:      If the status or the known status is unknown. |br|
+		                                The note lists the allowed values.
+		:raises BuildSummaryError:      If the expected status is unknown. |br|
 		                                The note lists the allowed values.
 		:raises BuildSummaryError:      If the functional coverage is out of range 0..100.
 		:raises BuildSummaryError:      If the simulation time isn't a VHDL time value.
@@ -549,7 +783,17 @@ class Testcase(ut_Testcase):
 		warningCount, errorCount, fatalCount = counts("AlertCount")
 		expectedWarningCount, expectedErrorCount, expectedFatalCount = counts("ExpectedCount")
 		disabledWarningCount, disabledErrorCount, disabledFatalCount = counts("DisabledAlertCount")
+		externalWarningCount, externalErrorCount, externalFatalCount = counts("ExternalErrors")
 		generics = node.get("Generics", None)
+		expectedResults = node.get("ExpectedResults", None)
+
+		if (knownStatus := node.get("KnownStatus", None)) is not None:
+			try:
+				knownStatus = OSVVMStatus.Parse(knownStatus)
+			except ValueError as cause:
+				ex = BuildSummaryError(f"Test case '{name}' at line {line} has unknown known status '{knownStatus}'.")
+				ex.add_note(f"Allowed values: {', '.join(OSVVMStatus)}.")
+				raise ex from cause
 		elapsedTime = node.get("ElapsedTime", None)
 
 		return cls(
@@ -570,12 +814,17 @@ class Testcase(ut_Testcase):
 			disabledWarningCount=disabledWarningCount,
 			disabledErrorCount=disabledErrorCount,
 			disabledFatalCount=disabledFatalCount,
+			externalWarningCount=externalWarningCount,
+			externalErrorCount=externalErrorCount,
+			externalFatalCount=externalFatalCount,
 			requirementsGoalCount=0 if results is None else int(results["RequirementsGoal"]),
 			passedRequirementsCount=0 if results is None else int(results["RequirementsPassed"]),
 			functionalCoverage=functionalCoverage,
 			simulationTime=femtoseconds,
 			generics=None if generics is None else {str(key): str(value) for key, value in generics.items()},
 			reason=None if (reason := node.get("Reason", None)) is None else str(reason),
+			expectedResults=None if expectedResults is None else ExpectedResults.Parse(expectedResults),
+			knownStatus=knownStatus,
 			parent=parent
 		)
 
@@ -598,12 +847,15 @@ class Testcase(ut_Testcase):
 			self._warningCount, self._errorCount, self._fatalCount,
 			self._expectedWarningCount, self._expectedErrorCount, self._expectedFatalCount,
 			self._disabledWarningCount, self._disabledErrorCount, self._disabledFatalCount,
+			self._externalWarningCount, self._externalErrorCount, self._externalFatalCount,
 			self._requirementsGoalCount,
 			self._passedRequirementsCount,
 			self._functionalCoverage,
 			self._simulationTime,
 			self._generics,
 			self._message,
+			self._expectedResults,
+			self._knownStatus,
 			self._dict
 		)
 
@@ -611,13 +863,37 @@ class Testcase(ut_Testcase):
 		"""
 		Compute the unified status from the OSVVM status, then aggregate the test case.
 
-		A test case without OSVVM status is aggregated as a unified test case.
+		A test case with expected results passes, if its status, total errors and alert counts match them, as OSVVM's
+		``MatchExpectedResults`` decides: an expected failure is
+		:attr:`~pyEDAA.Reports.Unittesting.TestcaseStatus.ExpectedFailed`, an unexpected pass
+		:attr:`~pyEDAA.Reports.Unittesting.TestcaseStatus.UnexpectedPassed`. For a skipped test case, one that failed to
+		analyze or one without results, only the status is compared. A test case without OSVVM status is aggregated as a
+		unified test case.
 
 		:param strict: Optional, if true, a fatal error fails a test case without OSVVM status. Default: ``True``.
 		:returns:      The test case's warning, error and fatal error counts, the expected ones and its duration.
 		"""
-		if self._status is TestcaseStatus.Unknown and self._osvvmStatus is not None:
-			self._status = self._osvvmStatus.ToTestcaseStatus()
+		if self._status is TestcaseStatus.Unknown and (osvvmStatus := self._osvvmStatus) is not None:
+			if (expected := self._expectedResults) is None:
+				self._status = osvvmStatus.ToTestcaseStatus()
+			else:
+				if osvvmStatus in (OSVVMStatus.Skipped, OSVVMStatus.AnalyzeFailed, OSVVMStatus.NoReports):
+					matches = expected._osvvmStatus is osvvmStatus
+				else:
+					matches = (
+						expected._osvvmStatus is osvvmStatus and
+						expected._totalErrorCount == self._totalErrorCount and
+						expected._warningCount == self._warningCount and
+						expected._errorCount == self._errorCount and
+						expected._fatalCount == self._fatalCount
+					)
+
+				if matches:
+					self._status = TestcaseStatus.Passed if osvvmStatus is OSVVMStatus.Passed else TestcaseStatus.ExpectedFailed
+				elif osvvmStatus is OSVVMStatus.Passed:
+					self._status = TestcaseStatus.UnexpectedPassed
+				else:
+					self._status = TestcaseStatus.Failed
 
 		return super().Aggregate(strict)
 

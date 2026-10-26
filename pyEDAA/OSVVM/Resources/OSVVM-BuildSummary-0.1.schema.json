@@ -35,7 +35,7 @@
 			"enum": ["PASSED", "FAILED", "SKIPPED", "ANALYZE_FAILED", "STOPLIMIT", "TIMEOUT", "MANUALCHECKS", "NOCHECKS"]
 		},
 		"Results": {
-			"description": "A test case's results. 'ExpectedCount' since OSVVM 2025.06.",
+			"description": "A test case's results. 'ExpectedCount' since OSVVM 2025.06, 'ExternalErrors' since 2026.08.",
 			"type": "object",
 			"required": ["TotalErrors", "AlertCount", "PassedCount", "AffirmCount", "RequirementsPassed", "RequirementsGoal", "DisabledAlertCount"],
 			"properties": {
@@ -46,12 +46,28 @@
 				"RequirementsPassed": {"type": "integer", "minimum": 0},
 				"RequirementsGoal":   {"type": "integer", "minimum": 0},
 				"DisabledAlertCount": {"$ref": "#/$defs/AlertCount"},
-				"ExpectedCount":      {"$ref": "#/$defs/AlertCount"}
+				"ExpectedCount":      {"$ref": "#/$defs/AlertCount"},
+				"ExternalErrors":     {"$ref": "#/$defs/AlertCount"}
 			},
 			"additionalProperties": false
 		},
+		"ExpectedResults": {
+			"description": "The results a test case is expected to have (ExpectedStatus), since OSVVM 2026.09.",
+			"type": "object",
+			"required": ["Status", "TotalErrors", "AlertCount"],
+			"properties": {
+				"Status":      {"$ref": "#/$defs/ExpectedStatus"},
+				"TotalErrors": {"type": "integer", "minimum": 0},
+				"AlertCount":  {"$ref": "#/$defs/AlertCount"}
+			},
+			"additionalProperties": false
+		},
+		"ExpectedStatus": {
+			"description": "A status a test case is expected or known to have; NOREPORTS is OSVVM's reader's status of a test case without results.",
+			"enum": ["PASSED", "FAILED", "SKIPPED", "ANALYZE_FAILED", "STOPLIMIT", "TIMEOUT", "MANUALCHECKS", "NOCHECKS", "NOREPORTS"]
+		},
 		"TestCase": {
-			"description": "A test case. A skipped one, or one that failed to analyze, has 'Reason' and no 'TestCaseFileName'; a simulation without results has no 'Status' and no 'Results'.",
+			"description": "A test case. A skipped one, or one that failed to analyze, has 'Reason' and no 'TestCaseFileName'; a simulation without results has no 'Status' and no 'Results'. 'ExpectedResults' and 'KnownStatus' since OSVVM 2026.09; their 'Reason' is the test case's 'Reason'.",
 			"type": "object",
 			"required": ["TestCaseName"],
 			"properties": {
@@ -64,7 +80,9 @@
 				"SimulationTime":     {"description": "Simulated time, as VHDL's to_string(NOW) writes it.", "type": "string", "pattern": "^[0-9]+ (fs|ps|ns|us|ms|sec|min|hr)$"},
 				"TestCaseFileName":   {"description": "Base name of the test case's report files: the test's name extended by the generics' values.", "type": "string", "minLength": 1},
 				"Generics":           {"type": ["object", "null"], "additionalProperties": {"type": "string"}},
-				"ElapsedTime":        {"description": "Duration of the simulation in seconds.", "type": "number", "minimum": 0}
+				"ElapsedTime":        {"description": "Duration of the simulation in seconds.", "type": "number", "minimum": 0},
+				"ExpectedResults":    {"$ref": "#/$defs/ExpectedResults"},
+				"KnownStatus":        {"$ref": "#/$defs/ExpectedStatus"}
 			},
 			"additionalProperties": false
 		},
