@@ -278,7 +278,8 @@ class Testcase(ut_Testcase):
 		:raises TypeError:              If parameter 'testName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'vhdlName' is not of type :class:`str`.
 		:raises TypeError:              If parameter 'osvvmStatus' is not of type :class:`OSVVMStatus`.
-		:raises TypeError:              If parameter 'totalErrorCount' or 'simulationTime' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'totalErrorCount' is not of type :class:`int`.
+		:raises TypeError:              If parameter 'simulationTime' is not of type :class:`int`.
 		:raises TypeError:              If a parameter of the disabled alert counts or of the requirements is not of type
 		                                :class:`int`.
 		:raises TypeError:              If parameter 'functionalCoverage' is not of type :class:`float`.
@@ -312,7 +313,10 @@ class Testcase(ut_Testcase):
 			ex.add_note(f"Got type '{getFullyQualifiedName(osvvmStatus)}'.")
 			raise ex
 
-		for parameterName, count in (("totalErrorCount", totalErrorCount), ("simulationTime", simulationTime)):
+		for parameterName, count in (
+			("totalErrorCount", totalErrorCount),
+			("simulationTime",  simulationTime)
+		):
 			if count is not None and not isinstance(count, int):
 				ex = TypeError(f"Parameter '{parameterName}' is not of type 'int'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(count)}'.")
