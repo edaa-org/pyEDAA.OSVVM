@@ -1,0 +1,80 @@
+# Hand-written sample from an OSVVM output: a test case of RunDemoTestsWithCoverage (OSVVM 2026.09, NVC), a failed test
+# with disabled alerts and requirements, a skipped test, a test failing as expected and a test with generics.
+Version: "0.1"
+Date: 2026-10-10T18:44:02+00:00
+TestSuites: 
+  - Name: Axi4Full
+    TestCases:
+      - TestCaseName: "TbAxi4_BasicReadWrite"
+        FunctionalCoverage: 100.00
+        SimulationTime: "430000000 fs"
+        Name: "TbAxi4_BasicReadWrite"
+        Status: "PASSED"
+        Results: {TotalErrors: 0, AlertCount: {Failure: 0, Error: 0, Warning: 0}, PassedCount: 60, AffirmCount: 60, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        TestCaseFileName: "TbAxi4_BasicReadWrite"
+        Generics:           null
+        ElapsedTime: 0.251
+    ElapsedTime: 0.251
+  - Name: Demo
+    TestCases:
+      - TestCaseName: "TbDemo_Failed"
+        FunctionalCoverage: 43.75
+        SimulationTime: "125000000 fs"
+        Name: "TbDemo_Failed"
+        Status: "FAILED"
+        Results: {TotalErrors: 3, AlertCount: {Failure: 0, Error: 2, Warning: 1}, PassedCount: 7, AffirmCount: 9, RequirementsPassed: 1, RequirementsGoal: 2, DisabledAlertCount: {Failure: 0, Error: 1, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        TestCaseFileName: "TbDemo_Failed"
+        Generics:           null
+        ElapsedTime: 0.250
+      - TestCaseName: TbDemo_Skipped
+        Name: TbDemo_Skipped
+        Status: SKIPPED
+        Results: null
+        Reason: "Not supported by NVC"
+        ElapsedTime: 0
+      - TestCaseName: "TbExpected_Failed"
+        SimulationTime: "1000000 fs"
+        Name: "TbExpected_Failed"
+        Status: "FAILED"
+        Results: {TotalErrors: 1, AlertCount: {Failure: 0, Error: 1, Warning: 0}, PassedCount: 4, AffirmCount: 5, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        ExpectedResults:
+          Status: "FAILED"
+          TotalErrors: 1
+          AlertCount:
+            Failure: 0
+            Error: 1
+            Warning: 0
+        Reason: "Checks the error path"
+        TestCaseFileName: "TbExpected_Failed"
+        Generics:           null
+        ElapsedTime: 0.101
+      - TestCaseName: "TbGenerics"
+        SimulationTime: "2000000 fs"
+        Name: "TbGenerics"
+        Status: "PASSED"
+        Results: {TotalErrors: 0, AlertCount: {Failure: 0, Error: 0, Warning: 0}, PassedCount: 3, AffirmCount: 3, RequirementsPassed: 0, RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}, ExpectedCount: {Failure: 0, Error: 0, Warning: 0}, ExternalErrors: {Failure: 0, Error: 0, Warning: 0}}
+        TestCaseFileName: "TbGenerics_WIDTH_8"
+        Generics:
+          WIDTH: "8"
+        ElapsedTime: 0.050
+    ElapsedTime: 0.401
+Name:     "Demo"
+BuildInfo:
+  StartTime:            2026-10-10T18:44:02+00:00
+  FinishTime:           2026-10-10T18:44:03+00:00
+  ElapsedTime:              0.652
+  Simulator:            "NVC"
+  SimulatorVersion:     "1.23.0"
+  OsvvmVersion:         "2026.09"
+  BuildErrorCode:       0
+  AnalyzeErrorCount:    0
+  SimulateErrorCount:   2
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Demo.log"
+  SimulationHtmlLogFile: "logs/Demo_log.html"
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory:    ""
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"

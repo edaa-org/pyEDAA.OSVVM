@@ -1,0 +1,24 @@
+Version: "0.1"
+TestCaseName: "TbAxi4_BasicReadWrite"
+TestCaseFile:  "../../src/TbAxi4_BasicReadWrite.vhd"
+TestSuiteName: "Axi4Full"
+BuildName: "Demo"
+Generics:           null
+ReportsTestSuiteDirectory:  "reports/Axi4Full"
+RequirementsYamlFile: ""
+AlertYamlFile:  "reports/Axi4Full/TbAxi4_BasicReadWrite_alerts.yml"
+CovYamlFile:  "reports/Axi4Full/TbAxi4_BasicReadWrite_cov.yml"
+ScoreboardDict:
+  slv: "reports/Axi4Full/TbAxi4_BasicReadWrite_sb_slv.yml"
+TranscriptFiles: "results/Axi4Full/TbAxi4_BasicReadWrite.log"
+TestCaseFileName: "TbAxi4_BasicReadWrite"
+GenericNames: ""
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Demo.log"
+  SimulationHtmlLogFile: "logs/Demo_log.html"
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory:    ""
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"

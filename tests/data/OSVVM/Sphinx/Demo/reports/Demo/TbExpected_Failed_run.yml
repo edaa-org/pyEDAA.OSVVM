@@ -1,0 +1,23 @@
+Version: "0.1"
+TestCaseName: "TbExpected_Failed"
+TestCaseFile:  "../../src/TbExpected_Failed.vhd"
+TestSuiteName: "Demo"
+BuildName: "Demo"
+Generics:           null
+ReportsTestSuiteDirectory:  "reports/Demo"
+RequirementsYamlFile: ""
+AlertYamlFile:  "reports/Demo/TbExpected_Failed_alerts.yml"
+CovYamlFile:  ""
+ScoreboardDict:           null
+TranscriptFiles: "results/Demo/TbExpected_Failed.log"
+TestCaseFileName: "TbExpected_Failed"
+GenericNames: ""
+OsvvmSettingsInfo:
+  ReportsSubdirectory:  "reports"
+  SimulationLogFile: "logs/Demo.log"
+  SimulationHtmlLogFile: "logs/Demo_log.html"
+  RequirementsSubdirectory: ""
+  CoverageSubdirectory:    ""
+  Report2CssFiles:
+    - "reports/CssOsvvmStyle.css"
+  Report2PngFile:  "reports/OsvvmLogo.png"
