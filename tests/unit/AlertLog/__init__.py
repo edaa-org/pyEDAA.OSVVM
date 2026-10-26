@@ -32,15 +32,20 @@
 from datetime              import timedelta
 from pathlib               import Path
 
+from ruamel.yaml           import YAML, CommentedMap
+
 from pyTooling.Testing     import Testcase
 
 from pyEDAA.OSVVM.AlertLog import AlertLogError, AlertLogItem, AlertLogStatus, AlreadyInAlertLogError, Document, \
-                                  DuplicateAlertLogItemError
+                                  DuplicateAlertLogItemError, Settings
 
 if __name__ == "__main__": # pragma: no cover
 	print("ERROR: you called a testcase declaration file as an executable module.")
 	print("Use: 'python -m unitest <testcase module>'")
 	exit(1)
+
+
+DATA = Path("tests/data/OSVVM/AlertLog")
 
 
 class Status(Testcase):
@@ -150,6 +155,28 @@ class Instantiation(Testcase):
 			_ = AlertLogItem("name", parent="root")
 
 		self.assertEqual("Parameter 'parent' is not of type 'AlertLogItem'.", str(context.exception))
+
+	def test_Settings(self) -> None:
+		settings = Settings(0, 0, -1, True, False, True)
+
+		self.assertIsNone(settings.Parent)
+		self.assertEqual(0, settings.ExternalWarningCount)
+		self.assertEqual(0, settings.ExternalErrorCount)
+		self.assertEqual(-1, settings.ExternalFailureCount)
+		self.assertTrue(settings.FailOnDisabledErrors)
+		self.assertFalse(settings.FailOnRequirementErrors)
+		self.assertTrue(settings.FailOnWarning)
+
+	def test_Settings_Flags(self) -> None:
+		with self.assertRaises(ValueError) as context:
+			_ = Settings(0, 0, 0, True, None, True)
+
+		self.assertEqual("Parameter 'failOnRequirementErrors' is None.", str(context.exception))
+
+		with self.assertRaises(TypeError) as context:
+			_ = Settings(0, 0, 0, True, True, "true")
+
+		self.assertEqual("Parameter 'failOnWarning' is not of type 'bool'.", str(context.exception))
 
 
 class Hierarchy(Testcase):
@@ -276,6 +303,19 @@ class Hierarchy(Testcase):
 
 		self.assertEqual("Parameter 'value' is not of type 'AlertLogItem'.", str(context.exception))
 
+	def test_Settings_Parent(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml")
+		settings = Settings(0, 0, 0, True, True, True, parent=document)
+
+		self.assertIs(document, settings.Parent)
+		self.assertIs(settings, document.Settings)
+
+		with self.assertRaises(AlertLogError):
+			_ = Settings(0, 0, 0, True, True, True, parent=document)
+
+		with self.assertRaises(TypeError):
+			_ = Settings(0, 0, 0, True, True, True, parent=AlertLogItem("root"))
+
 
 class Iterate(Testcase):
 	def test_Iterate(self) -> None:
@@ -305,6 +345,45 @@ class Iterate(Testcase):
 		self.assertListEqual([item11, item2], list(root.IterateItems(lambda item: item.Status is AlertLogStatus.Failed)))
 
 
+class ItemParse(Testcase):
+	def _Node(self, alertCount: str) -> CommentedMap:
+		return YAML().load(
+			'Name: "Default"\n'
+			'Status: "PASSED"\n'
+			f'Results: {{TotalErrors: 0, AlertCount: {alertCount}, PassedCount: 0, AffirmCount: 0, RequirementsPassed: 0, '
+			'RequirementsGoal: 0, DisabledAlertCount: {Failure: 0, Error: 0, Warning: 0}}\n'
+			'Children: []\n'
+		)
+
+	def test_Parse(self) -> None:
+		item = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3}"))
+
+		self.assertEqual("Default", item.Name)
+		self.assertEqual(3, item.WarningCount)
+		self.assertEqual(2, item.ErrorCount)
+		self.assertEqual(1, item.FailureCount)
+
+	def test_Parse_UnknownKey(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Error: 2, Warning: 3, Note: 4}"))
+
+		self.assertEqual("Unknown key 'Note' in 'AlertCount' at line 3.", str(context.exception))
+
+	def test_Parse_MissingKey(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Warning: 3}"))
+
+		self.assertEqual("'AlertCount' of AlertLog item at line 3 has no key 'Error'.", str(context.exception))
+
+	def test_Parse_Type(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
+			_ = AlertLogItem.Parse(self._Node("{Failure: 1, Error: two, Warning: 3}"))
+
+		self.assertEqual(
+			"Key 'Error' of 'AlertCount' of AlertLog item at line 3 is not an integer.", str(context.exception)
+		)
+
+
 class Parse(Testcase):
 	def test_Create(self) -> None:
 		path = Path("tests/data/OSVVM/TbAxi4_BasicReadWrite_alerts.yml")
@@ -328,3 +407,42 @@ class Parse(Testcase):
 		self.assertEqual(40, document.Children["Default"].PassedCount)
 		self.assertGreater(document.AnalysisDuration, timedelta())
 		self.assertGreater(document.ModelConversionDuration, timedelta())
+
+	def test_TimeOut(self) -> None:
+		document = Document(DATA / "TbTimeOut_alerts.yml", analyzeAndConvert=True)
+
+		self.assertIs(AlertLogStatus.TimeOut, document.Status)
+		self.assertFalse(document.Settings.FailOnDisabledErrors)
+		self.assertTrue(document.Settings.FailOnRequirementErrors)
+		self.assertFalse(document.Settings.FailOnWarning)
+
+		default = document.Children["Default"]
+		self.assertIs(AlertLogStatus.Failed, default.Status)
+		self.assertEqual(3, default.TotalErrorCount)
+		self.assertEqual(1, default.WarningCount)
+		self.assertEqual(1, default.ErrorCount)
+		self.assertEqual(1, default.FailureCount)
+		self.assertEqual(1, default.PassedRequirementsCount)
+		self.assertEqual(2, default.RequirementsGoalCount)
+		self.assertEqual(0, default.DisabledWarningCount)
+		self.assertEqual(2, default.DisabledErrorCount)
+		self.assertEqual(0, default.DisabledFailureCount)
+
+	def test_ToTree_Format(self) -> None:
+		document = Document(DATA / "TbModelParameters_alerts.yml", analyzeAndConvert=True)
+
+		tree = document.ToTree(lambda node: node["Name"].upper())
+
+		self.assertEqual("TBMODELPARAMETERS\n├─VHDL ASSERTS\n├─DEFAULT\n├─OSVVM\n└─TB\n", tree.Render())
+
+	def test_UnknownKeys(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(DATA / "UnknownKeys_alerts.yml", analyzeAndConvert=True)
+
+		self.assertEqual("Unknown key 'FailOnVhdlAssertErrors' in settings at line 5.", str(context.exception))
+
+	def test_MissingKey(self) -> None:
+		with self.assertRaises(AlertLogError) as context:
+			_ = Document(DATA / "MissingStatus_alerts.yml", analyzeAndConvert=True)
+
+		self.assertEqual("AlertLog item at line 7 has no key 'Status'.", str(context.exception))
