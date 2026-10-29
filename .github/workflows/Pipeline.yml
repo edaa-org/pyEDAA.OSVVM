@@ -26,6 +26,7 @@ jobs:
       pylint:              'false'
       codecov:             'true'
       codacy:              'true'
+      coverage_html:       'false'   # the documentation renders its code coverage below 'coverage/' itself
       dorny:               'true'
       documentation_steps: 'html latex pages pdf'
     secrets:
