@@ -1,4 +1,4 @@
 ruamel.yaml ~= 0.19.1
 pyTooling >= 10.1.1, < 11.0
-pyVHDLModel ~= 0.40.0rc3
+pyVHDLModel ~= 0.40.0
 pyEDAA.Reports ~= 1.0
