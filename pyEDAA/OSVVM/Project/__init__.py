@@ -381,7 +381,7 @@ class VHDLLibrary(Named["Build"]):
 			ex.add_note(f"Got type '{getFullyQualifiedName(build)}'.")
 			raise ex
 
-		self._files = []
+		self._files = files = []
 		if vhdlFiles is None:
 			pass
 		elif isinstance(vhdlFiles, Iterable):
@@ -392,7 +392,7 @@ class VHDLLibrary(Named["Build"]):
 					raise ex
 
 				vhdlFile._parent = self
-				self._files.append(vhdlFile)
+				files.append(vhdlFile)
 		else:  # pragma: no cover
 			ex = TypeError("Parameter 'vhdlFiles' is not an iterable of VHDLSourceFile.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(vhdlFiles)}'.")
