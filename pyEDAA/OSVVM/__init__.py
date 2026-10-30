@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -31,9 +31,9 @@
 """Parser and converters for OSVVM-specific data models and report formats."""
 __author__ =            "Patrick Lehmann"
 __email__ =             "Paebbels@gmail.com"
-__copyright__ =         "2025-2026, Patrick Lehmann"
+__copyright__ =         "2025-2026, Electronic Design Automation Abstraction (EDA²)"
 __license__ =           "Apache License, Version 2.0"
-__version__ =           "0.8.1"
+__version__ =           "0.9.0rc1"
 __keywords__ =          ["eda project", "model", "abstract", "osvvm", "reports", "data format", "unit test", "test suite", "test bench", "test harness"]
 __project_url__ =       "https://github.com/edaa-org/pyEDAA.OSVVM"
 __documentation_url__ = "https://edaa-org.github.io/pyEDAA.OSVVM"

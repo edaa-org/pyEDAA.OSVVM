@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -39,17 +39,24 @@ packageName =            "pyEDAA.OSVVM"
 packageDirectory =       packageName.replace(".", "/")
 packageInformationFile = Path(f"{packageDirectory}/__init__.py")
 
+additionalRequirements = {
+	"sphinx": ["pyTooling.Sphinx[reports] ~= 1.0"],
+}
+
 setup(
 	**DescribePythonPackageHostedOnGitHub(
 		packageName=packageName,
 		description="Parser and converters for OSVVM-specific data models and report formats.",
 		gitHubNamespace=gitHubNamespace,
 		sourceFileWithVersion=packageInformationFile,
+		additionalRequirements=additionalRequirements,
 		classifiers=list(DEFAULT_CLASSIFIERS) + [
+			"Framework :: Sphinx :: Domain",
+			"Framework :: Sphinx :: Extension",
 			"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
 		],
 		developmentStatus="beta",
-		pythonVersions=("3.12", "3.13", "3.14"),
+		pythonVersions=("3.12", "3.13", "3.14", "3.15"),
 		consoleScripts={
 			"pyedaa-osvvm": "pyEDAA.OSVVM.CLI:main"
 		},

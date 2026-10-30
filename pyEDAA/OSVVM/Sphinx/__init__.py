@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Bötzingen, Germany                                                             #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -54,11 +54,9 @@ from sphinx.environment    import BuildEnvironment
 from sphinx.util.logging   import getLogger
 from pyTooling.Decorators  import export
 from pyTooling.Common      import readResourceFile
+from pyTooling.Sphinx      import ReportExtensionError
 
-from sphinx_reports.Common import ReportExtensionError
-
-from pyEDAA.OSVVM          import __version__
-from pyEDAA.OSVVM          import static as ResourcePackage
+from pyEDAA.OSVVM          import __version__, static as ResourcePackage
 
 @export
 class OSVVMDomain(Domain):
@@ -104,8 +102,6 @@ class OSVVMDomain(Domain):
 	indices = [
 		# LibraryIndex,
 	]  #: A list of all indices in this domain.
-
-	from pyEDAA.OSVVM.Sphinx.Testsuites import BuildSummary
 
 	configValues: Dict[str, Tuple[Any, str, Any]] = {
 		**BuildSummary.configValues,

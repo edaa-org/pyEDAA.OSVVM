@@ -46,45 +46,42 @@ At next use this layer's service program to convert from UCDB to Cobertura forma
 
    pyedaa-ucis export --ucdb ucdb.xml --cobertura cobertura.xml
 """
-from typing   import NoReturn, Optional as Nullable
+from typing   import NoReturn, Optional as Nullable, ClassVar
 
 from argparse import RawDescriptionHelpFormatter, Namespace
 from textwrap import dedent
+from types    import ModuleType
 
 from pyTooling.Decorators                     import export
+from pyTooling.Exceptions                     import ExceptionBase
 from pyTooling.Attributes.ArgParse            import ArgParseHelperMixin, DefaultHandler, CommandHandler
 from pyTooling.Attributes.ArgParse.Argument   import StringArgument
+from pyTooling.Attributes.ArgParse.Flag       import FlagArgument
 from pyTooling.TerminalUI                     import TerminalApplication
 
-from pyEDAA.OSVVM                             import __version__, __copyright__, __license__
+from pyEDAA                                   import OSVVM
 from pyEDAA.OSVVM                             import OSVVMException
 from pyEDAA.OSVVM.CLI.Project                 import ProjectHandlers
 
 
-# todo: merge into application
-# todo: printheadline, printversion (see pyVersioning)
 @export
-class ProgramBase(TerminalApplication):
-	"""Base-class for all program classes."""
-
-	programTitle: str
-
-	def _PrintHeadline(self) -> None:
-		"""Print the program's headline."""
-		print("{line}".format(line="=" * 120))
-		print("{headline: ^120s}".format(headline=self.programTitle))
-		print("{line}".format(line="=" * 120))
-
-
-@export
-class Application(ProgramBase, ProjectHandlers, ArgParseHelperMixin):
+class Application(TerminalApplication, ProjectHandlers, ArgParseHelperMixin):
 	"""Program class to implement the command line interface (CLI) using commands and options."""
 
-	programTitle = "OSVVM Service Program"
-	ISSUE_TRACKER_URL = "https://github.com/edaa-org/pyEDAA.OSVVM/issues"
+	HEADLINE:      ClassVar[str]        = "OSVVM Service Program"  #: Headline printed by :meth:`_PrintHeadline`.
+	DUNDER_MODULE: ClassVar[ModuleType] = OSVVM                    #: Package with the dunder variables.
 
 	def __init__(self) -> None:
 		super().__init__()
+
+		# Call the constructor of the ArgParseMixin
+		textWidth = min(self.Width, 160)
+
+		class HelpFormatter(RawDescriptionHelpFormatter):
+			def __init__(self, *args, **kwargs):
+				kwargs['max_help_position'] = 30
+				kwargs['width'] = textWidth
+				super().__init__(*args, **kwargs)
 
 		# Call the constructor of the ArgParseMixin
 		ArgParseHelperMixin.__init__(
@@ -93,17 +90,22 @@ class Application(ProgramBase, ProjectHandlers, ArgParseHelperMixin):
 		  description=dedent('''\
 				'pyEDAA.OSVVM Service Program' to query and transform data to/from any other format.
 				'''),
-		  formatter_class=RawDescriptionHelpFormatter,
+		  # epilog=dedent("""\
+		  #   Currently the following inpu/output formats are supported:
+		  #    * JUnit XML (unit test reports - Java oriented format)
+		  #    * Cobertura XML (branch/statement coverage - Java oriented format)
+		  # """),
+		  formatter_class=HelpFormatter,
 		  add_help=False
 		)
 
-#	@CommonSwitchArgumentAttribute("-q", "--quiet",   dest="quiet",   help="Reduce messages to a minimum.")
-#	@CommonSwitchArgumentAttribute("-v", "--verbose", dest="verbose", help="Print out detailed messages.")
-#	@CommonSwitchArgumentAttribute("-d", "--debug",   dest="debug",   help="Enable debug mode.")
 	def Run(self) -> None:
 		ArgParseHelperMixin.Run(self)
 
 	@DefaultHandler()
+	@FlagArgument("-q", "--quiet", dest="quiet", help="Reduce messages to a minimum.")
+	@FlagArgument("-v", "--verbose", dest="verbose", help="Print out detailed messages.")
+	@FlagArgument("-d", "--debug",   dest="debug",   help="Enable debug mode.")
 	def HandleDefault(self, _: Namespace) -> None:
 		"""Handle program calls without any command."""
 		self._PrintHeadline()
@@ -120,29 +122,7 @@ class Application(ProgramBase, ProjectHandlers, ArgParseHelperMixin):
 	def HandleVersion(self, _: Namespace) -> None:
 		"""Handle program calls with command ``version``."""
 		self._PrintHeadline()
-		self._PrintVersion()
-
-
-	def _PrintVersion(self) -> None:
-		"""Helper function to print the version information."""
-		print(dedent(f"""\
-			Copyright: {__copyright__}
-			License:   {__license__}
-			Version:   v{__version__}
-			""")
-		)
-
-	def _PrintHelp(self, command: Nullable[str] = None) -> None:
-		"""Helper function to print the command line parsers help page(s)."""
-		if command is None:
-			self.MainParser.print_help()
-		elif command == "help":
-			print("This is a recursion ...")
-		else:
-			try:
-				self.SubParsers[command].print_help()
-			except KeyError:
-				print(f"Command {command} is unknown.")
+		super()._PrintVersion("pyEDAA.OSVVM")
 
 
 @export
@@ -168,10 +148,12 @@ def main() -> NoReturn:
 	try:
 		program.Run()
 	except OSVVMException as ex:
-		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.Foreground))
+		program.WriteLineToStdErr(f"{{RED}}[ERROR] {ex}{{NOCOLOR}}".format(**Application.FOREGROUND))
 		while (ex := ex.__cause__) is not None:
-			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.Foreground))
+			program.WriteLineToStdErr(f"{{DARK_YELLOW}}Because of: {ex}{{NOCOLOR}}".format(**Application.FOREGROUND))
 
+	except ExceptionBase as ex:
+		program.PrintExceptionBase(ex)
 	except NotImplementedError as ex:
 		program.PrintNotImplementedError(ex)
 	except Exception as ex:
