@@ -94,7 +94,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			self._PrintHelp("project")
 			self.Exit(2)
 
-		self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
+		self.WriteNormal(f"  Parsing duration: {sw.DurationInSeconds:.3f} s")
 		self.WriteNormal(f"  Builds:           {len(osvvmProject.Builds)}")
 		self.WriteNormal(f"  Processed files:  {count(osvvmProject.IncludedFiles)}")
 
