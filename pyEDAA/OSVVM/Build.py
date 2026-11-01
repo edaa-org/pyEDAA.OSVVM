@@ -40,9 +40,9 @@ from pyTooling.Common      import getFullyQualifiedName
 from pyTooling.Stopwatch   import Stopwatch
 from pyTooling.Versioning  import CalendarVersion, SemanticVersion
 
-from pyEDAA.Reports.Unittesting import UnittestException, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, TestsuiteKind
-from pyEDAA.Reports.Unittesting import TestsuiteSummary as ut_TestsuiteSummary, Testsuite as ut_Testsuite
-from pyEDAA.Reports.Unittesting import Testcase as ut_Testcase
+from pyEDAA.Reports.Unittesting import UnittestError, Document, TestcaseStatus, TestsuiteStatus, TestsuiteType, \
+                                       TestsuiteKind, TestsuiteSummary as ut_TestsuiteSummary, \
+                                       Testsuite as ut_Testsuite, Testcase as ut_Testcase
 
 
 @export
@@ -51,16 +51,14 @@ class OsvvmException:
 
 
 @export
-@InheritDocString(UnittestException)
-class UnittestException(UnittestException, OsvvmException):
-	"""@InheritDocString(UnittestException)"""
+@InheritDocString(UnittestError)
+class UnittestException(UnittestError, OsvvmException):
+	pass
 
 
 @export
 @InheritDocString(ut_Testcase)
 class Testcase(ut_Testcase):
-	"""@InheritDocString(ut_Testcase)"""
-
 	_disabledWarningCount: int
 	_disabledErrorCount:   int
 	_disabledFatalCount:   int
@@ -73,6 +71,9 @@ class Testcase(ut_Testcase):
 	def __init__(
 		self,
 		name: str,
+		title: Nullable[str] = None,
+		summary: Nullable[str] = None,
+		description: Nullable[str] = None,
 		startTime: Nullable[datetime] = None,
 		setupDuration: Nullable[timedelta] = None,
 		testDuration: Nullable[timedelta] = None,
@@ -96,12 +97,16 @@ class Testcase(ut_Testcase):
 		expectedErrorCount: int = 0,
 		expectedFatalCount: int = 0,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		*,
 		parent: Nullable["Testsuite"] = None
 	) -> None:
 		"""
 		Initializes the fields of a test case.
 
 		:param name:                    Name of the test entity.
+		:param title:                   Optional, short label of the test case, written for a reader.
+		:param summary:                 Optional, summary of the test case.
+		:param description:             Optional, description of the test case.
 		:param startTime:               Time when the test entity was started.
 		:param setupDuration:           Duration it took to set up the entity.
 		:param testDuration:            Duration of the entity's test run.
@@ -112,8 +117,8 @@ class Testcase(ut_Testcase):
 		:param failedAssertionCount:    Number of failed assertions within the test.
 		:param passedAssertionCount:    Number of passed assertions within the test.
 		:param requirementsCount:       Number of requirements within the test.
-		:param failedRequirementsCount: Number of failed requirements within the test.
 		:param passedRequirementsCount: Number of passed requirements within the test.
+		:param failedRequirementsCount: Number of failed requirements within the test.
 		:param warningCount:            Count of encountered warnings.
 		:param errorCount:              Count of encountered errors.
 		:param fatalCount:              Count of encountered fatal errors.
@@ -125,32 +130,33 @@ class Testcase(ut_Testcase):
 		:param expectedFatalCount:      Count of expected fatal errors.
 		:param keyValuePairs:           Mapping of key-value pairs to initialize the test case.
 		:param parent:                  Reference to the parent test suite.
-		:raises TypeError:              If parameter 'parent' is not a Testsuite.
 		:raises ValueError:             If parameter 'assertionCount' is not consistent.
+		:raises TypeError:              If parameter 'parent' is not a Testsuite.
 		"""
 		super().__init__(
 			name,
+			title, summary, description,
 			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
 			status,
 			assertionCount, failedAssertionCount, passedAssertionCount,
 			warningCount, errorCount, fatalCount,
 			expectedWarningCount, expectedErrorCount, expectedFatalCount,
 			keyValuePairs,
-			parent
+			parent=parent
 		)
 
 		if not isinstance(disabledWarningCount, int):
-			ex = TypeError(f"Parameter 'disabledWarningCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledWarningCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledWarningCount)}'.")
 			raise ex
 
 		if not isinstance(disabledErrorCount, int):
-			ex = TypeError(f"Parameter 'disabledErrorCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledErrorCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledErrorCount)}'.")
 			raise ex
 
 		if not isinstance(disabledFatalCount, int):
-			ex = TypeError(f"Parameter 'disabledFatalCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'disabledFatalCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(disabledFatalCount)}'.")
 			raise ex
 
@@ -159,17 +165,17 @@ class Testcase(ut_Testcase):
 		self._disabledFatalCount =   disabledFatalCount
 
 		if requirementsCount is not None and not isinstance(requirementsCount, int):
-			ex = TypeError(f"Parameter 'requirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'requirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(requirementsCount)}'.")
 			raise ex
 
 		if passedRequirementsCount is not None and not isinstance(passedRequirementsCount, int):
-			ex = TypeError(f"Parameter 'passedRequirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'passedRequirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(passedRequirementsCount)}'.")
 			raise ex
 
 		if failedRequirementsCount is not None and not isinstance(failedRequirementsCount, int):
-			ex = TypeError(f"Parameter 'failedRequirementsCount' is not of type 'int'.")
+			ex = TypeError("Parameter 'failedRequirementsCount' is not of type 'int'.")
 			ex.add_note(f"Got type '{getFullyQualifiedName(failedRequirementsCount)}'.")
 			raise ex
 
@@ -177,7 +183,7 @@ class Testcase(ut_Testcase):
 			if passedRequirementsCount is not None:
 				if failedRequirementsCount is not None:
 					if passedRequirementsCount + failedRequirementsCount != requirementsCount:
-						raise ValueError(f"Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
+						raise ValueError("Parameter 'requirementsCount' is not the sum of 'passedRequirementsCount' and 'failedRequirementsCount'.")
 				else:
 					failedRequirementsCount = requirementsCount - passedRequirementsCount
 			elif failedRequirementsCount is not None:
@@ -202,12 +208,12 @@ class Testcase(ut_Testcase):
 
 		if functionalCoverage is not None:
 			if not isinstance(functionalCoverage, float):
-				ex = TypeError(f"Parameter 'functionalCoverage' is not of type 'float'.")
+				ex = TypeError("Parameter 'functionalCoverage' is not of type 'float'.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(functionalCoverage)}'.")
 				raise ex
 
 			if not (0.0 <= functionalCoverage <= 1.0):
-				raise ValueError(f"Parameter 'functionalCoverage' is not in range 0.0..1.0.")
+				raise ValueError("Parameter 'functionalCoverage' is not in range 0.0..1.0.")
 
 		self._functionalCoverage = functionalCoverage
 
@@ -278,7 +284,7 @@ class Testcase(ut_Testcase):
 @export
 @InheritDocString(ut_Testsuite)
 class Testsuite(ut_Testsuite):
-	"""@InheritDocString(ut_Testsuite)"""
+	pass
 
 
 @export
@@ -315,13 +321,14 @@ class Settings(metaclass=ExtendedType, slots=True):
 @export
 @InheritDocString(ut_TestsuiteSummary)
 class TestsuiteSummary(ut_TestsuiteSummary):
-	"""@InheritDocString(ut_TestsuiteSummary)"""
-
 	_datetime: datetime
 
 	def __init__(
 		self,
 		name: str,
+		title: Nullable[str] = None,
+		summary: Nullable[str] = None,
+		description: Nullable[str] = None,
 		startTime: Nullable[datetime] = None,
 		setupDuration: Nullable[timedelta] = None,
 		testDuration: Nullable[timedelta] = None,
@@ -333,12 +340,16 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		fatalCount: int = 0,
 		testsuites: Nullable[Iterable[TestsuiteType]] = None,
 		keyValuePairs: Nullable[Mapping[str, Any]] = None,
+		*,
 		parent: Nullable[TestsuiteType] = None
 	) -> None:
 		"""
 		Initializes the fields of a test summary.
 
 		:param name:               Name of the test summary.
+		:param title:              Optional, short label of the test summary, written for a reader.
+		:param summary:            Optional, summary of the test summary.
+		:param description:        Optional, description of the test summary.
 		:param startTime:          Time when the test summary was started.
 		:param setupDuration:      Duration it took to set up the test summary.
 		:param testDuration:       Duration of all tests listed in the test summary.
@@ -354,12 +365,13 @@ class TestsuiteSummary(ut_TestsuiteSummary):
 		"""
 		super().__init__(
 			name,
+			title, summary, description,
 			startTime, setupDuration, testDuration, teardownDuration, totalDuration,
 			status,
 			warningCount, errorCount, fatalCount,
 			testsuites,
 			keyValuePairs,
-			parent
+			parent=parent
 		)
 
 
@@ -428,7 +440,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		# 	self.Generate(overwrite=True)
 
 		if self._yamlDocument is None:
-			ex = UnittestException(f"Internal YAML document tree is empty and needs to be generated before write is possible.")
+			ex = UnittestException("Internal YAML document tree is empty and needs to be generated before write is possible.")
 			# ex.add_note(f"Call 'BuildSummaryDocument.Generate()' or 'BuildSummaryDocument.Write(..., regenerate=True)'.")
 			raise ex
 
@@ -542,7 +554,7 @@ class BuildSummaryDocument(TestsuiteSummary, Document):
 		"""
 		if self._yamlDocument is None:
 			ex = UnittestException(f"OSVVM YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note(f"Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
+			ex.add_note("Call 'Document.Analyze()' or create document using 'Document(path, parse=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:

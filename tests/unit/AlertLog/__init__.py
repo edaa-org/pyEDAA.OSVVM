@@ -31,9 +31,10 @@
 """Testcases for OSVVM's AlertLog YAML file format."""
 from datetime import timedelta
 from pathlib import Path
-from unittest     import TestCase
 
 from pytest       import mark
+
+from pyTooling.Testing import Testcase
 
 from pyEDAA.OSVVM.AlertLog import AlertLogItem, Document as AlertLogDocument, AlertLogStatus, AlertLogException
 
@@ -43,7 +44,7 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiation(TestCase):
+class Instantiation(Testcase):
 	def test_AlertLogStatus_dummy(self) -> None:
 		with self.assertRaises(AlertLogException):
 			_ = AlertLogStatus.Parse("dummy")
@@ -83,7 +84,7 @@ class Instantiation(TestCase):
 		self.assertEqual(0, item.DisabledAlertCountFailures)
 
 
-class Hierarchy(TestCase):
+class Hierarchy(Testcase):
 	def test_TopDown(self) -> None:
 		root = AlertLogItem("root")
 		item = AlertLogItem("item1", parent=root)
@@ -130,7 +131,7 @@ class Hierarchy(TestCase):
 		self.assertEqual(0, len(item))
 
 
-class Iterate(TestCase):
+class Iterate(Testcase):
 	def test_Iterate(self) -> None:
 		child1 = AlertLogItem("item1")
 		child2 = AlertLogItem("item2")

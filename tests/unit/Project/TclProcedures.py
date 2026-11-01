@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -32,10 +32,10 @@
 from pathlib  import Path
 from textwrap import dedent
 from tkinter  import TclError
-from unittest import TestCase as TestCase
 
-from pyTooling.Common import firstPair, firstValue, firstItem, firstElement
-from pyVHDLModel      import VHDLVersion
+from pyTooling.Common  import firstPair, firstValue, firstItem, firstElement
+from pyTooling.Testing import Testcase
+from pyVHDLModel       import VHDLVersion
 
 from pyEDAA.OSVVM.Project     import Context, osvvmContext
 from pyEDAA.OSVVM.Project.TCL import OsvvmProFileProcessor, getException
@@ -63,12 +63,12 @@ def EndBuild() -> None:
 
 
 def throw():
-	ex = ValueError(f"Dummy exception")
+	ex = ValueError("Dummy exception")
 	osvvmContext.LastException = ex
 	raise ex
 
 
-class BasicProcedures(TestCase):
+class BasicProcedures(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -172,8 +172,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			library lib
 			EndBuild
 			""")
@@ -373,8 +373,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tb
 			simulate harness
 			EndBuild
@@ -406,8 +406,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tb
 			simulate harness [generic param value]
 			EndBuild
@@ -443,8 +443,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestSuite ts
 			EndBuild
 			""")
@@ -473,8 +473,8 @@ class BasicProcedures(TestCase):
 		processor.RegisterPythonFunctionAsTclProcedure(BeginBuild)
 		processor.RegisterPythonFunctionAsTclProcedure(EndBuild)
 
-		code = dedent(f"""\
-			BeginBuild {{build}}
+		code = dedent("""\
+			BeginBuild {build}
 			TestName tn
 			EndBuild
 			""")
@@ -566,7 +566,7 @@ class BasicProcedures(TestCase):
 			self.assertEqual(f"value{i}", value)
 
 
-class SetterGatter(TestCase):
+class SetterGatter(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -576,7 +576,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			SetVHDLVersion 2019
 			""")
 
@@ -593,7 +593,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			set vhdlVersion [GetVHDLVersion]
 			""")
 
@@ -608,7 +608,7 @@ class SetterGatter(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
+		code = dedent("""\
 			set vhdlVersion [GetVHDLVersion]
 
 			SetVHDLVersion 1987
@@ -637,7 +637,7 @@ class SetterGatter(TestCase):
 			self.assertEqual(version, processor[f"vhdlVersion_{version}"])
 
 
-class Helper(TestCase):
+class Helper(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -687,7 +687,7 @@ class Helper(TestCase):
 		self.assertEqual(0, processor["missing"])
 
 
-class NoOperation(TestCase):
+class NoOperation(Testcase):
 	def setUp(self) -> None:
 		from pyEDAA.OSVVM.Project import osvvmContext
 
@@ -698,7 +698,7 @@ class NoOperation(TestCase):
 		processor = OsvvmProFileProcessor()
 		processor.RegisterPythonFunctionAsTclProcedure(throw)
 
-		code = dedent(f"""\
+		code = dedent("""\
 			throw
 			""")
 
@@ -712,8 +712,8 @@ class NoOperation(TestCase):
 		print()
 		processor = OsvvmProFileProcessor()
 
-		code = dedent(f"""\
-			puts {{Hello World}}
+		code = dedent("""\
+			puts {Hello World}
 			""")
 
 		try:

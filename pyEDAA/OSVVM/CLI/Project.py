@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -31,9 +31,7 @@
 from argparse import Namespace
 from pathlib  import Path
 from sys      import stdin
-from typing   import NoReturn
 
-from pyTooling.Decorators                     import readonly
 from pyTooling.MetaClasses                    import ExtendedType
 from pyTooling.Common                         import count
 from pyTooling.Attributes.ArgParse            import CommandHandler
@@ -57,7 +55,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 
 		returnCode = 0
 		if (args.stdin is None and args.regressionTCL is None and args.buildPro is None):
-			self.WriteError(f"Either option '--stdin' or '--regressionTCL=<TCL file>' or '--buildPro=<PRO file>' is missing.")
+			self.WriteError("Either option '--stdin' or '--regressionTCL=<TCL file>' or '--buildPro=<PRO file>' is missing.")
 			returnCode = 3
 
 		if returnCode != 0:
@@ -67,7 +65,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 		processor = OsvvmProFileProcessor()
 
 		if args.stdin is True:
-			self.WriteNormal(f"Reading TCL code from STDIN ...")
+			self.WriteNormal("Reading TCL code from STDIN ...")
 			tclCode = stdin.read()
 
 			with sw:
@@ -76,7 +74,7 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			osvvmProject = processor.Context.ToProject("unnamed")
 
 		elif args.regressionTCL is not None:
-			self.WriteNormal(f"Reading regression TCL file ...")
+			self.WriteNormal("Reading regression TCL file ...")
 
 			with sw:
 				osvvmProject = processor.LoadRegressionFile(Path(args.regressionTCL))
@@ -92,9 +90,11 @@ class ProjectHandlers(metaclass=ExtendedType, mixin=True):
 			osvvmProject = processor.Context.ToProject("unnamed")
 
 		else:
-			self.Exit(1)
+			self.WriteError("Neither --stdin, --regressionTCL nor --buildPro has been provided.")
+			self._PrintHelp("project")
+			self.Exit(2)
 
-		self.WriteNormal(f"  Parsing duration: {sw.Duration:.3f} s")
+		self.WriteNormal(f"  Parsing duration: {sw.DurationInSeconds:.3f} s")
 		self.WriteNormal(f"  Builds:           {len(osvvmProject.Builds)}")
 		self.WriteNormal(f"  Processed files:  {count(osvvmProject.IncludedFiles)}")
 
