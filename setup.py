@@ -40,7 +40,7 @@ packageDirectory =       packageName.replace(".", "/")
 packageInformationFile = Path(f"{packageDirectory}/__init__.py")
 
 additionalRequirements = {
-	"sphinx": ["pyTooling.Sphinx[reports] ~= 1.0"],
+	"sphinx": ["pyTooling.Sphinx[reports] ~= 1.1"],
 }
 
 setup(
