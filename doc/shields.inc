@@ -18,7 +18,7 @@
    :alt: Code license
    :height: 22
    :target: Code-License.html
-.. |SHIELD:png:OSVVM-src-license| image:: https://img.shields.io/pypi/l/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Apache&label=code
+.. |SHIELD:png:OSVVM-src-license| image:: https://raster.shields.io/pypi/l/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=Apache&label=code
    :alt: Code license
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/blob/main/LICENSE.md
@@ -28,7 +28,7 @@
    :alt: GitHub tag (latest SemVer incl. pre-release
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/tags
-.. |SHIELD:png:OSVVM-tag| image:: https://raster.shields.io/github/v/tag/edaa-org/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=GitHub&include_prereleases
+.. |SHIELD:png:OSVVM-tag| image:: https://raster.shields.io/github/v/tag/edaa-org/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=GitHub&include_prereleases
    :alt: GitHub tag (latest SemVer incl. pre-release
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/tags
@@ -38,7 +38,7 @@
    :alt: GitHub release date
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/releases
-.. |SHIELD:png:OSVVM-date| image:: https://raster.shields.io/github/release-date/edaa-org/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=GitHub
+.. |SHIELD:png:OSVVM-date| image:: https://raster.shields.io/github/release-date/edaa-org/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=GitHub
    :alt: GitHub release date
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/releases
@@ -48,7 +48,7 @@
    :alt: Dependent repos (via libraries.io)
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/network/dependents
-.. |SHIELD:png:OSVVM-lib-dep| image:: https://raster.shields.io/librariesio/dependent-repos/pypi/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
+.. |SHIELD:png:OSVVM-lib-dep| image:: https://raster.shields.io/librariesio/dependent-repos/pypi/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
    :alt: Dependent repos (via libraries.io)
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/network/dependents
@@ -58,7 +58,7 @@
    :alt: GitHub Workflow - Build and Test Status
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/actions/workflows/Pipeline.yml
-.. |SHIELD:png:OSVVM-gha-test| image:: https://raster.shields.io/github/actions/workflow/status/edaa-org/pyEDAA.OSVVM/Pipeline.yml?longCache=true&style=flat-square&label=Build%20and%20Test&logo=GitHub%20Actions&logoColor=FFFFFF
+.. |SHIELD:png:OSVVM-gha-test| image:: https://raster.shields.io/github/actions/workflow/status/edaa-org/pyEDAA.OSVVM/Pipeline.yml.png?longCache=true&style=flat-square&label=Build%20and%20Test&logo=GitHub%20Actions&logoColor=FFFFFF
    :alt: GitHub Workflow - Build and Test Status
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/actions/workflows/Pipeline.yml
@@ -88,7 +88,7 @@
    :alt: Codecov - Branch Coverage
    :height: 22
    :target: https://codecov.io/gh/edaa-org/pyEDAA.OSVVM
-.. |SHIELD:png:OSVVM-codecov-coverage| image:: https://raster.shields.io/codecov/c/github/edaa-org/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Codecov
+.. |SHIELD:png:OSVVM-codecov-coverage| image:: https://raster.shields.io/codecov/c/github/edaa-org/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=Codecov
    :alt: Codecov - Branch Coverage
    :height: 22
    :target: https://codecov.io/gh/edaa-org/pyEDAA.OSVVM
@@ -98,7 +98,7 @@
    :alt: Libraries.io SourceRank
    :height: 22
    :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM/sourcerank
-.. |SHIELD:png:OSVVM-lib-rank| image:: https://raster.shields.io/librariesio/sourcerank/pypi/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
+.. |SHIELD:png:OSVVM-lib-rank| image:: https://raster.shields.io/librariesio/sourcerank/pypi/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
    :alt: Libraries.io SourceRank
    :height: 22
    :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM/sourcerank
@@ -108,7 +108,7 @@
    :alt: PyPI - Tag
    :height: 22
    :target: https://pypi.org/project/pyEDAA.OSVVM/
-.. |SHIELD:png:OSVVM-pypi-tag| image:: https://raster.shields.io/pypi/v/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
+.. |SHIELD:png:OSVVM-pypi-tag| image:: https://raster.shields.io/pypi/v/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
    :alt: PyPI - Tag
    :height: 22
    :target: https://pypi.org/project/pyEDAA.OSVVM/
@@ -117,7 +117,7 @@
 .. |SHIELD:svg:OSVVM-pypi-status| image:: https://img.shields.io/pypi/status/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
    :alt: PyPI - Status
    :height: 22
-.. |SHIELD:png:OSVVM-pypi-status| image:: https://raster.shields.io/pypi/status/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
+.. |SHIELD:png:OSVVM-pypi-status| image:: https://raster.shields.io/pypi/status/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
    :alt: PyPI - Status
    :height: 22
 
@@ -125,7 +125,7 @@
 .. |SHIELD:svg:OSVVM-pypi-python| image:: https://img.shields.io/pypi/pyversions/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
    :alt: PyPI - Python Version
    :height: 22
-.. |SHIELD:png:OSVVM-pypi-python| image:: https://raster.shields.io/pypi/pyversions/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
+.. |SHIELD:png:OSVVM-pypi-python| image:: https://raster.shields.io/pypi/pyversions/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=PyPI&logoColor=FBE072
    :alt: PyPI - Python Version
    :height: 22
 
@@ -134,7 +134,7 @@
    :alt: Libraries.io status for latest release
    :height: 22
    :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM
-.. |SHIELD:png:OSVVM-lib-status| image:: https://raster.shields.io/librariesio/release/pypi/pyEDAA.OSVVM?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
+.. |SHIELD:png:OSVVM-lib-status| image:: https://raster.shields.io/librariesio/release/pypi/pyEDAA.OSVVM.png?longCache=true&style=flat-square&logo=Libraries.io&logoColor=fff
    :alt: Libraries.io status for latest release
    :height: 22
    :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM
@@ -144,7 +144,7 @@
    :alt: Requires.io
    :height: 22
    :target: https://requires.io/github/edaa-org/pyEDAA.OSVVM/requirements/?branch=main
-.. |SHIELD:png:OSVVM-req-status| image:: https://raster.shields.io/requires/github/edaa-org/pyEDAA.OSVVM?longCache=true&style=flat-square
+.. |SHIELD:png:OSVVM-req-status| image:: https://raster.shields.io/requires/github/edaa-org/pyEDAA.OSVVM.png?longCache=true&style=flat-square
    :alt: Requires.io
    :height: 22
    :target: https://requires.io/github/edaa-org/pyEDAA.OSVVM/requirements/?branch=main
@@ -154,7 +154,7 @@
    :alt: Documentation License
    :height: 22
    :target: License.html
-.. |SHIELD:png:OSVVM-doc-license| image:: https://raster.shields.io/badge/doc-CC--BY%204.0-green?longCache=true&style=flat-square&logo=CreativeCommons&logoColor=fff
+.. |SHIELD:png:OSVVM-doc-license| image:: https://raster.shields.io/badge/doc-CC--BY%204.0-green.png?longCache=true&style=flat-square&logo=CreativeCommons&logoColor=fff
    :alt: Documentation License
    :height: 22
    :target: https://GitHub.com/edaa-org/pyEDAA.OSVVM/blob/main/doc/License.rst

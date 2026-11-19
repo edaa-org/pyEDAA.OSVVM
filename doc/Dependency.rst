@@ -3,20 +3,22 @@
 Dependencies
 ############
 
-.. |img-OSVVM-lib-status| image:: https://img.shields.io/librariesio/release/pypi/pyEDAA.OSVVM
-   :alt: Libraries.io status for latest release
-   :height: 22
-   :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM
-.. |img-OSVVM-vul-status| image:: https://img.shields.io/snyk/vulnerabilities/github/edaa-org/pyEDAA.OSVVM
-   :alt: Snyk Vulnerabilities for GitHub Repo
-   :height: 22
-   :target: https://img.shields.io/snyk/vulnerabilities/github/edaa-org/pyEDAA.OSVVM
+.. only:: html
 
-+------------------------------------------+------------------------------------------+
-| `Libraries.io <https://libraries.io/>`_  | Vulnerabilities Summary                  |
-+==========================================+==========================================+
-| |img-OSVVM-lib-status|                   | |img-OSVVM-vul-status|                   |
-+------------------------------------------+------------------------------------------+
+   .. |img-OSVVM-lib-status| image:: https://img.shields.io/librariesio/release/pypi/pyEDAA.OSVVM
+      :alt: Libraries.io status for latest release
+      :height: 22
+      :target: https://libraries.io/github/edaa-org/pyEDAA.OSVVM
+   .. |img-OSVVM-vul-status| image:: https://img.shields.io/snyk/vulnerabilities/github/edaa-org/pyEDAA.OSVVM
+      :alt: Snyk Vulnerabilities for GitHub Repo
+      :height: 22
+      :target: https://img.shields.io/snyk/vulnerabilities/github/edaa-org/pyEDAA.OSVVM
+
+   +------------------------------------------+------------------------------------------+
+   | `Libraries.io <https://libraries.io/>`_  | Vulnerabilities Summary                  |
+   +==========================================+==========================================+
+   | |img-OSVVM-lib-status|                   | |img-OSVVM-vul-status|                   |
+   +------------------------------------------+------------------------------------------+
 
 .. _DEP/package:
 
