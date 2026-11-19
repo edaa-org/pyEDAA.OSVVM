@@ -1,5 +1,3 @@
-.. include:: shields.inc
-
 .. only:: html
 
    .. image:: _static/logo_on_light.svg
@@ -15,21 +13,18 @@
 
    \part{Introduction}
 
-.. only:: html
+.. shields::
+   :github:                edaa-org/pyEDAA.OSVVM
+   :pypi:                  pyEDAA.OSVVM
+   :codacy:                b57c7ddd73ef459aaa6a4a6251dd0ad4
+   :source-license:        github:LICENSE.md
+   :documentation-license: CC-BY-4.0 github:doc/Doc-License.rst
+   :github-action:         Pipeline.yml
+   :documentation:         github-pages
 
-   |  |SHIELD:svg:OSVVM-github| |SHIELD:svg:OSVVM-src-license| |SHIELD:svg:OSVVM-ghp-doc| |SHIELD:svg:OSVVM-doc-license|
-   |  |SHIELD:svg:OSVVM-pypi-tag| |SHIELD:svg:OSVVM-pypi-status| |SHIELD:svg:OSVVM-pypi-python|
-   |  |SHIELD:svg:OSVVM-gha-test| |SHIELD:svg:OSVVM-lib-status| |SHIELD:svg:OSVVM-codacy-quality| |SHIELD:svg:OSVVM-codacy-coverage| |SHIELD:svg:OSVVM-codecov-coverage|
-
-.. Disabled shields: |SHIELD:svg:OSVVM-lib-dep| |SHIELD:svg:OSVVM-req-status| |SHIELD:svg:OSVVM-lib-rank|
-
-.. only:: latex
-
-   |SHIELD:png:OSVVM-github| |SHIELD:png:OSVVM-src-license| |SHIELD:png:OSVVM-ghp-doc| |SHIELD:png:OSVVM-doc-license|
-   |SHIELD:png:OSVVM-pypi-tag| |SHIELD:png:OSVVM-pypi-status| |SHIELD:png:OSVVM-pypi-python|
-   |SHIELD:png:OSVVM-gha-test| |SHIELD:png:OSVVM-lib-status| |SHIELD:png:OSVVM-codacy-quality| |SHIELD:png:OSVVM-codacy-coverage| |SHIELD:png:OSVVM-codecov-coverage|
-
-.. Disabled shields: |SHIELD:png:OSVVM-lib-dep| |SHIELD:png:OSVVM-req-status| |SHIELD:png:OSVVM-lib-rank|
+   github, src-license, ghp-doc, doc-license
+   pypi-tag, pypi-status, pypi-python
+   github-action, lib-status, codacy-quality, codacy-coverage, codecov-coverage
 
 --------------------------------------------------------------------------------
 
