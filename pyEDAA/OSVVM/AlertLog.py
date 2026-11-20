@@ -143,7 +143,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		self._parent = parent
 		if parent is not None:
 			if not isinstance(parent, AlertLogItem):
-				ex = TypeError(f"Parameter 'parent' is not an AlertLogItem.")
+				ex = TypeError("Parameter 'parent' is not an AlertLogItem.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(parent)}'.")
 				raise ex
 			elif name in parent._children:
@@ -155,7 +155,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 		if children is not None:
 			for child in children:
 				if not isinstance(child, AlertLogItem):
-					ex = TypeError(f"Item in parameter 'children' is not an AlertLogItem.")
+					ex = TypeError("Item in parameter 'children' is not an AlertLogItem.")
 					ex.add_note(f"Got type '{getFullyQualifiedName(child)}'.")
 					raise ex
 				elif child._name in self._children:
@@ -194,7 +194,7 @@ class AlertLogItem(metaclass=ExtendedType, slots=True):
 			del self._parent._children[self._name]
 		else:
 			if not isinstance(value, AlertLogItem):
-				ex = TypeError(f"Parameter 'value' is not an AlertLogItem.")
+				ex = TypeError("Parameter 'value' is not an AlertLogItem.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(value)}'.")
 				raise ex
 			elif self._name in value._children:
@@ -474,7 +474,7 @@ class Document(AlertLogItem, Settings):
 			except Exception as ex:
 				raise AlertLogException(f"Couldn't open '{self._path}'.") from ex
 
-		self._analysisDuration = timedelta(seconds=sw.Duration)
+		self._analysisDuration = sw.Duration
 
 	def Parse(self) -> None:
 		"""
@@ -484,7 +484,7 @@ class Document(AlertLogItem, Settings):
 		"""
 		if self._yamlDocument is None:
 			ex = AlertLogException(f"OSVVM AlertLog YAML file '{self._path}' needs to be read and analyzed by a YAML parser.")
-			ex.add_note(f"Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
+			ex.add_note("Call 'Document.Analyze()' or create the document using 'Document(path, parse=True)'.")
 			raise ex
 
 		with Stopwatch() as sw:
@@ -499,7 +499,7 @@ class Document(AlertLogItem, Settings):
 			for child in self._ParseSequenceFromYAML(self._yamlDocument, "Children"):
 				_ = self._ParseAlertLogItem(child, self)
 
-		self._modelConversionDuration = timedelta(seconds=sw.Duration)
+		self._modelConversionDuration = sw.Duration
 
 	@staticmethod
 	def _ParseSequenceFromYAML(node: CommentedMap, fieldName: str) -> Nullable[CommentedSeq]:

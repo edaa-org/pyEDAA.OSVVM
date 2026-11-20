@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Bötzingen, Germany                                                             #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -41,11 +41,10 @@ from docutils.parsers.rst.directives   import flag
 from sphinx.config                     import Config
 from sphinx.application                import Sphinx
 from pyTooling.Decorators              import export
-from sphinx_reports                    import Landscape
+from pyTooling.Sphinx                  import BaseDirective, ReportExtensionError, strip, stripAndNormalize
+from pyTooling.Sphinx.Node             import Landscape
 
 from pyEDAA.Reports.Unittesting        import TestcaseStatus, TestsuiteStatus
-from sphinx_reports.Common             import ReportExtensionError
-from sphinx_reports.Sphinx             import strip, BaseDirective, stripAndNormalize
 
 from pyEDAA.OSVVM.Build                import BuildSummaryDocument, TestsuiteSummary, Testsuite, Testcase
 
@@ -153,7 +152,7 @@ class BuildSummary(BaseDirective):
 
 		:param sphinxApplication:   Sphinx application instance.
 		"""
-		print(f"[REPORT] Reading build reports ...")
+		print("[REPORT] Reading build reports ...")
 
 	@classmethod
 	def _CheckConfiguration(cls, sphinxConfiguration: Config) -> None:
@@ -347,7 +346,7 @@ class BuildSummary(BaseDirective):
 		def countVsExpected(count: int, expectedCount: int, kind: str) -> Tuple[nodes.entry, nodes.entry]:
 			classes = []
 			if count == expectedCount == 0:
-				text = f"⸻"
+				text = "⸻"
 			else:
 				if count != expectedCount:
 					classes = [f"osvvm-{kind}-mismatch"]
@@ -360,7 +359,7 @@ class BuildSummary(BaseDirective):
 		def functionalCoverage(percent: float, kind: str) -> nodes.entry:
 			classes = []
 			if percent is None:
-				text = f"⸻"
+				text = "⸻"
 			else:
 				text = f"{percent * 100:.1f}"
 

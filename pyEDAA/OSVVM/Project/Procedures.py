@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -57,9 +57,9 @@ from pyTooling.Common      import getFullyQualifiedName
 from pyVHDLModel           import VHDLVersion
 
 from pyEDAA.OSVVM          import OSVVMException
-from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue, ConstraintFile as OSVVM_ConstraintFile
-from pyEDAA.OSVVM.Project  import XDCConstraintFile, ScopeToRef as OSVVM_ScopeToRef, ScopeToCell as OSVVM_ScopeToCell
-from pyEDAA.OSVVM.Project  import BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
+from pyEDAA.OSVVM.Project  import osvvmContext, VHDLSourceFile, GenericValue, ConstraintFile as OSVVM_ConstraintFile, \
+                                  XDCConstraintFile, ScopeToRef as OSVVM_ScopeToRef, ScopeToCell as OSVVM_ScopeToCell, \
+                                  BuildName as OSVVM_BuildName, NoNullRangeWarning as OSVVM_NoNullRangeWarning
 
 
 @export
@@ -217,7 +217,7 @@ def library(libraryName: str, libraryPath: Nullable[str] = None) -> None:
 	"""
 	try:
 		if libraryPath is not None:
-			raise NotImplementedError(f"Optional parameter 'libraryPath' not yet supported.")
+			raise NotImplementedError("Optional parameter 'libraryPath' not yet supported.")
 
 		osvvmContext.SetLibrary(libraryName)
 
@@ -291,7 +291,7 @@ def analyze(file: str, *options: int) -> None:
 			else:  # pragma: no cover
 				ex = TypeError(f"Option {optionID} is not a NoNullRangeWarning or ConstraintFile.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
-				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a NoNullRangeWarning or ConstraintFile object"), ex)
+				osvvmContext.RaiseException(OSVVMException("Dereferenced option ID is not a NoNullRangeWarning or ConstraintFile object"), ex)
 
 		if not fullPath.exists():  # pragma: no cover
 			osvvmContext.RaiseException(OSVVMException(f"Path '{fullPath}' can't be analyzed."), FileNotFoundError(fullPath))
@@ -334,7 +334,7 @@ def simulate(toplevelName: str, *options: int) -> None:
 	"""
 	try:
 		if toplevelName == "":
-			raise ValueError(f"Parameter 'toplevelName' is empty.")
+			raise ValueError("Parameter 'toplevelName' is empty.")
 
 		testcase = osvvmContext.SetTestcaseToplevel(toplevelName)
 		for optionID in options:
@@ -348,7 +348,7 @@ def simulate(toplevelName: str, *options: int) -> None:
 			else:  # pragma: no cover
 				ex = TypeError(f"Option {optionID} is not a GenericValue.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
-				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a GenericValue object"), ex)
+				osvvmContext.RaiseException(OSVVMException("Dereferenced option ID is not a GenericValue object"), ex)
 
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
@@ -458,7 +458,7 @@ def RunTest(file: str, *options: int) -> None:
 			else:  # pragma: no cover
 				ex = TypeError(f"Option {optionID} is not a GenericValue.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
-				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a GenericValue object"), ex)
+				osvvmContext.RaiseException(OSVVMException("Dereferenced option ID is not a GenericValue object"), ex)
 
 	except Exception as ex:       # pragma: no cover
 		osvvmContext.RaiseException(ex)
@@ -469,7 +469,7 @@ def LinkLibrary(libraryName: str, libraryPath: Nullable[str] = None):
 	"""
 	Not implemented by pyEDAA.OSVVM.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'LinkLibrary' is not implemented."))
+	osvvmContext.RaiseException(NotImplementedError("Procedure 'LinkLibrary' is not implemented."))
 
 
 @export
@@ -477,7 +477,7 @@ def LinkLibraryDirectory(libraryDirectory: str):
 	"""
 	Not implemented by pyEDAA.OSVVM.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'LinkLibraryDirectory' is not implemented."))
+	osvvmContext.RaiseException(NotImplementedError("Procedure 'LinkLibraryDirectory' is not implemented."))
 
 
 @export
@@ -503,7 +503,7 @@ def SetVHDLVersion(value: str) -> None:
 		try:
 			value = int(value)
 		except ValueError as e:  # pragma: no cover
-			ex = ValueError(f"Parameter 'value' is not an integer value.")
+			ex = ValueError("Parameter 'value' is not an integer value.")
 			ex.add_note(f"Got '{value}'.")
 			osvvmContext.RaiseException(ex, e)
 
@@ -562,7 +562,7 @@ def SetCoverageAnalyzeEnable(value: bool) -> None:
 	"""
 	Not implemented by pyEDAA.OSVVM.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'SetCoverageAnalyzeEnable' is not implemented."))
+	osvvmContext.RaiseException(NotImplementedError("Procedure 'SetCoverageAnalyzeEnable' is not implemented."))
 
 
 @export
@@ -570,7 +570,7 @@ def SetCoverageSimulateEnable(value: bool) -> None:
 	"""
 	Not implemented by pyEDAA.OSVVM.
 	"""
-	osvvmContext.RaiseException(NotImplementedError(f"Procedure 'SetCoverageSimulateEnable' is not implemented."))
+	osvvmContext.RaiseException(NotImplementedError("Procedure 'SetCoverageSimulateEnable' is not implemented."))
 
 
 @export
@@ -590,7 +590,7 @@ def FileExists(file: str) -> bool:
 	"""
 	try:
 		if file == "":
-			raise ValueError(f"Parameter 'file' is empty.")
+			raise ValueError("Parameter 'file' is empty.")
 
 		return (osvvmContext._currentDirectory / file).is_file()
 
@@ -615,7 +615,7 @@ def DirectoryExists(directory: str) -> bool:
 	"""
 	try:
 		if directory == "":
-			raise ValueError(f"Parameter 'directory' is empty.")
+			raise ValueError("Parameter 'directory' is empty.")
 
 		return (osvvmContext._currentDirectory / directory).is_dir()
 
@@ -641,7 +641,7 @@ def ChangeWorkingDirectory(directory: str) -> None:
 	"""
 	try:
 		if directory == "":
-			raise ValueError(f"Parameter 'directory' is empty.")
+			raise ValueError("Parameter 'directory' is empty.")
 
 		osvvmContext._currentDirectory = (newDirectory := osvvmContext._currentDirectory / directory)
 		if not newDirectory.is_dir():  # pragma: no cover
@@ -712,7 +712,7 @@ def ConstraintFile(file: str, *options: int) -> int:
 			else:  # pragma: no cover
 				ex = TypeError(f"Option {optionID} is not a ScopeToRef or ScopeToCell.")
 				ex.add_note(f"Got type '{getFullyQualifiedName(option)}'.")
-				osvvmContext.RaiseException(OSVVMException(f"Dereferenced option ID is not a ScopeToRef or ScopeToCell object"), ex)
+				osvvmContext.RaiseException(OSVVMException("Dereferenced option ID is not a ScopeToRef or ScopeToCell object"), ex)
 
 		if not fullPath.exists():  # pragma: no cover
 			osvvmContext.RaiseException(OSVVMException(f"Constraint file '{fullPath}' can't be found."), FileNotFoundError(fullPath))

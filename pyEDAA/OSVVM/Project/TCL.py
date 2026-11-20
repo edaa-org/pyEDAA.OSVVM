@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -43,14 +43,12 @@ from pyVHDLModel                     import VHDLVersion
 
 from pyEDAA.OSVVM                    import OSVVMException
 from pyEDAA.OSVVM.Project            import Context, osvvmContext, Build, Project
-from pyEDAA.OSVVM.Project.Procedures import noop, NoNullRangeWarning
-from pyEDAA.OSVVM.Project.Procedures import FileExists, DirectoryExists, FindOsvvmSettingsDirectory
-from pyEDAA.OSVVM.Project.Procedures import build, BuildName, include, library, analyze, simulate, generic
-from pyEDAA.OSVVM.Project.Procedures import TestSuite, TestName, RunTest
-from pyEDAA.OSVVM.Project.Procedures import ChangeWorkingDirectory, CreateOsvvmScriptSettingsPkg
-from pyEDAA.OSVVM.Project.Procedures import SetVHDLVersion, GetVHDLVersion
-from pyEDAA.OSVVM.Project.Procedures import SetCoverageAnalyzeEnable, SetCoverageSimulateEnable
-from pyEDAA.OSVVM.Project.Procedures import ConstraintFile, ScopeToRef, ScopeToCell
+from pyEDAA.OSVVM.Project.Procedures import noop, NoNullRangeWarning, FileExists, DirectoryExists, \
+                                            FindOsvvmSettingsDirectory, build, BuildName, include, library, analyze, \
+                                            simulate, generic, TestSuite, TestName, RunTest, ChangeWorkingDirectory, \
+                                            CreateOsvvmScriptSettingsPkg, SetVHDLVersion, GetVHDLVersion, \
+                                            SetCoverageAnalyzeEnable, SetCoverageSimulateEnable, ConstraintFile, \
+                                            ScopeToRef, ScopeToCell
 
 
 @export
@@ -129,7 +127,7 @@ class TclEnvironment(metaclass=ExtendedType, slots=True):
 			self._tcl.eval(tclCode)
 		except TclError as e:
 			e = getException(e, self._context)
-			ex = OSVVMException(f"Caught TclError while evaluating TCL code.")
+			ex = OSVVMException("Caught TclError while evaluating TCL code.")
 			ex.add_note(tclCode)
 			raise ex from e
 
@@ -500,7 +498,7 @@ class OsvvmProFileProcessor(TclEnvironment):
 		try:
 			self._tcl.eval(code)
 		except TclError as ex:
-			raise OSVVMException(f"TCL error occurred, when initializing OSVVM variables.") from ex
+			raise OSVVMException("TCL error occurred, when initializing OSVVM variables.") from ex
 
 	def OverwriteTclProcedures(self) -> None:
 		"""

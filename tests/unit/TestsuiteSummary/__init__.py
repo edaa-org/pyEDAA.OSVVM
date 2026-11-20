@@ -30,7 +30,8 @@
 #
 """Testcase for OSVVM specific file formats."""
 from pathlib      import Path
-from unittest     import TestCase
+
+from pyTooling.Testing import Testcase as py_Testcase
 
 from pyEDAA.OSVVM.Build import Testsuite, Testcase, TestsuiteSummary, BuildSummaryDocument
 
@@ -40,7 +41,7 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiation(TestCase):
+class Instantiation(py_Testcase):
 	def test_Testcase(self) -> None:
 		tc = Testcase("tc")
 

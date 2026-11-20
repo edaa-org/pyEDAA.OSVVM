@@ -11,7 +11,7 @@
 #                                                                                                                      #
 # License:                                                                                                             #
 # ==================================================================================================================== #
-# Copyright 2025-2026 Patrick Lehmann - Boetzingen, Germany                                                            #
+# Copyright 2025-2026 Electronic Design Automation Abstraction (EDA²)                                                  #
 #                                                                                                                      #
 # Licensed under the Apache License, Version 2.0 (the "License");                                                      #
 # you may not use this file except in compliance with the License.                                                     #
@@ -30,14 +30,13 @@
 #
 """Tests for the OSVVM's project descriptions in ``*.pro`` files."""
 from pathlib              import Path
-from unittest             import TestCase as TestCase
 
 from pyTooling.Common     import firstPair
+from pyTooling.Testing    import Testcase as py_Testcase
 from pyVHDLModel          import VHDLVersion
 
-from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary
-from pyEDAA.OSVVM.Project import GenericValue, Testcase, Testsuite
-from pyEDAA.OSVVM.Project import Context, Project, Build
+from pyEDAA.OSVVM.Project import VHDLSourceFile, VHDLLibrary, GenericValue, Testcase, Testsuite, Context, Project, \
+                                 Build
 
 
 if __name__ == "__main__": # pragma: no cover
@@ -46,7 +45,7 @@ if __name__ == "__main__": # pragma: no cover
 	exit(1)
 
 
-class Instantiation(TestCase):
+class Instantiation(py_Testcase):
 	def test_VHDLSourceFile(self) -> None:
 		path = Path("source.vhdl")
 		vhdlFile = VHDLSourceFile(path, VHDLVersion.VHDL2008)
@@ -67,7 +66,7 @@ class Instantiation(TestCase):
 		self.assertIs(library, vhdlFile.VHDLLibrary)
 		self.assertEqual(path, vhdlFile.Path)
 		self.assertEqual(VHDLVersion.VHDL2008, vhdlFile.VHDLVersion)
-		self.assertEqual(f"VHDLSourceFile: source.vhdl (VHDL'08)", repr(vhdlFile))
+		self.assertEqual("VHDLSourceFile: source.vhdl (VHDL'08)", repr(vhdlFile))
 
 	def test_Library(self) -> None:
 		library = VHDLLibrary("library")
@@ -76,7 +75,7 @@ class Instantiation(TestCase):
 		self.assertIsNone(library.Parent)
 		self.assertIsNone(library.Build)
 		self.assertEqual(0, len(library.Files))
-		self.assertEqual(f"VHDLLibrary: library", repr(library))
+		self.assertEqual("VHDLLibrary: library", repr(library))
 
 	def test_Library_VHDLSourceFiles(self) -> None:
 		path1 = Path("source1.vhdl")
@@ -120,7 +119,7 @@ class Instantiation(TestCase):
 		self.assertIsNone(tc.Testsuite)
 		self.assertIsNone(tc.ToplevelName)
 		self.assertEqual(0, len(tc.Generics))
-		self.assertEqual(f"Testcase: tc", repr(tc))
+		self.assertEqual("Testcase: tc", repr(tc))
 
 	def test_Testcase_Testsuite(self) -> None:
 		ts = Testsuite("ts")
@@ -131,7 +130,7 @@ class Instantiation(TestCase):
 		self.assertIs(ts, tc.Testsuite)
 		self.assertIsNone(tc.ToplevelName)
 		self.assertEqual(0, len(tc.Generics))
-		self.assertEqual(f"Testcase: tc", repr(tc))
+		self.assertEqual("Testcase: tc", repr(tc))
 
 	def test_Testcase_GenericsList(self) -> None:
 		generic1 = GenericValue("param1", "value1")
@@ -147,7 +146,7 @@ class Instantiation(TestCase):
 		for i, (genericName, genericValue) in enumerate(tc.Generics.items(), start=1):
 			self.assertEqual(f"param{i}", genericName)
 			self.assertEqual(f"value{i}", genericValue)
-		self.assertEqual(f"Testcase: tc - [param1=value1, param2=value2]", repr(tc))
+		self.assertEqual("Testcase: tc - [param1=value1, param2=value2]", repr(tc))
 
 	def test_Testcase_GenericsDict(self) -> None:
 		generics = {
@@ -164,7 +163,7 @@ class Instantiation(TestCase):
 		for i, (genericName, genericValue) in enumerate(tc.Generics.items(), start=1):
 			self.assertEqual(f"param{i}", genericName)
 			self.assertEqual(f"value{i}", genericValue)
-		self.assertEqual(f"Testcase: tc - [param1=value1, param2=value2]", repr(tc))
+		self.assertEqual("Testcase: tc - [param1=value1, param2=value2]", repr(tc))
 
 	def test_Testsuite(self) -> None:
 		ts = Testsuite("ts")
@@ -173,7 +172,7 @@ class Instantiation(TestCase):
 		self.assertIsNone(ts.Parent)
 		self.assertIsNone(ts.Build)
 		self.assertEqual(0, len(ts.Testcases))
-		self.assertEqual(f"Testsuite: ts", repr(ts))
+		self.assertEqual("Testsuite: ts", repr(ts))
 
 	def test_Testsuite_Build(self) -> None:
 		build = Build("build")
@@ -183,7 +182,7 @@ class Instantiation(TestCase):
 		self.assertIs(build, ts.Parent)
 		self.assertIs(build, ts.Build)
 		self.assertEqual(0, len(ts.Testcases))
-		self.assertEqual(f"Testsuite: ts", repr(ts))
+		self.assertEqual("Testsuite: ts", repr(ts))
 
 	def test_Testsuite_TestcasesList(self) -> None:
 		tc1 = Testcase("tc1")
@@ -199,7 +198,7 @@ class Instantiation(TestCase):
 			self.assertIs(ts, testcase.Testsuite)
 			self.assertEqual(f"tc{i+1}", testcaseName)
 			self.assertEqual(testcases[i], testcase)
-		self.assertEqual(f"Testsuite: ts", repr(ts))
+		self.assertEqual("Testsuite: ts", repr(ts))
 
 	def test_Testsuite_TestcasesDict(self) -> None:
 		testcases = {
@@ -216,7 +215,7 @@ class Instantiation(TestCase):
 			self.assertIs(ts, testcase.Testsuite)
 			self.assertEqual(f"tc{i+1}", testcaseName)
 			self.assertEqual(testcases[testcaseName], testcase)
-		self.assertEqual(f"Testsuite: ts", repr(ts))
+		self.assertEqual("Testsuite: ts", repr(ts))
 
 	def test_Build(self) -> None:
 		build = Build("build")
@@ -226,7 +225,7 @@ class Instantiation(TestCase):
 		self.assertIsNone(build.Project)
 		self.assertEqual(0, len(build.VHDLLibraries))
 		self.assertEqual(0, len(build.Testsuites))
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Build_Project(self) -> None:
 		project = Project("project")
@@ -237,7 +236,7 @@ class Instantiation(TestCase):
 		self.assertIs(project, build.Project)
 		self.assertEqual(0, len(build.VHDLLibraries))
 		self.assertEqual(0, len(build.Testsuites))
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Build_LibrariesList(self) -> None:
 		library1 = VHDLLibrary("lib1")
@@ -254,7 +253,7 @@ class Instantiation(TestCase):
 			self.assertEqual(f"lib{i+1}", libraryName)
 			self.assertEqual(libraries[i], library)
 		self.assertEqual(0, len(build.Testsuites))
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Build_LibrariesDict(self) -> None:
 		libraries = {
@@ -272,7 +271,7 @@ class Instantiation(TestCase):
 			self.assertEqual(f"lib{i+1}", libraryName)
 			self.assertEqual(libraries[libraryName], library)
 		self.assertEqual(0, len(build.Testsuites))
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Build_TestsuitesList(self) -> None:
 		ts1 = Testsuite("ts1")
@@ -289,7 +288,7 @@ class Instantiation(TestCase):
 			self.assertIs(build, testsuite.Build)
 			self.assertEqual(f"ts{i+1}", testsuiteName)
 			self.assertEqual(testsuites[i], testsuite)
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Build_TestsuitesDict(self) -> None:
 		testsuites = {
@@ -307,7 +306,7 @@ class Instantiation(TestCase):
 			self.assertIs(build, testsuite.Build)
 			self.assertEqual(f"ts{i+1}", testsuiteName)
 			self.assertEqual(testsuites[testsuiteName], testsuite)
-		self.assertEqual(f"Build: build", repr(build))
+		self.assertEqual("Build: build", repr(build))
 
 	def test_Project(self) -> None:
 		project = Project("project")
@@ -315,7 +314,7 @@ class Instantiation(TestCase):
 		self.assertEqual("project", project.Name)
 		self.assertIsNone(project.Parent)
 		self.assertEqual(0, len(project.Builds))
-		self.assertEqual(f"Project: project", repr(project))
+		self.assertEqual("Project: project", repr(project))
 
 	def test_Project_BuildsList(self) -> None:
 		build1 = Build("build1")
@@ -330,7 +329,7 @@ class Instantiation(TestCase):
 			self.assertIs(project, build.Project)
 			self.assertEqual(f"build{i+1}", buildName)
 			self.assertEqual(builds[i], build)
-		self.assertEqual(f"Project: project", repr(project))
+		self.assertEqual("Project: project", repr(project))
 
 	def test_Project_BuildsDict(self) -> None:
 		builds = {
@@ -346,7 +345,7 @@ class Instantiation(TestCase):
 			self.assertIs(project, build.Project)
 			self.assertEqual(f"build{i+1}", buildName)
 			self.assertEqual(builds[buildName], build)
-		self.assertEqual(f"Project: project", repr(project))
+		self.assertEqual("Project: project", repr(project))
 
 	def test_Context(self) -> None:
 		context = Context()
@@ -362,7 +361,7 @@ class Instantiation(TestCase):
 		self.assertEqual(0, len(context.Testsuites))
 
 
-class Operations(TestCase):
+class Operations(py_Testcase):
 	def test_Testsuite_AddTestcase(self) -> None:
 		tc = Testcase("tc")
 		ts = Testsuite("ts")
